@@ -696,15 +696,17 @@ static void drawDockHost()
         ImGui::DockBuilderAddNode(dockId, ImGuiDockNodeFlags_DockSpace);
         ImGui::DockBuilderSetNodeSize(dockId, vp->WorkSize);
 
-        ImGuiID left, right, rtop, rbot, ctrl, dec;
+        ImGuiID left, right, rtop, rrest, rmid, rbot, ctrl, dec;
         ImGui::DockBuilderSplitNode(dockId, ImGuiDir_Left, 0.26f, &left, &right);
         ImGui::DockBuilderSplitNode(left, ImGuiDir_Up, 0.62f, &ctrl, &dec);
-        ImGui::DockBuilderSplitNode(right, ImGuiDir_Up, 0.5f, &rtop, &rbot);
+        // Right column: Spectrum (short, top) / Waterfall (middle) / Messages (bottom).
+        ImGui::DockBuilderSplitNode(right, ImGuiDir_Up, 0.30f, &rtop, &rrest);
+        ImGui::DockBuilderSplitNode(rrest, ImGuiDir_Up, 0.58f, &rmid, &rbot);
 
         ImGui::DockBuilderDockWindow("Control", ctrl);
         ImGui::DockBuilderDockWindow("Decoders", dec);
         ImGui::DockBuilderDockWindow("Spectrum", rtop);
-        ImGui::DockBuilderDockWindow("Waterfall", rbot);
+        ImGui::DockBuilderDockWindow("Waterfall", rmid);
         ImGui::DockBuilderDockWindow("Messages", rbot);
         ImGui::DockBuilderFinish(dockId);
     }
