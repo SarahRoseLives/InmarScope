@@ -847,6 +847,8 @@ typedef void (*aerol_dcd_cb)(bool status, void *user);
 typedef void (*aerol_acars_cb)(ACARSItem &acarsitem, void *user);
 typedef void (*aerol_decoded_cb)(const uint8_t *data, int len, void *user);
 typedef void (*aerol_cassign_cb)(CChannelAssignmentItem &item, void *user);
+/* C-channel voice: one 12-byte AMBE frame per call. */
+typedef void (*aerol_voice_cb)(const uint8_t *frame, int len, void *user);
 
 class AeroL
 {
@@ -879,6 +881,9 @@ public:
     void setDecodedCallback(aerol_decoded_cb cb, void *user) { decoded_callback = cb; decoded_user = user; }
     void setCChannelAssignmentCallback(aerol_cassign_cb cb, void *user) {
         cassign_callback = cb; cassign_user = user;
+    }
+    void setVoiceCallback(aerol_voice_cb cb, void *user) {
+        voice_callback = cb; voice_user = user;
     }
 
 private:
@@ -965,6 +970,8 @@ private:
     void *decoded_user;
     aerol_cassign_cb cassign_callback;
     void *cassign_user;
+    aerol_voice_cb voice_callback;
+    void *voice_user;
 };
 
 #endif // AEROL_H

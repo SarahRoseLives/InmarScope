@@ -620,10 +620,19 @@ struct jaero_oqpsk_cont_demod {
     void *cassign_user;
     jaero_decoded_cb decoded_cb;
     void *decoded_user;
+    jaero_voice_cb voice_cb;
+    void *voice_user;
     bool sigstat_good;
     bool afc_on;          /* shadow of OqpskDemodulator::afc for UI readout */
     double lockingbw;     /* shadow of Settings.lockingbw so UI can pick a zoom window */
 };
+
+static void oqpsk_cont_voice_adapter(const uint8_t *frame, int len, void *ctx)
+{
+    jaero_oqpsk_cont_demod_t *d = (jaero_oqpsk_cont_demod_t *)ctx;
+    if (d->voice_cb)
+        d->voice_cb(frame, len, d->channel_id, d->voice_user);
+}
 
 static void oqpsk_cont_decoded_adapter(const uint8_t *data, int len, void *ctx)
 {
@@ -698,6 +707,8 @@ jaero_oqpsk_cont_demod_t *jaero_oqpsk_cont_create(double sample_rate, double sym
     d->cassign_user = NULL;
     d->decoded_cb  = NULL;
     d->decoded_user = NULL;
+    d->voice_cb    = NULL;
+    d->voice_user  = NULL;
     d->sigstat_good = false;
     d->demod       = new OqpskDemodulator();
 
@@ -782,6 +793,16 @@ void jaero_oqpsk_cont_set_acars2_callback(jaero_oqpsk_cont_demod_t *d,
     d->acars2_user = user;
     if (d->aerol)
         d->aerol->setACARSCallback(oqpsk_cont_aerol_acars_adapter, d);
+}
+
+void jaero_oqpsk_cont_set_voice_callback(jaero_oqpsk_cont_demod_t *d,
+                                           jaero_voice_cb cb, void *user)
+{
+    if (!d) return;
+    d->voice_cb = cb;
+    d->voice_user = user;
+    if (d->aerol)
+        d->aerol->setVoiceCallback(oqpsk_cont_voice_adapter, d);
 }
 
 static void oqpsk_cont_cassign_adapter(CChannelAssignmentItem &item, void *ctx)

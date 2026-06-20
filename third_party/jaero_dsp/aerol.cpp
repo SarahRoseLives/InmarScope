@@ -833,6 +833,8 @@ AeroL::AeroL()
     decoded_user=NULL;
     cassign_callback=NULL;
     cassign_user=NULL;
+    voice_callback=NULL;
+    voice_user=NULL;
 
     //install parser
     parserisu = new ParserISU();
@@ -1705,6 +1707,27 @@ std::vector<uint8_t> &AeroL::DecodeC(std::vector<short> &bits)
 
 
                 }// end of sub-data loop
+
+              // Extract C-channel voice: 25 primary fields x 12 bytes (AMBE
+              // frames). Each 96-bit field, then skip 13 bits. (From JAERO.)
+              if(voice_callback)
+              {
+                  std::vector<uint8_t> vdata;
+                  vdata.reserve(320);
+                  int vch=0, vptr=0, bitsin=0;
+                  for(int h=1; h<2714; ++h)
+                  {
+                      vch|=deconvol[h]*128;
+                      vptr++; vptr%=8;
+                      if(vptr==0){ vdata.push_back((uint8_t)vch); vch=0; }
+                      else vch>>=1;
+                      bitsin++;
+                      if(bitsin==96){ bitsin=0; h+=13; }
+                  }
+                  for(int i=0;i<25;i++)
+                      if((size_t)(i*12+12)<=vdata.size())
+                          voice_callback(vdata.data()+i*12, 12, voice_user);
+              }
 
               // reset for next block
               index = -1;

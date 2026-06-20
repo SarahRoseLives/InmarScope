@@ -95,6 +95,13 @@ target_include_directories(jaero_dsp PUBLIC
 target_compile_definitions(jaero_dsp PUBLIC _USE_MATH_DEFINES)
 
 # ---------------------------------------------------------------------------
+# mbelib (AMBE/IMBE voice codec, C) for Aero C-channel voice decoding.
+# ---------------------------------------------------------------------------
+file(GLOB MBELIB_SOURCES ${CMAKE_SOURCE_DIR}/third_party/mbelib/*.c)
+add_library(mbelib STATIC ${MBELIB_SOURCES})
+target_include_directories(mbelib PUBLIC ${CMAKE_SOURCE_DIR}/third_party/mbelib)
+
+# ---------------------------------------------------------------------------
 # FrameSync application
 # ---------------------------------------------------------------------------
 add_executable(FrameSync
@@ -104,17 +111,21 @@ add_executable(FrameSync
     src/gui/waterfall.cpp
     src/decode/decoder.cpp
     src/decode/decoder_manager.cpp
+    src/voice/ambe_decoder.cpp
+    src/audio/audio_output.cpp
 )
 target_include_directories(FrameSync PRIVATE
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/third_party/mbelib
+    ${CMAKE_SOURCE_DIR}/third_party/miniaudio
     ${RTLSDR_INCLUDE_DIRS}
 )
 target_compile_definitions(FrameSync PRIVATE _USE_MATH_DEFINES)
-target_link_libraries(FrameSync PRIVATE imgui jaero_dsp ${RTLSDR_LIBRARIES})
+target_link_libraries(FrameSync PRIVATE imgui jaero_dsp mbelib ${RTLSDR_LIBRARIES})
 target_link_directories(FrameSync PRIVATE ${RTLSDR_LIBRARY_DIRS})
 
 if(WIN32)
-    target_link_libraries(FrameSync PRIVATE opengl32 gdi32 comdlg32)
+    target_link_libraries(FrameSync PRIVATE opengl32 gdi32 comdlg32 ole32 winmm)
 
     # Copy MinGW runtime DLLs next to the executable so it runs standalone
     # (PyCharm, double-click) without the MSYS2 bin dir on PATH.

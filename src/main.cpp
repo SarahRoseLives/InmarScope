@@ -426,8 +426,8 @@ static void drawControls(App& app)
     ImGui::TextDisabled("drag=pan  scroll=zoom  dbl-click=fit");
 
     ImGui::Separator();
-    const char* bauds[] = {"600", "1200", "10500"};
-    ImGui::Combo("Decode baud", &app.newBaud, bauds, 3);
+    const char* bauds[] = {"600", "1200", "8400", "10500"};
+    ImGui::Combo("Decode baud", &app.newBaud, bauds, 4);
     ImGui::TextDisabled("Ctrl+click the spectrum to add a decoder there");
 
     if (running)
@@ -521,8 +521,9 @@ static void drawSpectrum(App& app)
             ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             ImPlotPoint mp = ImPlot::GetPlotMousePos();
-            static const int kBaudVals[] = {600, 1200, 10500};
-            int baud = kBaudVals[app.newBaud < 0 ? 0 : (app.newBaud > 2 ? 2 : app.newBaud)];
+            static const int kBaudVals[] = {600, 1200, 8400, 10500};
+            int idx = app.newBaud < 0 ? 0 : (app.newBaud > 3 ? 3 : app.newBaud);
+            int baud = kBaudVals[idx];
             app.decoders.addDecoder(mp.x * 1e6, baud);
         }
 
@@ -582,6 +583,20 @@ static void drawDecoders(App& app)
     ImGui::SameLine();
     if (ImGui::SmallButton("Remove all"))
         app.decoders.removeAll();
+
+    int vm = app.decoders.voiceMonitor();
+    if (vm >= 0)
+        ImGui::Text("Voice: monitoring ch %d", vm);
+    else
+        ImGui::TextDisabled("Voice: (no 8400 decoder)");
+    ImGui::SameLine();
+    float lvl = app.decoders.audioLevel() * 5.0f; // voice is quiet; scale for the meter
+    if (lvl > 1.0f) lvl = 1.0f;
+    ImGui::ProgressBar(lvl, ImVec2(110, 0), "");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Listen to selected"))
+        app.decoders.setVoiceMonitor(app.selectedDecoder);
+
     ImGui::Separator();
 
     if (ImGui::BeginTable("##decs", 6,

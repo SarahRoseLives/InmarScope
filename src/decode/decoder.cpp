@@ -1,6 +1,8 @@
 #include "decode/decoder.h"
 
 #include "jaero_demod.h"
+#include "voice/ambe_decoder.h"
+#include "audio/audio_output.h"
 
 #include <cstdio>
 
@@ -18,9 +20,13 @@ static double ddcRate(int baud)
 
 static double ddcBw(int baud)
 {
-    // Signal bandwidth fb*(1+alpha): ~6 kHz for 600/1200 MSK, ~21 kHz for
-    // 10500 OQPSK (matches the reference channelizer's cleanup bandwidths).
-    return (baud == 10500) ? 21000.0 : 6000.0;
+    // Signal bandwidth fb*(1+alpha): ~6 kHz for 600/1200 MSK, ~14 kHz for
+    // 8400 OQPSK (alpha 0.6), ~21 kHz for 10500 OQPSK (alpha 1.0).
+    if (baud == 10500)
+        return 21000.0;
+    if (baud == 8400)
+        return 14000.0;
+    return 6000.0;
 }
 
 // Human-readable name for a P-channel signal-unit type (first decoded byte).
@@ -62,24 +68,31 @@ static const char* suTypeName(uint8_t t)
 }
 
 Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud,
-                 int channelId, MessageLog* log, MessageLog* suLog)
+                 int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink)
     : ddc_(subRate, chanFreqHz - subCenterHz, ddcRate(baud), ddcBw(baud)),
       log_(log),
       suLog_(suLog),
       subCenterHz_(subCenterHz),
       chanFreqHz_(chanFreqHz),
       baud_(baud),
-      channelId_(channelId)
+      channelId_(channelId),
+      audioSink_(audioSink)
 {
-    if (baud == 10500)
+    if (baud == 10500 || baud == 8400)
     {
-        oqpsk_ = jaero_oqpsk_cont_create(ddc_.outputRate(), 10500.0, channelId,
+        oqpsk_ = jaero_oqpsk_cont_create(ddc_.outputRate(), (double)baud, channelId,
                                          nullptr, nullptr);
         if (oqpsk_)
         {
             jaero_oqpsk_cont_set_acars2_callback(oqpsk_, &Decoder::acars2Trampoline, this);
             jaero_oqpsk_cont_set_decoded_callback(oqpsk_, &Decoder::decodedTrampoline, this);
             jaero_oqpsk_cont_set_cassign_callback(oqpsk_, &Decoder::cassignTrampoline, this);
+        }
+        if (baud == 8400)
+        {
+            ambe_ = std::make_unique<AmbeDecoder>();
+            if (oqpsk_)
+                jaero_oqpsk_cont_set_voice_callback(oqpsk_, &Decoder::voiceTrampoline, this);
         }
     }
     else
@@ -278,4 +291,19 @@ void Decoder::onCassign(uint8_t type, uint32_t aes_id, uint8_t ges_id,
                   type, aes_id, ges_id, rx_mhz, tx_mhz);
     m.text = buf;
     suLog_->add(m);
+}
+
+void Decoder::voiceTrampoline(const uint8_t* frame, int len, int, void* user)
+{
+    static_cast<Decoder*>(user)->onVoice(frame, len);
+}
+
+void Decoder::onVoice(const uint8_t* frame, int len)
+{
+    if (!ambe_ || len != AmbeDecoder::kFrameBytes)
+        return;
+    int16_t pcm[AmbeDecoder::kPcmSamples];
+    ambe_->decode(frame, pcm);
+    if (monitored_.load() && audioSink_)
+        audioSink_->push(pcm, AmbeDecoder::kPcmSamples);
 }

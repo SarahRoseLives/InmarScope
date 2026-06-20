@@ -13,6 +13,8 @@
 struct jaero_pmsk_demod;       // from jaero_demod.h
 struct jaero_oqpsk_cont_demod; // from jaero_demod.h
 struct jaero_acars_msg;        // from jaero_demod.h
+class AmbeDecoder;
+class AudioOutput;
 
 class Decoder
 {
@@ -20,7 +22,7 @@ public:
     // subRate/subCenterHz describe the shared front-end sub-band stream this
     // decoder consumes; chanFreqHz is the absolute channel frequency.
     Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud,
-            int channelId, MessageLog* log, MessageLog* suLog);
+            int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink);
     ~Decoder();
 
     // Process a block of sub-band interleaved double IQ (decode thread).
@@ -39,6 +41,9 @@ public:
     int    baud() const { return baud_; }
     int    channelId() const { return channelId_; }
     uint64_t msgCount() const { return msgCount_.load(); }
+    bool   isVoice() const { return baud_ == 8400; }
+    void   setMonitored(bool on) { monitored_.store(on); }
+    bool   monitored() const { return monitored_.load(); }
 
 private:
     static void acarsTrampoline(const uint8_t* data, int len, int channel_id,
@@ -57,6 +62,9 @@ private:
                                   void* user);
     void onCassign(uint8_t type, uint32_t aes_id, uint8_t ges_id, double rx_mhz,
                    double tx_mhz);
+    static void voiceTrampoline(const uint8_t* frame, int len, int channel_id,
+                                void* user);
+    void onVoice(const uint8_t* frame, int len);
 
     Ddc ddc_;
     jaero_pmsk_demod* pmsk_ = nullptr;
@@ -70,4 +78,8 @@ private:
     int baud_;
     int channelId_;
     std::atomic<uint64_t> msgCount_{0};
+
+    std::unique_ptr<AmbeDecoder> ambe_; // voice (8400) only
+    AudioOutput* audioSink_ = nullptr;
+    std::atomic<bool> monitored_{false};
 };

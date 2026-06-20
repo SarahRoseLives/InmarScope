@@ -7,6 +7,7 @@
 #include "decode/decoder.h"
 #include "decode/message_log.h"
 #include "dsp/ddc.h"
+#include "audio/audio_output.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -52,6 +53,11 @@ public:
     MessageLog& log() { return log_; }
     MessageLog& suLog() { return suLog_; }
 
+    // Voice: route one 8400 decoder's audio to the speakers.
+    void setVoiceMonitor(int channelId);
+    int  voiceMonitor() const { return voiceMonitorId_; }
+    float audioLevel() { return audio_.level(); }
+
 private:
     struct SubBand
     {
@@ -95,4 +101,6 @@ private:
     static constexpr size_t kMaxQueue = 64;
     MessageLog log_;
     MessageLog suLog_;
+    AudioOutput audio_;
+    int voiceMonitorId_ = -1;
 };

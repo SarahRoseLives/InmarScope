@@ -116,6 +116,9 @@ void jaero_oqpsk_cont_set_acars_callback(jaero_oqpsk_cont_demod_t *d, jaero_acar
 void jaero_oqpsk_cont_set_cassign_callback(jaero_oqpsk_cont_demod_t *d, jaero_cassign_cb cb, void *user);
 void jaero_oqpsk_cont_set_decoded_callback(jaero_oqpsk_cont_demod_t *d, jaero_decoded_cb cb, void *user);
 void jaero_oqpsk_cont_set_acars2_callback(jaero_oqpsk_cont_demod_t *d, jaero_acars2_cb cb, void *user);
+/* C-channel voice: one 12-byte AMBE frame at a time. */
+typedef void (*jaero_voice_cb)(const uint8_t *frame, int len, int channel_id, void *user);
+void jaero_oqpsk_cont_set_voice_callback(jaero_oqpsk_cont_demod_t *d, jaero_voice_cb cb, void *user);
 double jaero_oqpsk_cont_get_mse(jaero_oqpsk_cont_demod_t *d);
 double jaero_oqpsk_cont_get_ebno(jaero_oqpsk_cont_demod_t *d);
 int    jaero_oqpsk_cont_is_locked(jaero_oqpsk_cont_demod_t *d);

@@ -32,6 +32,8 @@ void DecoderManager::start()
         workers_.push_back(std::make_unique<Worker>());
     for (auto& w : workers_)
         w->thread = std::thread([this, wp = w.get()]() { workerLoop(wp); });
+
+    audio_.start(8000); // 8 kHz mono voice output
 }
 
 void DecoderManager::stop()
@@ -43,6 +45,8 @@ void DecoderManager::stop()
         if (w->thread.joinable())
             w->thread.join();
     workers_.clear();
+    audio_.stop();
+    voiceMonitorId_ = -1;
 }
 
 void DecoderManager::feed(const float* iq, int nComplex)
@@ -86,9 +90,14 @@ int DecoderManager::addDecoder(double freqHz, int baud)
         {
             if (std::fabs(freqHz - sb->centerHz) < 0.36 * sb->subRate)
             {
-                sb->decoders.push_back(std::make_unique<Decoder>(
-                    sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_));
+                Decoder* dec = sb->decoders.emplace_back(std::make_unique<Decoder>(
+                    sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_)).get();
                 w->count.fetch_add(1);
+                if (baud == 8400 && voiceMonitorId_ < 0)
+                {
+                    dec->setMonitored(true);
+                    voiceMonitorId_ = id;
+                }
                 return id;
             }
         }
@@ -102,8 +111,13 @@ int DecoderManager::addDecoder(double freqHz, int baud)
 
     std::lock_guard<std::mutex> lk(best->dMtx);
     auto sb = std::make_unique<SubBand>(Fs_, centerHz_, freqHz, kSubRateTarget, kSubBW);
-    sb->decoders.push_back(std::make_unique<Decoder>(
-        sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_));
+    Decoder* dec = sb->decoders.emplace_back(std::make_unique<Decoder>(
+        sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_)).get();
+    if (baud == 8400 && voiceMonitorId_ < 0)
+    {
+        dec->setMonitored(true);
+        voiceMonitorId_ = id;
+    }
     best->subbands.push_back(std::move(sb));
     best->count.fetch_add(1);
     return id;
@@ -124,10 +138,25 @@ void DecoderManager::removeDecoder(int channelId)
                     w->count.fetch_sub(1);
                     if (decs.empty())
                         w->subbands.erase(sbIt); // drop now-empty sub-band
+                    if (channelId == voiceMonitorId_)
+                        voiceMonitorId_ = -1;
                     return;
                 }
         }
     }
+}
+
+void DecoderManager::setVoiceMonitor(int channelId)
+{
+    voiceMonitorId_ = channelId;
+    for (auto& w : workers_)
+    {
+        std::lock_guard<std::mutex> lk(w->dMtx);
+        for (auto& sb : w->subbands)
+            for (auto& d : sb->decoders)
+                d->setMonitored(d->isVoice() && d->channelId() == channelId);
+    }
+    audio_.clear();
 }
 
 void DecoderManager::setDecoderFreq(int channelId, double freqHz)
