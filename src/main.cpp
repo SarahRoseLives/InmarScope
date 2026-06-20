@@ -72,6 +72,8 @@ struct App
     Waterfall waterfall;
     DecoderManager decoders;
     int newBaud = 1; // 0 = 600, 1 = 1200 (baud for click-added decoders)
+    int selectedDecoder = -1;     // channelId shown in the constellation panel
+    std::vector<float> constBuf;  // interleaved I,Q scratch for the plot
 
     // Device list.
     std::vector<SdrDeviceInfo> devices;
@@ -487,23 +489,16 @@ static void drawSpectrum(App& app)
         if (app.curN > 0)
             ImPlot::PlotLine("PSD", app.freqMHz.data(), app.avg.data(), app.curN);
 
-        // Vertical markers at each active decoder's frequency.
+        // Draggable vertical markers at each decoder's frequency. Grab and
+        // drag to retune that decoder; green = locked, amber = searching.
         auto decs = app.decoders.status();
+        for (auto& d : decs)
         {
-            ImVec2 pp = ImPlot::GetPlotPos();
-            ImVec2 ps = ImPlot::GetPlotSize();
-            ImDrawList* dl = ImPlot::GetPlotDrawList();
-            ImPlot::PushPlotClipRect();
-            for (auto& d : decs)
-            {
-                ImVec2 px = ImPlot::PlotToPixels(ImPlotPoint(d.freqMHz, 0.0));
-                if (px.x < pp.x || px.x > pp.x + ps.x)
-                    continue;
-                ImU32 col = d.locked ? IM_COL32(50, 255, 90, 220)
-                                     : IM_COL32(230, 180, 50, 220);
-                dl->AddLine(ImVec2(px.x, pp.y), ImVec2(px.x, pp.y + ps.y), col, 1.5f);
-            }
-            ImPlot::PopPlotClipRect();
+            double x = d.freqMHz;
+            ImVec4 col = d.locked ? ImVec4(0.2f, 1.0f, 0.35f, 1.0f)
+                                  : ImVec4(0.9f, 0.7f, 0.2f, 1.0f);
+            if (ImPlot::DragLineX(d.channelId, &x, col, 2.0f))
+                app.decoders.setDecoderFreq(d.channelId, x * 1e6);
         }
 
         ImPlotRect lim = ImPlot::GetPlotLimits();
@@ -576,6 +571,13 @@ static void drawDecoders(App& app)
 
     auto decs = app.decoders.status();
     ImGui::Text("%d active on %d threads", (int)decs.size(), app.decoders.workerCount());
+    uint64_t drops = app.decoders.drops();
+    ImGui::SameLine();
+    if (drops > 0)
+        ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f), "  drops: %llu",
+                           (unsigned long long)drops);
+    else
+        ImGui::TextDisabled("  drops: 0");
     ImGui::SameLine();
     if (ImGui::SmallButton("Remove all"))
         app.decoders.removeAll();
@@ -597,6 +599,14 @@ static void drawDecoders(App& app)
         {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
+            bool sel = (app.selectedDecoder == d.channelId);
+            char selid[24];
+            std::snprintf(selid, sizeof(selid), "##sel%d", d.channelId);
+            if (ImGui::Selectable(selid, sel,
+                                  ImGuiSelectableFlags_SpanAllColumns |
+                                      ImGuiSelectableFlags_AllowOverlap))
+                app.selectedDecoder = d.channelId;
+            ImGui::SameLine();
             ImVec4 c = d.locked ? ImVec4(0.2f, 1.0f, 0.3f, 1.0f)
                                 : ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
             ImGui::TextColored(c, "%s", d.locked ? "LOCK" : "--");
@@ -617,6 +627,43 @@ static void drawDecoders(App& app)
         ImGui::EndTable();
         if (toRemove >= 0)
             app.decoders.removeDecoder(toRemove);
+    }
+
+    ImGui::End();
+}
+
+static void drawSUs(App& app)
+{
+    ImGui::Begin("SUs");
+
+    ImGui::Text("%llu total", (unsigned long long)app.decoders.suLog().count());
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Clear"))
+        app.decoders.suLog().clear();
+    ImGui::Separator();
+
+    auto msgs = app.decoders.suLog().snapshot();
+    if (ImGui::BeginTable("##sus", 3,
+                          ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                          ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
+    {
+        ImGui::TableSetupColumn("Freq", ImGuiTableColumnFlags_WidthFixed, 70);
+        ImGui::TableSetupColumn("Text", ImGuiTableColumnFlags_WidthFixed, 220);
+        ImGui::TableSetupColumn("Bytes");
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableHeadersRow();
+
+        for (auto it = msgs.rbegin(); it != msgs.rend(); ++it)
+        {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%.3f", it->freqMHz);
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(it->text.c_str());
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(it->hex.c_str());
+        }
+        ImGui::EndTable();
     }
 
     ImGui::End();
@@ -666,6 +713,84 @@ static void drawMessages(App& app)
 // layout on first run (Control left, Spectrum top-right, Waterfall
 // bottom-right). Panels can't be undocked or closed; "View > Reset Layout"
 // restores the default.
+static ImPlotPoint constGetter(int idx, void* data)
+{
+    const float* p = static_cast<const float*>(data);
+    return ImPlotPoint(p[idx * 2], p[idx * 2 + 1]);
+}
+
+static void drawConstellation(App& app)
+{
+    ImGui::Begin("Constellation");
+
+    auto decs = app.decoders.status();
+    int chan = app.selectedDecoder;
+    bool valid = false;
+    double freq = 0.0;
+    for (auto& d : decs)
+        if (d.channelId == chan)
+        {
+            valid = true;
+            freq = d.freqMHz;
+            break;
+        }
+    if (!valid && !decs.empty())
+    {
+        chan = decs.front().channelId;
+        freq = decs.front().freqMHz;
+    }
+
+    if (decs.empty())
+    {
+        ImGui::TextDisabled("No decoders. Ctrl+click the spectrum to add one.");
+        ImGui::End();
+        return;
+    }
+
+    // Decoder selector (also selectable by clicking a row in Decoders panel).
+    char preview[64];
+    std::snprintf(preview, sizeof(preview), "ch %d  %.4f MHz", chan, freq);
+    if (ImGui::BeginCombo("Decoder", preview))
+    {
+        for (auto& d : decs)
+        {
+            char label[64];
+            std::snprintf(label, sizeof(label), "ch %d  %.4f MHz  @%d",
+                          d.channelId, d.freqMHz, d.baud);
+            if (ImGui::Selectable(label, d.channelId == chan))
+            {
+                app.selectedDecoder = d.channelId;
+                chan = d.channelId;
+                freq = d.freqMHz;
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    int pairs = app.decoders.getConstellation(chan, app.constBuf, 1024);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(%d pts)", pairs);
+
+    float m = 0.5f;
+    for (float v : app.constBuf)
+        m = std::max(m, std::fabs(v));
+    double lim = m * 1.15;
+
+    if (ImPlot::BeginPlot("##const", ImVec2(-1, -1),
+                          ImPlotFlags_Equal | ImPlotFlags_NoLegend))
+    {
+        ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels,
+                          ImPlotAxisFlags_NoTickLabels);
+        ImPlot::SetupAxisLimits(ImAxis_X1, -lim, lim, ImGuiCond_Always);
+        ImPlot::SetupAxisLimits(ImAxis_Y1, -lim, lim, ImGuiCond_Always);
+        if (pairs > 0)
+            ImPlot::PlotScatterG("IQ", constGetter, app.constBuf.data(), pairs);
+        ImPlot::EndPlot();
+    }
+
+    ImGui::End();
+}
+
 static void drawDockHost()
 {
     static bool forceLayout = true;
@@ -697,18 +822,22 @@ static void drawDockHost()
         ImGui::DockBuilderAddNode(dockId, ImGuiDockNodeFlags_DockSpace);
         ImGui::DockBuilderSetNodeSize(dockId, vp->WorkSize);
 
-        ImGuiID left, right, rtop, rrest, rmid, rbot, ctrl, dec;
+        ImGuiID left, right, rtop, rrest, rmid, rbot, rcon, ctrl, dec;
         ImGui::DockBuilderSplitNode(dockId, ImGuiDir_Left, 0.26f, &left, &right);
         ImGui::DockBuilderSplitNode(left, ImGuiDir_Up, 0.62f, &ctrl, &dec);
-        // Right column: Spectrum (short, top) / Waterfall (middle) / Messages (bottom).
+        // Right column: Spectrum (short, top) / Waterfall (middle) / bottom row.
         ImGui::DockBuilderSplitNode(right, ImGuiDir_Up, 0.30f, &rtop, &rrest);
         ImGui::DockBuilderSplitNode(rrest, ImGuiDir_Up, 0.58f, &rmid, &rbot);
+        // Bottom row: Messages (left) | Constellation (right).
+        ImGui::DockBuilderSplitNode(rbot, ImGuiDir_Right, 0.34f, &rcon, &rbot);
 
         ImGui::DockBuilderDockWindow("Control", ctrl);
         ImGui::DockBuilderDockWindow("Decoders", dec);
         ImGui::DockBuilderDockWindow("Spectrum", rtop);
         ImGui::DockBuilderDockWindow("Waterfall", rmid);
+        ImGui::DockBuilderDockWindow("SUs", rbot);
         ImGui::DockBuilderDockWindow("Messages", rbot);
+        ImGui::DockBuilderDockWindow("Constellation", rcon);
         ImGui::DockBuilderFinish(dockId);
     }
 
@@ -779,7 +908,9 @@ int main(int, char**)
         drawSpectrum(app);
         drawWaterfall(app);
         drawDecoders(app);
+        drawSUs(app);
         drawMessages(app);
+        drawConstellation(app);
 
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
