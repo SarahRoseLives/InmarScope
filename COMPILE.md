@@ -1,6 +1,6 @@
-# Building FrameSync on Windows
+# Building InmarScope on Windows
 
-FrameSync is built with the **MSYS2 / MinGW-w64** toolchain (GCC 15.x) using
+InmarScope is built with the **MSYS2 / MinGW-w64** toolchain (GCC 15.x) using
 **CMake** and **Ninja**. The build is reproducible from a clean MSYS2 install.
 
 > Important: GCC must be invoked from inside the **MINGW64** environment. If you
@@ -52,7 +52,7 @@ ninja -C build
 The executable and the runtime DLLs it needs are placed in `build/`:
 
 ```
-build/FrameSync.exe
+build/InmarScope.exe
 build/libgcc_s_seh-1.dll, libwinpthread-1.dll, libstdc++-6.dll,
       glfw3.dll, librtlsdr.dll, libusb-1.0.dll, libzstd.dll
 ```
@@ -63,7 +63,7 @@ runs standalone from a double-click or from PyCharm without MSYS2 on `PATH`.
 Run it:
 
 ```bash
-./build/FrameSync.exe
+./build/InmarScope.exe
 ```
 
 ## 4. Building from PowerShell (optional)
@@ -74,7 +74,7 @@ environment first. For example:
 ```powershell
 $env:MSYSTEM = "MINGW64"
 $env:CHERE_INVOKING = "1"
-& C:\msys64\usr\bin\bash.exe -lc "cd /c/path/to/FrameSync && ninja -C build"
+& C:\msys64\usr\bin\bash.exe -lc "cd /c/path/to/InmarScope && ninja -C build"
 ```
 
 The `-l` (login) shell with `MSYSTEM=MINGW64` sources `/etc/profile`, which puts
@@ -89,7 +89,7 @@ keeps the current directory.
   builds in about a minute. This is intentional, not a hang.
 - **`cc1plus` exits 1 with no output.** You are not in the MINGW64 environment.
   Build from the MSYS2 MINGW64 shell (see the warning above).
-- **Link fails with "Access is denied" on `FrameSync.exe`.** A previous instance
+- **Link fails with "Access is denied" on `InmarScope.exe`.** A previous instance
   is still running and is locking the file. Close it, then rebuild.
 - **Incremental builds.** Re-run `ninja -C build`. Only changed files recompile.
   After editing `CMakeLists.txt`, re-run `cmake -S . -B build` first.

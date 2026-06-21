@@ -1,5 +1,5 @@
 // In-app EGC self-test: feed the 48 kHz IQ WAV straight into the integrated
-// EgcDecoder (the same class FrameSync uses) and print decoded messages.
+// EgcDecoder (the same class InmarScope uses) and print decoded messages.
 // Build (MSYS2 MINGW64):
 //   g++ -O2 -std=gnu++17 -Isrc tools/egc_inapp_test.cpp src/decode/egc/egc_decoder.cpp -o build/egc_inapp_test.exe
 // Run:

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(FrameSync C CXX)
+project(InmarScope C CXX)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 17)
@@ -114,9 +114,9 @@ add_library(mbelib STATIC ${MBELIB_SOURCES})
 target_include_directories(mbelib PUBLIC ${CMAKE_SOURCE_DIR}/third_party/mbelib)
 
 # ---------------------------------------------------------------------------
-# FrameSync application
+# InmarScope application
 # ---------------------------------------------------------------------------
-add_executable(FrameSync
+add_executable(InmarScope
     src/main.cpp
     src/sdr/rtl_sdr_source.cpp
     src/sdr/hackrf_source.cpp
@@ -130,25 +130,26 @@ add_executable(FrameSync
     src/voice/wav_writer.cpp
     src/audio/audio_output.cpp
     src/output/message_feed.cpp
+    src/update/version_check.cpp
 )
-target_include_directories(FrameSync PRIVATE
+target_include_directories(InmarScope PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/third_party/mbelib
     ${CMAKE_SOURCE_DIR}/third_party/miniaudio
     ${RTLSDR_INCLUDE_DIRS}
     ${HACKRF_INCLUDE_DIRS}
 )
-target_compile_definitions(FrameSync PRIVATE _USE_MATH_DEFINES)
+target_compile_definitions(InmarScope PRIVATE _USE_MATH_DEFINES)
 find_library(ZSTD_LIBRARIES NAMES zstd libzstd REQUIRED)
-target_link_libraries(FrameSync PRIVATE imgui jaero_dsp mbelib ${RTLSDR_LIBRARIES} ${HACKRF_LIBRARIES} ${ZSTD_LIBRARIES})
-target_link_directories(FrameSync PRIVATE ${RTLSDR_LIBRARY_DIRS})
+target_link_libraries(InmarScope PRIVATE imgui jaero_dsp mbelib ${RTLSDR_LIBRARIES} ${HACKRF_LIBRARIES} ${ZSTD_LIBRARIES})
+target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS})
 
 if(WIN32)
-    target_link_libraries(FrameSync PRIVATE opengl32 gdi32 comdlg32 ole32 winmm ws2_32)
+    target_link_libraries(InmarScope PRIVATE opengl32 gdi32 comdlg32 ole32 winmm ws2_32 winhttp shell32)
 
     # Build as a GUI-subsystem app so no console window opens alongside the GUI.
     # MinGW provides a WinMain shim, so the existing int main() still works.
-    set_target_properties(FrameSync PROPERTIES WIN32_EXECUTABLE TRUE)
+    set_target_properties(InmarScope PROPERTIES WIN32_EXECUTABLE TRUE)
 
     # Embed the application icon (icon.ico in the project root). Windows and
     # GLFW both pick up the first icon resource for the exe and window.
@@ -156,7 +157,7 @@ if(WIN32)
         enable_language(RC)
         set(FRAMESYNC_ICON "${CMAKE_SOURCE_DIR}/icon.ico")
         configure_file("${CMAKE_SOURCE_DIR}/app.rc.in" "${CMAKE_BINARY_DIR}/app.rc" @ONLY)
-        target_sources(FrameSync PRIVATE "${CMAKE_BINARY_DIR}/app.rc")
+        target_sources(InmarScope PRIVATE "${CMAKE_BINARY_DIR}/app.rc")
     endif()
 
     # Copy MinGW runtime DLLs next to the executable so it runs standalone
@@ -174,9 +175,9 @@ if(WIN32)
     )
     foreach(dll ${FRAMESYNC_RUNTIME_DLLS})
         if(EXISTS "${MINGW_BIN}/${dll}")
-            add_custom_command(TARGET FrameSync POST_BUILD
+            add_custom_command(TARGET InmarScope POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "${MINGW_BIN}/${dll}" "$<TARGET_FILE_DIR:FrameSync>"
+                        "${MINGW_BIN}/${dll}" "$<TARGET_FILE_DIR:InmarScope>"
                 COMMENT "Copying ${dll}")
         else()
             message(WARNING "Runtime DLL not found: ${MINGW_BIN}/${dll}")

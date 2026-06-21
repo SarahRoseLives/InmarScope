@@ -206,7 +206,7 @@ void MessageFeed::feedAcars(const DecodedMessage& m)
     char modeStr[2] = {m.mode ? m.mode : ' ', 0};
     char blkStr[2] = {m.blockId ? m.blockId : ' ', 0};
 
-    std::string s = "{\"app\":{\"name\":\"JAERO\",\"ver\":\"FrameSync\"},\"isu\":{\"acars\":{";
+    std::string s = "{\"app\":{\"name\":\"JAERO\",\"ver\":\"InmarScope\"},\"isu\":{\"acars\":{";
     s += "\"mode\":\"" + jsonEscape(modeStr) + "\",";
     s += "\"ack\":\" \",";
     s += "\"blk_id\":\"" + jsonEscape(blkStr) + "\",";
@@ -246,7 +246,7 @@ void MessageFeed::feedEgc(const EgcMessage& m)
     }
 
     // inmarsat-sniffer STD-C JSON schema.
-    std::string s = "{\"source\":\"FrameSync\",\"type\":\"egc\"";
+    std::string s = "{\"source\":\"InmarScope\",\"type\":\"egc\"";
     s += ",\"service\":\"" + jsonEscape(m.service) + "\"";
     s += ",\"priority\":\"" + jsonEscape(m.priority) + "\"";
     s += ",\"msg_id\":" + std::to_string(m.messageId);

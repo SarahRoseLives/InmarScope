@@ -1,4 +1,4 @@
-// FrameSync - Inmarsat decoder
+// InmarScope - Inmarsat decoder
 // Phase 1: RTL-SDR -> IQ ring -> FFT -> spectrum + scrolling waterfall.
 
 #include "imgui.h"
@@ -17,6 +17,8 @@
 #include "sdr/sdrpp_server_source.h"
 #include "decode/decoder_manager.h"
 #include "output/message_feed.h"
+#include "update/version_check.h"
+#include "version.h"
 #include "gui/waterfall.h"
 
 #include <algorithm>
@@ -37,6 +39,7 @@
 #endif
 #include <windows.h>
 #include <commdlg.h>
+#include <shellapi.h>
 static bool openWavDialog(char* out, int outLen)
 {
     char file[1024] = "";
@@ -133,6 +136,7 @@ struct App
 
     // Message output feed (JSON / JAERO text -> file and/or UDP).
     MessageFeed feed;
+    VersionCheck verCheck; // background update check against the server
     uint64_t lastAcarsFed = 0, lastEgcFed = 0;
     bool   outFile = false;
     char   outFilePath[512] = "messages.jsonl";
@@ -729,6 +733,38 @@ static void drawControls(App& app)
     ImGui::SameLine();
     ImGui::TextUnformatted(app.status.c_str());
 
+    // Version + update banner.
+    ImGui::TextDisabled("InmarScope v" INMARSCOPE_VERSION);
+    {
+        VersionCheck::State st = app.verCheck.state();
+        if (st == VersionCheck::UpdateAvailable)
+        {
+            std::string latest = app.verCheck.latestVersion();
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "  Update available: v%s",
+                               latest.c_str());
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Get update"))
+            {
+#if defined(_WIN32)
+                std::string url = app.verCheck.productUrl();
+                if (url.empty()) url = "https://sarahsforge.dev/products/inmarscope";
+                ShellExecuteA(nullptr, "open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+#endif
+            }
+        }
+        else if (st == VersionCheck::UpToDate)
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f), "  (up to date)");
+        }
+        else if (st == VersionCheck::Checking)
+        {
+            ImGui::SameLine();
+            ImGui::TextDisabled("  checking for updates...");
+        }
+    }
+
     ImGui::Separator();
 
     if (app.sourceMode == 0)
@@ -1062,7 +1098,7 @@ static void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const c
     ImVec2 origin = ImGui::GetCursorScreenPos();
     float availW = ImGui::GetContentRegionAvail().x;
     std::string plotId = std::string("##plot_") + title;
-    if (ImPlot::BeginPlot(plotId.c_str(), ImVec2(-1, -1)))
+    if (ImPlot::BeginPlot(plotId.c_str(), ImVec2(-1, -1), ImPlotFlags_NoLegend))
     {
         ImPlot::SetupAxes("MHz", "dB", 0, 0);
 
@@ -1630,10 +1666,10 @@ static void drawDockHost(App& app)
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::Begin("##FrameSyncHost", nullptr, hostFlags);
+    ImGui::Begin("##InmarScopeHost", nullptr, hostFlags);
     ImGui::PopStyleVar(3);
 
-    ImGuiID dockId = ImGui::GetID("FrameSyncDockSpace");
+    ImGuiID dockId = ImGui::GetID("InmarScopeDockSpace");
     ImGui::DockSpace(dockId, ImVec2(0, 0), ImGuiDockNodeFlags_NoUndocking);
 
     if (forceLayout || ImGui::DockBuilderGetNode(dockId) == nullptr)
@@ -1698,7 +1734,7 @@ int main(int, char**)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    GLFWwindow* window = glfwCreateWindow(1400, 900, "FrameSync", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1400, 900, "InmarScope", nullptr, nullptr);
     if (!window)
     {
         glfwTerminate();
@@ -1722,6 +1758,7 @@ int main(int, char**)
     buildWindow(app.viewA, kFftSizes[app.fftSizeIdx], app.dbMin);
     buildWindow(app.viewB, kFftSizes[app.fftSizeIdx], app.dbMin);
     app.devices = app.sdr.listDevices();
+    app.verCheck.start("inmarscope", INMARSCOPE_VERSION);
 
     const ImVec4 clear_color = ImVec4(0.06f, 0.07f, 0.09f, 1.0f);
 

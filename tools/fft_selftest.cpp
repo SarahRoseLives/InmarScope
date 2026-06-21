@@ -1,4 +1,4 @@
-// Offline self-test for the FrameSync spectrum pipeline.
+// Offline self-test for the InmarScope spectrum pipeline.
 // Verifies the window + FFT + fftshift + power-dB path produces no spurious
 // null/spike at the center bin for clean (DC-free) input, and that the DC
 // patch removes a synthetic DC spike. Runs headless; prints stats.
