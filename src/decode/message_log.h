@@ -17,6 +17,8 @@ struct DecodedMessage
     int downlink = 0;
     std::string reg;   // aircraft registration (ACARS)
     std::string label; // ACARS label
+    char mode = 0;     // ACARS mode char
+    char blockId = 0;  // ACARS block id char
     std::string text;  // printable rendering of the payload
     std::string hex;   // hex rendering
 };

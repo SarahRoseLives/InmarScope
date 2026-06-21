@@ -129,6 +129,7 @@ add_executable(FrameSync
     src/voice/ambe_decoder.cpp
     src/voice/wav_writer.cpp
     src/audio/audio_output.cpp
+    src/output/message_feed.cpp
 )
 target_include_directories(FrameSync PRIVATE
     ${CMAKE_SOURCE_DIR}/src

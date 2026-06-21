@@ -16,6 +16,7 @@
 #include "sdr/wav_file_source.h"
 #include "sdr/sdrpp_server_source.h"
 #include "decode/decoder_manager.h"
+#include "output/message_feed.h"
 #include "gui/waterfall.h"
 
 #include <algorithm>
@@ -97,6 +98,17 @@ struct App
     // Voice call recording (8400). Saves every decoded call to its own WAV.
     bool recordVoice = false;
     char recordDir[256] = "recordings";
+
+    // Message output feed (JSON / JAERO text -> file and/or UDP).
+    MessageFeed feed;
+    uint64_t lastAcarsFed = 0, lastEgcFed = 0;
+    bool   outFile = false;
+    char   outFilePath[512] = "messages.jsonl";
+    bool   outUdp = false;
+    char   outUdpHost[128] = "127.0.0.1";
+    int    outUdpPort = 5556;
+    int    outFormat = 0; // 0 = JSON, 1 = JAERO text
+    char   outStation[64] = "";
 
     // Voice follow: when a C-channel voice assignment appears, hop the SDR to
     // the assigned RX (forward) frequency, decode the 8400 voice call, then hop
@@ -459,6 +471,39 @@ static void updateVoiceFollow(App& app)
         }
         app.following = false;
         app.status = "Running";
+    }
+}
+
+// Push the UI's output settings into the feed (idempotent; guarded internally)
+// and forward any newly-logged ACARS/EGC messages to it.
+static void updateFeed(App& app)
+{
+    app.feed.setFormat(app.outFormat);
+    app.feed.setStationId(app.outStation);
+    app.feed.setFileEnabled(app.outFile, app.outFilePath);
+    app.feed.setUdpEnabled(app.outUdp, app.outUdpHost, app.outUdpPort);
+
+    auto& alog = app.decoders.log();
+    uint64_t at = alog.count();
+    if (at > app.lastAcarsFed)
+    {
+        auto snap = alog.snapshot();
+        uint64_t newN = at - app.lastAcarsFed;
+        if (newN > snap.size()) newN = snap.size();
+        for (size_t i = snap.size() - (size_t)newN; i < snap.size(); ++i)
+            app.feed.feedAcars(snap[i]);
+        app.lastAcarsFed = at;
+    }
+    auto& elog = app.decoders.egcLog();
+    uint64_t et = elog.count();
+    if (et > app.lastEgcFed)
+    {
+        auto snap = elog.snapshot();
+        uint64_t newN = et - app.lastEgcFed;
+        if (newN > snap.size()) newN = snap.size();
+        for (size_t i = snap.size() - (size_t)newN; i < snap.size(); ++i)
+            app.feed.feedEgc(snap[i]);
+        app.lastEgcFed = et;
     }
 }
 
@@ -838,6 +883,24 @@ static void drawControls(App& app)
     else if (app.voiceFollow)
     {
         ImGui::TextDisabled("  Waiting for a voice assignment...");
+    }
+
+    ImGui::Separator();
+    if (ImGui::CollapsingHeader("Output (message feed)"))
+    {
+        const char* fmts[] = {"JSON (JAERO/Acarshub)", "JAERO text"};
+        ImGui::Combo("Format", &app.outFormat, fmts, 2);
+        ImGui::Checkbox("Write to file", &app.outFile);
+        ImGui::SetNextItemWidth(-70.0f);
+        ImGui::InputText("File", app.outFilePath, sizeof(app.outFilePath));
+        ImGui::Checkbox("Send over UDP", &app.outUdp);
+        ImGui::SetNextItemWidth(-70.0f);
+        ImGui::InputText("UDP host", app.outUdpHost, sizeof(app.outUdpHost));
+        ImGui::InputInt("UDP port", &app.outUdpPort);
+        ImGui::SetNextItemWidth(-70.0f);
+        ImGui::InputText("Station", app.outStation, sizeof(app.outStation));
+        ImGui::Text("Sent: %llu", (unsigned long long)app.feed.sent());
+        ImGui::TextDisabled("ACARS -> JAERO JSONdump; EGC -> STD-C JSON.");
     }
 
     if (running)
@@ -1560,6 +1623,8 @@ int main(int, char**)
 
         if (app.active->running())
             updateRateChange(app);
+
+        updateFeed(app);
 
         drawControls(app);
         drawSpectrum(app);

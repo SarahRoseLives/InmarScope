@@ -241,6 +241,8 @@ void Decoder::onAcars2(const jaero_acars_msg* msg)
     m.aesId = msg->aes_id;
     m.gesId = msg->ges_id;
     m.downlink = msg->downlink;
+    m.mode = msg->mode;
+    m.blockId = msg->bi;
 
     // Registration: strip leading/trailing padding ('.', space).
     std::string reg = msg->reg;
