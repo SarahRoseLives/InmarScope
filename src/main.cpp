@@ -553,7 +553,8 @@ static void updateFeed(App& app)
     app.feed.setStationId(app.outStation);
     app.feed.setFileEnabled(app.outFile, app.outFilePath);
     app.feed.setUdpEnabled(app.outUdp, app.outUdpHost, app.outUdpPort);
-    app.feed.setSbsEnabled(app.outSbs, app.outSbsHost, app.outSbsPort);
+    app.feed.setSbsEnabled(app.outSbs, app.outSbsPort);
+    app.feed.pollSbs();
 
     auto& alog = app.decoders.log();
     uint64_t at = alog.count();
@@ -1077,15 +1078,23 @@ static void drawControls(App& app)
         ImGui::SetNextItemWidth(-70.0f);
         ImGui::InputText("Station", app.outStation, sizeof(app.outStation));
         ImGui::Separator();
-        ImGui::Checkbox("Send SBS/BaseStation positions (UDP)", &app.outSbs);
-        ImGui::SetNextItemWidth(-70.0f);
-        ImGui::InputText("SBS host", app.outSbsHost, sizeof(app.outSbsHost));
+        ImGui::Checkbox("SBS/BaseStation server (positions)", &app.outSbs);
         ImGui::InputInt("SBS port", &app.outSbsPort);
         if (app.outSbs)
-            ImGui::Text("SBS sent: %llu", (unsigned long long)app.feed.sbsSent());
+        {
+            if (app.feed.sbsListening())
+                ImGui::TextColored(ImVec4(0.4f, 0.9f, 0.4f, 1.0f),
+                                   "Listening on TCP :%d  -  %d client(s), %llu sent",
+                                   app.outSbsPort, app.feed.sbsClients(),
+                                   (unsigned long long)app.feed.sbsSent());
+            else
+                ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f),
+                                   "Bind failed on :%d (port in use? try another)",
+                                   app.outSbsPort);
+        }
         ImGui::Text("Sent: %llu", (unsigned long long)app.feed.sent());
         ImGui::TextDisabled("ACARS -> JAERO JSONdump; EGC -> STD-C JSON.");
-        ImGui::TextDisabled("SBS feeds ADS-C positions to tar1090 / Virtual Radar.");
+        ImGui::TextDisabled("SBS: VRS receiver -> Network, 127.0.0.1, this port, BaseStation.");
     }
 
     if (running)

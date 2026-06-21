@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <mutex>
 #include <string>
+#include <vector>
 
 class MessageFeed
 {
@@ -20,15 +21,20 @@ public:
     // Configuration (safe to call live).
     void setFileEnabled(bool on, const std::string& path);
     void setUdpEnabled(bool on, const std::string& host, int port);
-    // SBS / BaseStation (port 30003 style) position feed over UDP. Emits one
-    // MSG,3 line per ACARS message that carries an ADS-C position.
-    void setSbsEnabled(bool on, const std::string& host, int port);
+    // SBS / BaseStation (port 30003) position feed. We act as a TCP *server*
+    // (listener); Virtual Radar Server / tar1090 connect to us as clients. Each
+    // ACARS message carrying an ADS-C position is broadcast as a MSG,3 line.
+    void setSbsEnabled(bool on, int port);
     void setFormat(int fmt) { format_ = fmt; }
     void setStationId(const std::string& s) { station_ = s; }
 
     bool enabled() const { return fileEnabled_ || udpEnabled_ || sbsEnabled_; }
     uint64_t sent() const { return sent_; }
     uint64_t sbsSent() const { return sbsSent_; }
+    int sbsClients() const { return (int)sbsClients_.size(); }
+    bool sbsListening() const { return sbsListen_ != ~(uintptr_t)0; }
+    // Accept newly-connected clients / prune dropped ones (call each frame).
+    void pollSbs();
 
     void feedAcars(const DecodedMessage& m);
     void feedEgc(const EgcMessage& m);
@@ -40,7 +46,8 @@ private:
     void closeFile();
     void ensureUdp();
     void closeUdp();
-    void ensureSbs();
+    void ensureSbsListen();
+    void acceptSbsClients();
     void closeSbs();
 
     std::mutex mtx_;
@@ -55,10 +62,9 @@ private:
     void* addr_ = nullptr; // sockaddr_in*
 
     bool sbsEnabled_ = false;
-    std::string sbsHost_;
     int sbsPort_ = 0;
-    uintptr_t sbsSock_ = ~(uintptr_t)0;
-    void* sbsAddr_ = nullptr; // sockaddr_in*
+    uintptr_t sbsListen_ = ~(uintptr_t)0;       // listening TCP socket
+    std::vector<uintptr_t> sbsClients_;         // connected client sockets
     uint64_t sbsSent_ = 0;
 
     int format_ = JSON;

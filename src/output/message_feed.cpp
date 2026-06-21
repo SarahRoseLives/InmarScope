@@ -11,6 +11,8 @@ using socket_t = SOCKET;
 #define CLOSESOCK closesocket
 #else
 #include <arpa/inet.h>
+#include <cerrno>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -140,62 +142,136 @@ void MessageFeed::closeUdp()
     addr_ = nullptr;
 }
 
-void MessageFeed::setSbsEnabled(bool on, const std::string& host, int port)
+static void setNonBlocking(socket_t s)
+{
+#if defined(_WIN32)
+    u_long mode = 1;
+    ioctlsocket(s, FIONBIO, &mode);
+#else
+    int fl = fcntl(s, F_GETFL, 0);
+    fcntl(s, F_SETFL, fl | O_NONBLOCK);
+#endif
+}
+
+static bool sendWouldBlock()
+{
+#if defined(_WIN32)
+    return WSAGetLastError() == WSAEWOULDBLOCK;
+#else
+    return errno == EAGAIN || errno == EWOULDBLOCK;
+#endif
+}
+
+void MessageFeed::setSbsEnabled(bool on, int port)
 {
     std::lock_guard<std::mutex> lk(mtx_);
-    if (on && (host != sbsHost_ || port != sbsPort_ || sbsSock_ == ~(uintptr_t)0))
+    if (on && (port != sbsPort_ || sbsListen_ == ~(uintptr_t)0))
     {
         closeSbs();
-        sbsHost_ = host;
         sbsPort_ = port;
-        ensureSbs();
+        ensureSbsListen();
     }
     else if (!on)
     {
         closeSbs();
     }
-    sbsEnabled_ = on && sbsSock_ != ~(uintptr_t)0;
+    sbsEnabled_ = on && sbsListen_ != ~(uintptr_t)0;
 }
 
-void MessageFeed::ensureSbs()
+void MessageFeed::ensureSbsListen()
 {
-    socket_t s = ::socket(AF_INET, SOCK_DGRAM, 0);
-    if (s == INVALID_SOCKET) return;
-    auto* a = new sockaddr_in{};
-    a->sin_family = AF_INET;
-    a->sin_port = htons((uint16_t)sbsPort_);
-    if (::inet_pton(AF_INET, sbsHost_.c_str(), &a->sin_addr) != 1)
+    // Prefer a dual-stack IPv6 socket so clients reaching us as either ::1 or
+    // 127.0.0.1 (Windows resolves "localhost" to IPv6 first) both connect.
+    socket_t s = ::socket(AF_INET6, SOCK_STREAM, 0);
+    if (s != INVALID_SOCKET)
     {
-        addrinfo hints{}, *res = nullptr;
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_DGRAM;
-        if (getaddrinfo(sbsHost_.c_str(), nullptr, &hints, &res) == 0 && res)
+        int off = 0; // turn OFF v6-only -> accept IPv4-mapped connections too
+        ::setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (const char*)&off, sizeof(off));
+        int yes = 1;
+        ::setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
+        sockaddr_in6 a6{};
+        a6.sin6_family = AF_INET6;
+        a6.sin6_addr = in6addr_any;
+        a6.sin6_port = htons((uint16_t)sbsPort_);
+        if (::bind(s, (sockaddr*)&a6, sizeof(a6)) == 0 && ::listen(s, 8) == 0)
         {
-            a->sin_addr = ((sockaddr_in*)res->ai_addr)->sin_addr;
-            freeaddrinfo(res);
-        }
-        else
-        {
-            CLOSESOCK(s);
-            delete a;
+            setNonBlocking(s);
+            sbsListen_ = (uintptr_t)s;
             return;
         }
+        CLOSESOCK(s);
     }
-    sbsSock_ = (uintptr_t)s;
-    sbsAddr_ = a;
+
+    // Fallback: IPv4-only listener.
+    s = ::socket(AF_INET, SOCK_STREAM, 0);
+    if (s == INVALID_SOCKET) return;
+    int yes = 1;
+    ::setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
+    sockaddr_in a{};
+    a.sin_family = AF_INET;
+    a.sin_addr.s_addr = htonl(INADDR_ANY);
+    a.sin_port = htons((uint16_t)sbsPort_);
+    if (::bind(s, (sockaddr*)&a, sizeof(a)) != 0 || ::listen(s, 8) != 0)
+    {
+        CLOSESOCK(s);
+        return;
+    }
+    setNonBlocking(s);
+    sbsListen_ = (uintptr_t)s;
+}
+
+void MessageFeed::acceptSbsClients()
+{
+    if (sbsListen_ == ~(uintptr_t)0) return;
+    for (;;)
+    {
+        socket_t c = ::accept((socket_t)sbsListen_, nullptr, nullptr);
+        if (c == INVALID_SOCKET)
+            break; // no more pending connections
+        setNonBlocking(c);
+        sbsClients_.push_back((uintptr_t)c);
+    }
 }
 
 void MessageFeed::closeSbs()
 {
-    if (sbsSock_ != ~(uintptr_t)0) { CLOSESOCK((socket_t)sbsSock_); sbsSock_ = ~(uintptr_t)0; }
-    delete (sockaddr_in*)sbsAddr_;
-    sbsAddr_ = nullptr;
+    for (uintptr_t c : sbsClients_)
+        CLOSESOCK((socket_t)c);
+    sbsClients_.clear();
+    if (sbsListen_ != ~(uintptr_t)0) { CLOSESOCK((socket_t)sbsListen_); sbsListen_ = ~(uintptr_t)0; }
+}
+
+void MessageFeed::pollSbs()
+{
+    std::lock_guard<std::mutex> lk(mtx_);
+    if (sbsListen_ == ~(uintptr_t)0)
+        return;
+    acceptSbsClients();
+    // Prune clients that have disconnected (non-blocking peek: 0 == closed).
+    char tmp[8];
+    for (size_t i = 0; i < sbsClients_.size();)
+    {
+        int r = ::recv((socket_t)sbsClients_[i], tmp, sizeof(tmp), MSG_PEEK);
+        if (r == 0 || (r < 0 && !sendWouldBlock()))
+        {
+            CLOSESOCK((socket_t)sbsClients_[i]);
+            sbsClients_.erase(sbsClients_.begin() + i);
+        }
+        else
+        {
+            ++i;
+        }
+    }
 }
 
 void MessageFeed::emitSbs(const DecodedMessage& m)
 {
     std::lock_guard<std::mutex> lk(mtx_);
-    if (!sbsEnabled_ || sbsSock_ == ~(uintptr_t)0 || !sbsAddr_)
+    if (!sbsEnabled_ || sbsListen_ == ~(uintptr_t)0)
+        return;
+
+    acceptSbsClients(); // register any newly-connected VRS/tar1090 clients
+    if (sbsClients_.empty())
         return;
 
     std::time_t t = std::time(nullptr);
@@ -224,7 +300,20 @@ void MessageFeed::emitSbs(const DecodedMessage& m)
         "MSG,3,1,1,%s,1,%s,%s,%s,%s,%s,%d,,,%.5f,%.5f,,,,,,0\r\n",
         hex, dbuf, tbuf, dbuf, tbuf, callsign.c_str(), m.alt, m.lat, m.lon);
 
-    ::sendto((socket_t)sbsSock_, line, n, 0, (sockaddr*)sbsAddr_, sizeof(sockaddr_in));
+    // Broadcast to every connected client; drop those that have disconnected.
+    for (size_t i = 0; i < sbsClients_.size();)
+    {
+        int r = ::send((socket_t)sbsClients_[i], line, n, 0);
+        if (r < 0 && !sendWouldBlock())
+        {
+            CLOSESOCK((socket_t)sbsClients_[i]);
+            sbsClients_.erase(sbsClients_.begin() + i);
+        }
+        else
+        {
+            ++i;
+        }
+    }
     ++sbsSent_;
 }
 
