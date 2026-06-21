@@ -4,6 +4,7 @@
 #include "voice/ambe_decoder.h"
 #include "voice/wav_writer.h"
 #include "audio/audio_output.h"
+#include "decode/egc/egc_decoder.h"
 
 #include <cstdio>
 #include <ctime>
@@ -75,7 +76,7 @@ static const char* suTypeName(uint8_t t)
 
 Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud,
                  int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink,
-                 CassignLog* cassignLog, ChannelTable* netTable)
+                 CassignLog* cassignLog, ChannelTable* netTable, EgcLog* egcLog)
     : ddc_(subRate, chanFreqHz - subCenterHz, ddcRate(baud), ddcBw(baud)),
       log_(log),
       suLog_(suLog),
@@ -85,9 +86,14 @@ Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud
       chanFreqHz_(chanFreqHz),
       baud_(baud),
       channelId_(channelId),
-      audioSink_(audioSink)
+      audioSink_(audioSink),
+      egcLog_(egcLog)
 {
-    if (baud == 10500 || baud == 8400)
+    if (baud == kEgcBaud)
+    {
+        egc_ = std::make_unique<EgcDecoder>(channelId, chanFreqHz / 1e6, egcLog_);
+    }
+    else if (baud == 10500 || baud == 8400)
     {
         oqpsk_ = jaero_oqpsk_cont_create(ddc_.outputRate(), (double)baud, channelId,
                                          nullptr, nullptr);
@@ -136,7 +142,12 @@ void Decoder::process(const double* iq, int nComplex)
     if (ddcOut_.empty())
         return;
     int n = (int)(ddcOut_.size() / 2);
-    if (oqpsk_)
+    if (egc_)
+    {
+        egc_->process(ddcOut_.data(), n);
+        msgCount_.store(egc_->messageCount());
+    }
+    else if (oqpsk_)
         jaero_oqpsk_cont_feed_iq(oqpsk_, ddcOut_.data(), n);
     else if (pmsk_)
         jaero_pmsk_feed_iq(pmsk_, ddcOut_.data(), n);
@@ -150,6 +161,8 @@ void Decoder::setFreq(double chanFreqHz)
 
 bool Decoder::locked() const
 {
+    if (egc_)
+        return egc_->locked();
     if (oqpsk_)
         return jaero_oqpsk_cont_is_locked(oqpsk_);
     return pmsk_ && jaero_pmsk_is_locked(pmsk_);
@@ -171,12 +184,17 @@ double Decoder::mse() const
 
 int Decoder::getConstellation(double* iqOut, int maxPairs) const
 {
+    if (egc_)
+        return egc_->getConstellation(iqOut, maxPairs);
     if (oqpsk_)
         return jaero_oqpsk_cont_get_constellation(oqpsk_, iqOut, maxPairs);
     if (pmsk_)
         return jaero_pmsk_get_constellation(pmsk_, iqOut, maxPairs);
     return 0;
 }
+
+int Decoder::egcBer() const { return egc_ ? egc_->lastBer() : -1; }
+int Decoder::egcFrames() const { return egc_ ? egc_->framesSynced() : 0; }
 
 void Decoder::acarsTrampoline(const uint8_t* data, int len, int, uint32_t aes_id,
                               uint8_t ges_id, uint8_t, uint8_t, int downlink,

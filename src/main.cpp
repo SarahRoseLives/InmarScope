@@ -819,8 +819,8 @@ static void drawControls(App& app)
         ImGui::TextDisabled("  (WAV: tuning is fixed to the file)");
 
     ImGui::Separator();
-    const char* bauds[] = {"600", "1200", "8400", "10500"};
-    ImGui::Combo("Decode baud", &app.newBaud, bauds, 4);
+    const char* bauds[] = {"600", "1200", "8400", "10500", "Inmarsat-C/EGC"};
+    ImGui::Combo("Decode baud", &app.newBaud, bauds, 5);
     ImGui::TextDisabled("Ctrl+click the spectrum to add a decoder there");
 
     ImGui::Separator();
@@ -952,8 +952,8 @@ static void drawSpectrum(App& app)
             ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             ImPlotPoint mp = ImPlot::GetPlotMousePos();
-            static const int kBaudVals[] = {600, 1200, 8400, 10500};
-            int idx = app.newBaud < 0 ? 0 : (app.newBaud > 3 ? 3 : app.newBaud);
+            static const int kBaudVals[] = {600, 1200, 8400, 10500, kEgcBaud};
+            int idx = app.newBaud < 0 ? 0 : (app.newBaud > 4 ? 4 : app.newBaud);
             int baud = kBaudVals[idx];
             app.decoders.addDecoder(mp.x * 1e6, baud);
         }
@@ -1091,9 +1091,20 @@ static void drawDecoders(App& app)
             ImGui::TableNextColumn();
             ImGui::Text("%.4f", d.freqMHz);
             ImGui::TableNextColumn();
-            ImGui::Text("%d", d.baud);
+            if (d.baud == kEgcBaud)
+                ImGui::TextUnformatted("EGC");
+            else
+                ImGui::Text("%d", d.baud);
             ImGui::TableNextColumn();
-            ImGui::Text("%.1f", d.ebno);
+            if (d.baud == kEgcBaud)
+            {
+                if (d.egcFrames > 0)
+                    ImGui::Text("BER %d (%dfr)", d.egcBer, d.egcFrames);
+                else
+                    ImGui::TextDisabled("--");
+            }
+            else
+                ImGui::Text("%.1f", d.ebno);
             ImGui::TableNextColumn();
             ImGui::Text("%llu", (unsigned long long)d.msgs);
             ImGui::TableNextColumn();
@@ -1306,6 +1317,50 @@ static void drawNetwork(App& app)
     ImGui::End();
 }
 
+static void drawEgc(App& app)
+{
+    ImGui::Begin("EGC");
+
+    ImGui::Text("%llu message(s)", (unsigned long long)app.decoders.egcLog().count());
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Clear"))
+        app.decoders.egcLog().clear();
+    ImGui::TextDisabled("Inmarsat-C SafetyNET / FleetNET / system messages.");
+    ImGui::Separator();
+
+    auto msgs = app.decoders.egcLog().snapshot();
+    if (ImGui::BeginTable("##egc", 5,
+                          ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                          ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
+    {
+        ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed, 64);
+        ImGui::TableSetupColumn("Priority", ImGuiTableColumnFlags_WidthFixed, 64);
+        ImGui::TableSetupColumn("MsgId", ImGuiTableColumnFlags_WidthFixed, 52);
+        ImGui::TableSetupColumn("Service", ImGuiTableColumnFlags_WidthFixed, 200);
+        ImGui::TableSetupColumn("Message");
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableHeadersRow();
+
+        for (auto it = msgs.rbegin(); it != msgs.rend(); ++it)
+        {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(it->timeUtc.c_str());
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(it->priority.c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", it->messageId);
+            ImGui::TableNextColumn();
+            ImGui::TextWrapped("%s", it->service.c_str());
+            ImGui::TableNextColumn();
+            ImGui::TextWrapped("%s", it->text.c_str());
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+
 static ImPlotPoint constGetter(int idx, void* data)
 {
     const float* p = static_cast<const float*>(data);
@@ -1432,6 +1487,7 @@ static void drawDockHost()
         ImGui::DockBuilderDockWindow("Messages", rbot);
         ImGui::DockBuilderDockWindow("C-Channel", rbot);
         ImGui::DockBuilderDockWindow("Network", rbot);
+        ImGui::DockBuilderDockWindow("EGC", rbot);
         ImGui::DockBuilderDockWindow("Constellation", rcon);
         ImGui::DockBuilderFinish(dockId);
     }
@@ -1513,6 +1569,7 @@ int main(int, char**)
         drawMessages(app);
         drawCChannel(app);
         drawNetwork(app);
+        drawEgc(app);
         drawConstellation(app);
 
         int display_w, display_h;

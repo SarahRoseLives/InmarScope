@@ -29,6 +29,8 @@ public:
         bool locked;
         double ebno;
         uint64_t msgs;
+        int egcBer;     // -1 unless EGC
+        int egcFrames;  // 0 unless EGC
     };
 
     ~DecoderManager() { stop(); }
@@ -54,6 +56,7 @@ public:
     MessageLog& suLog() { return suLog_; }
     CassignLog& cassignLog() { return cassign_; }
     ChannelTable& channelTable() { return netTable_; }
+    EgcLog& egcLog() { return egcLog_; }
 
     // Voice: route one 8400 decoder's audio to the speakers.
     void setVoiceMonitor(int channelId);
@@ -112,6 +115,7 @@ private:
     MessageLog suLog_;
     CassignLog cassign_;
     ChannelTable netTable_;
+    EgcLog egcLog_;
     AudioOutput audio_;
     int voiceMonitorId_ = -1;
     bool recordOn_ = false;

@@ -18,6 +18,10 @@ struct jaero_acars_msg;        // from jaero_demod.h
 class AmbeDecoder;
 class AudioOutput;
 class WavWriter;
+class EgcDecoder;
+
+// Special "baud" code selecting the Inmarsat-C / EGC decoder.
+static constexpr int kEgcBaud = 1;
 
 class Decoder
 {
@@ -26,7 +30,7 @@ public:
     // decoder consumes; chanFreqHz is the absolute channel frequency.
     Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud,
             int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink,
-            CassignLog* cassignLog, ChannelTable* netTable);
+            CassignLog* cassignLog, ChannelTable* netTable, EgcLog* egcLog = nullptr);
     ~Decoder();
 
     // Process a block of sub-band interleaved double IQ (decode thread).
@@ -46,6 +50,9 @@ public:
     int    channelId() const { return channelId_; }
     uint64_t msgCount() const { return msgCount_.load(); }
     bool   isVoice() const { return baud_ == 8400; }
+    bool   isEgc() const { return baud_ == kEgcBaud; }
+    int    egcBer() const;    // -1 if not EGC
+    int    egcFrames() const; // 0 if not EGC
     void   setMonitored(bool on) { monitored_.store(on); }
     bool   monitored() const { return monitored_.load(); }
 
@@ -94,6 +101,9 @@ private:
     std::unique_ptr<AmbeDecoder> ambe_; // voice (8400) only
     AudioOutput* audioSink_ = nullptr;
     std::atomic<bool> monitored_{false};
+
+    std::unique_ptr<EgcDecoder> egc_; // Inmarsat-C / EGC only
+    EgcLog* egcLog_ = nullptr;
 
     // Recording state (worker thread only, except the atomics).
     void maintainRecording();

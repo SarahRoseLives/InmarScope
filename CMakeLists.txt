@@ -125,6 +125,7 @@ add_executable(FrameSync
     src/gui/waterfall.cpp
     src/decode/decoder.cpp
     src/decode/decoder_manager.cpp
+    src/decode/egc/egc_decoder.cpp
     src/voice/ambe_decoder.cpp
     src/voice/wav_writer.cpp
     src/audio/audio_output.cpp

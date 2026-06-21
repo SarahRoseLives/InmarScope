@@ -107,6 +107,54 @@ private:
     uint64_t count_ = 0;
 };
 
+// A decoded Inmarsat-C / EGC message (SafetyNET, FleetNET, system).
+struct EgcMessage
+{
+    int channelId = 0;
+    double freqMHz = 0.0;
+    int frameNumber = 0;
+    std::string timeUtc;  // HH:MM:SS from frame number
+    std::string service;  // service code + address name
+    std::string priority; // Routine/Safety/Urgency/Distress
+    int messageId = 0;
+    int presentation = 0; // 0=IA5, 6=ITA2, 7=8-bit
+    std::string text;     // decoded message text
+};
+
+class EgcLog
+{
+public:
+    void add(const EgcMessage& m)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        msgs_.push_back(m);
+        if (msgs_.size() > kMax)
+            msgs_.erase(msgs_.begin(), msgs_.begin() + (msgs_.size() - kMax));
+        ++count_;
+    }
+    std::vector<EgcMessage> snapshot()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        return msgs_;
+    }
+    uint64_t count()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        return count_;
+    }
+    void clear()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        msgs_.clear();
+    }
+
+private:
+    static constexpr size_t kMax = 2000;
+    std::mutex mtx_;
+    std::vector<EgcMessage> msgs_;
+    uint64_t count_ = 0;
+};
+
 // A channel discovered from the network's own system-table broadcasts.
 struct NetworkChannel
 {
