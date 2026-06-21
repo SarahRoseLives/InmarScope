@@ -203,6 +203,7 @@ struct App
     float  browseThrottleMs = 20.0f; // minimum time between retunes
     float  browseMinMovePct = 0.10f; // minimum view movement before retuning
     bool   acPosOnly = false;        // Aircraft panel: show only entries with a position
+    bool   showEmptyMsgs = false;    // Messages panel: show ACARS msgs with no text/decoded body
     // Dock layout versioning: when the built-in default layout changes we bump
     // kLayoutVersion so saved older layouts get replaced by the new default.
     int    layoutVersion = 0;        // persisted; compared to kLayoutVersion
@@ -1460,6 +1461,8 @@ static void drawMessages(App& app)
     ImGui::SameLine();
     if (ImGui::SmallButton("Clear"))
         app.decoders.log().clear();
+    ImGui::SameLine();
+    ImGui::Checkbox("Show empty", &app.showEmptyMsgs);
     ImGui::Separator();
 
     auto msgs = app.decoders.log().snapshot();
@@ -1479,6 +1482,9 @@ static void drawMessages(App& app)
         int rowIdx = 0;
         for (auto it = msgs.rbegin(); it != msgs.rend(); ++it)
         {
+            // Hide empty ACARS messages (no text and no decoded body) unless shown.
+            if (!app.showEmptyMsgs && it->text.empty() && it->decoded.empty())
+                continue;
             ImGui::TableNextRow();
             ImGui::PushID(rowIdx++);
             ImGui::TableNextColumn();
@@ -1895,6 +1901,7 @@ static void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(voiceFollow); WF(followHoldSec);
     WI(recordVoice); WS(recordDir);
     WI(acPosOnly);
+    WI(showEmptyMsgs);
     WI(outFile); WS(outFilePath); WI(outUdp); WS(outUdpHost); WI(outUdpPort);
     WI(outFormat); WS(outStation); WI(outSbs); WI(outSbsPort);
     WI(layoutVersion);
@@ -1937,6 +1944,7 @@ static void cfgReadLine(App& app, const char* line)
     RB(voiceFollow); RF(followHoldSec);
     RB(recordVoice); RS(recordDir);
     RB(acPosOnly);
+    RB(showEmptyMsgs);
     RB(outFile); RS(outFilePath); RB(outUdp); RS(outUdpHost); RI(outUdpPort);
     RI(outFormat); RS(outStation); RB(outSbs); RI(outSbsPort);
     RI(layoutVersion);
