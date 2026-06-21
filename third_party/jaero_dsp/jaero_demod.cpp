@@ -726,9 +726,11 @@ jaero_oqpsk_cont_demod_t *jaero_oqpsk_cont_create(double sample_rate, double sym
     s.freq_center              = 8000.0;
     /* OQPSK AFC lockingbw. 10500 default catches on-nominal carriers but
      * misses drifted ones; 20-30 kHz catches drifted but can wander onto
-     * nearby spurs. Override via --oqpsk-lockingbw when troubleshooting. */
+     * nearby spurs. 8400 voice C-channels need a wider capture to pull onto
+     * slightly-off assigned carriers, so default it to ±6 kHz. Override via
+     * --oqpsk-lockingbw when troubleshooting. */
     extern double oqpsk_lockingbw;
-    double default_bw = (symbol_rate <= 8400) ? 5000.0 : 10500.0;
+    double default_bw = (symbol_rate <= 8400) ? 12000.0 : 10500.0;
     s.lockingbw                = (oqpsk_lockingbw > 0) ? oqpsk_lockingbw : default_bw;
     s.coarsefreqest_fft_power  = 14;
     s.signalthreshold          = 0.8; /* raised from JAERO default 0.65 — accepts noisier constellations */

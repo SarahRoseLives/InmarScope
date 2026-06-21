@@ -12,6 +12,7 @@
 #include "dsp/iq_ring.h"
 #include "dsp/jfft.h"
 #include "sdr/rtl_sdr_source.h"
+#include "sdr/hackrf_source.h"
 #include "sdr/wav_file_source.h"
 #include "sdr/sdrpp_server_source.h"
 #include "decode/decoder_manager.h"
@@ -67,14 +68,23 @@ struct App
     RtlSdrSource sdr;
     WavFileSource wav;
     SdrppServerSource server;
+    HackRfSource hack;
     SdrSource* active = &sdr;   // currently selected/running source
-    int  sourceMode = 0;        // 0 = RTL-SDR, 1 = WAV file, 2 = SDR++ Server
+    int  sourceMode = 0;        // 0 = RTL-SDR, 1 = WAV, 2 = SDR++ Server, 3 = HackRF
     char wavPath[512] = "";
     bool wavLoop = true;
     char serverHost[128] = "localhost";
     int  serverPort = 5259;
     bool serverCompression = true;
     int  serverSampleType = 1;  // 0=int8, 1=int16, 2=float
+    double serverSampleRateMHz = 2.0; // rate requested from the server
+
+    // HackRF (native) settings.
+    double hackSampleRateMHz = 10.0;
+    int    hackLna = 16;   // IF gain 0..40 (8 dB steps)
+    int    hackVga = 16;   // baseband gain 0..62 (2 dB steps)
+    bool   hackAmp = false; // ~11 dB RF amp
+    bool   hackBias = false; // antenna/port power (bias tee)
 
     IqRing ring{1u << 21};
     JFFT fft;
@@ -140,6 +150,11 @@ struct App
     bool   bandBrowse = true;
     std::chrono::steady_clock::time_point lastRetune;
 
+    // Last sample rate the decoder manager was configured with; if the source
+    // rate changes (e.g. SDR++ server rate switch), the manager + FFT are
+    // reconfigured to match.
+    double lastConfiguredFs = 0.0;
+
     // Horizontal insets of the spectrum's plot data area (axis gutters), used
     // to align the waterfall to the spectrum frequency-for-frequency.
     float specLeftInset = 0.0f;
@@ -163,8 +178,8 @@ static const char* kRateLabels[] = {
     "1.8", "1.92", "2.048", "2.4", "2.56", "2.88", "3.2"};
 static const int kNumRates = (int)(sizeof(kRates) / sizeof(kRates[0]));
 
-static const int kFftSizes[] = {1024, 2048, 4096, 8192, 16384};
-static const char* kFftLabels[] = {"1024", "2048", "4096", "8192", "16384"};
+static const int kFftSizes[] = {1024, 2048, 4096, 8192, 16384, 32768, 65536};
+static const char* kFftLabels[] = {"1024", "2048", "4096", "8192", "16384", "32768", "65536"};
 static const int kNumFftSizes = (int)(sizeof(kFftSizes) / sizeof(kFftSizes[0]));
 
 static void buildWindow(App& app, int N)
@@ -285,6 +300,8 @@ static void retuneActive(App& app, double centerMHz)
         app.sdr.setCenterFreq(hz);
     else if (app.sourceMode == 2)
         app.server.setCenterFreq(hz);
+    else if (app.sourceMode == 3)
+        app.hack.setCenterFreq(hz);
     app.decoders.removeAll();
     app.decoders.configure(app.active->sampleRate(), hz);
     // Rebuild the frequency axis now (processFft already ran this frame with the
@@ -309,10 +326,36 @@ static void retunePreserving(App& app, double centerMHz)
         app.sdr.setCenterFreq(hz);
     else if (app.sourceMode == 2)
         app.server.setCenterFreq(hz);
+    else if (app.sourceMode == 3)
+        app.hack.setCenterFreq(hz);
     app.decoders.removeAll();
     app.decoders.configure(app.active->sampleRate(), hz);
     for (auto& k : keep)
         app.decoders.addDecoder(k.first * 1e6, k.second);
+}
+
+// If the source's sample rate changes (e.g. an SDR++ server rate switch),
+// reconfigure the decoder manager + FFT axis to match, keeping the decoders.
+static void updateRateChange(App& app)
+{
+    if (!app.active->running() || app.following)
+        return;
+    double fs = app.active->sampleRate();
+    if (fs <= 1.0 || std::fabs(fs - app.lastConfiguredFs) < 1.0)
+        return;
+
+    std::vector<std::pair<double, int>> keep;
+    for (auto& s : app.decoders.status())
+        keep.push_back({s.freqMHz, s.baud});
+    double center = app.active->centerFreq();
+    app.decoders.removeAll();
+    app.decoders.configure(fs, center);
+    for (auto& k : keep)
+        app.decoders.addDecoder(k.first * 1e6, k.second);
+    app.lastConfiguredFs = fs;
+    app.resetView = true;
+    if (app.curN > 0)
+        updateFreqAxis(app, app.curN);
 }
 
 // Drives the voice-follow state machine once per frame while a source runs.
@@ -382,7 +425,7 @@ static void updateVoiceFollow(App& app)
     // End when it has been unlocked for the hold time, then jump back to where
     // the user was (e.g. the 10500 channels they were decoding). A longer grace
     // applies before the first lock so we don't bail during acquisition.
-    constexpr double kAcquireSec = 8.0;
+    constexpr double kAcquireSec = 12.0;
     bool locked = false;
     for (auto& s : app.decoders.status())
         if (s.channelId == app.followChannelId)
@@ -390,12 +433,14 @@ static void updateVoiceFollow(App& app)
             locked = s.locked;
             break;
         }
-    const auto now = clock::now();
+        const auto now = clock::now();
     if (locked)
     {
         app.followActivity = now;
         app.followEverLocked = true;
     }
+
+
     double grace = app.followEverLocked
                        ? (double)app.followHoldSec
                        : std::max((double)app.followHoldSec, kAcquireSec);
@@ -451,7 +496,7 @@ static void startActive(App& app)
         app.wav.setCenterFreq(app.centerFreqMHz * 1e6);
         ok = app.wav.start(0, cb, err);
     }
-    else
+    else if (app.sourceMode == 2)
     {
         app.active = &app.server;
         app.server.setHost(app.serverHost);
@@ -472,12 +517,25 @@ static void startActive(App& app)
             }
         }
     }
+    else
+    {
+        app.active = &app.hack;
+        app.hack.setSampleRate(app.hackSampleRateMHz * 1e6);
+        app.hack.setCenterFreq(app.centerFreqMHz * 1e6);
+        app.hack.setLnaGain(app.hackLna);
+        app.hack.setVgaGain(app.hackVga);
+        app.hack.setAmpEnable(app.hackAmp);
+        app.hack.setBiasTee(app.hackBias);
+        app.hack.setDcBlock(app.dcBlock);
+        ok = app.hack.start(app.deviceIndex, cb, err);
+    }
 
     if (ok)
     {
         app.decoders.removeAll();
         app.decoders.configure(app.active->sampleRate(), app.active->centerFreq());
         app.decoders.start();
+        app.lastConfiguredFs = app.active->sampleRate();
         // Don't auto-follow assignments left over from a previous session.
         app.followSeenCount = app.decoders.cassignLog().count();
         app.following = false;
@@ -495,8 +553,8 @@ static void drawControls(App& app)
     bool running = app.active->running();
 
     ImGui::BeginDisabled(running);
-    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server"};
-    ImGui::Combo("Source", &app.sourceMode, modes, 3);
+    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF"};
+    ImGui::Combo("Source", &app.sourceMode, modes, 4);
     ImGui::EndDisabled();
 
     ImGui::Separator();
@@ -621,7 +679,7 @@ static void drawControls(App& app)
                         app.wav.channels(), app.wav.bits(), app.wav.sampleRate() / 1e3);
         }
     }
-    else
+    else if (app.sourceMode == 2)
     {
         // ---- SDR++ Server ----
         ImGui::BeginDisabled(running);
@@ -639,7 +697,105 @@ static void drawControls(App& app)
             if (running)
                 app.server.setCenterFreq(app.centerFreqMHz * 1e6);
         }
-        ImGui::TextDisabled("Gain/device settings are configured on the server.");
+
+        // Sample-rate combo, populated from the server's source-module UI once
+        // connected. Selecting one drives the server's rate via a UI action.
+        if (running)
+        {
+            auto labels = app.server.sampleRateLabels();
+            auto values = app.server.sampleRateValues();
+            int curIdx = app.server.currentSampleRateIndex();
+            if (!labels.empty())
+            {
+                const char* preview = (curIdx >= 0 && curIdx < (int)labels.size())
+                                          ? labels[curIdx].c_str()
+                                          : "(select)";
+                if (ImGui::BeginCombo("Sample rate", preview))
+                {
+                    for (int i = 0; i < (int)labels.size(); ++i)
+                    {
+                        bool sel = (i == curIdx);
+                        if (ImGui::Selectable(labels[i].c_str(), sel) && i < (int)values.size())
+                        {
+                            app.server.setSampleRate(values[i]);
+                            app.resetView = true;
+                        }
+                    }
+                    ImGui::EndCombo();
+                }
+            }
+            else
+            {
+                ImGui::TextDisabled("Sample rate: (no rate control exposed by server)");
+            }
+            ImGui::Text("Server sample rate: %.4f MHz", app.server.sampleRate() / 1e6);
+        }
+        else
+        {
+            ImGui::TextDisabled("Connect to list the server's sample rates.");
+        }
+        ImGui::TextDisabled("Gain and device are configured on the SDR++ server.");
+    }
+    else
+    {
+        // ---- HackRF (native) ----
+        if (ImGui::Button("Refresh devices"))
+            app.devices = app.hack.listDevices();
+        ImGui::SameLine();
+        ImGui::Text("(%d found)", (int)app.devices.size());
+        if (!app.devices.empty())
+        {
+            std::string preview = app.devices[std::min(app.deviceIndex, (int)app.devices.size() - 1)].name;
+            if (ImGui::BeginCombo("Device", preview.c_str()))
+            {
+                for (int i = 0; i < (int)app.devices.size(); ++i)
+                {
+                    bool sel = (app.deviceIndex == i);
+                    std::string label = std::to_string(i) + ": " + app.devices[i].name +
+                                        " [" + app.devices[i].serial + "]";
+                    if (ImGui::Selectable(label.c_str(), sel))
+                        app.deviceIndex = i;
+                }
+                ImGui::EndCombo();
+            }
+        }
+
+        if (ImGui::InputDouble("Center (MHz)", &app.centerFreqMHz, 0.1, 1.0, "%.4f"))
+        {
+            app.resetView = true;
+            if (running)
+                app.hack.setCenterFreq(app.centerFreqMHz * 1e6);
+        }
+        if (ImGui::InputDouble("Sample rate (MHz)", &app.hackSampleRateMHz, 1.0, 2.0, "%.3f"))
+        {
+            if (app.hackSampleRateMHz < 2.0) app.hackSampleRateMHz = 2.0;
+            if (app.hackSampleRateMHz > 20.0) app.hackSampleRateMHz = 20.0;
+            app.resetView = true;
+            if (running)
+                app.hack.setSampleRate(app.hackSampleRateMHz * 1e6);
+        }
+        if (ImGui::SliderInt("LNA (IF) dB", &app.hackLna, 0, 40, "%d"))
+        {
+            app.hackLna = (app.hackLna / 8) * 8;
+            if (running) app.hack.setLnaGain(app.hackLna);
+        }
+        if (ImGui::SliderInt("VGA (BB) dB", &app.hackVga, 0, 62, "%d"))
+        {
+            app.hackVga = (app.hackVga / 2) * 2;
+            if (running) app.hack.setVgaGain(app.hackVga);
+        }
+        if (ImGui::Checkbox("RF amp (+~11 dB)", &app.hackAmp))
+        {
+            if (running) app.hack.setAmpEnable(app.hackAmp);
+        }
+        if (ImGui::Checkbox("Bias-T (antenna power)", &app.hackBias))
+        {
+            if (running) app.hack.setBiasTee(app.hackBias);
+        }
+        if (ImGui::Checkbox("DC block", &app.dcBlock))
+        {
+            if (running) app.hack.setDcBlock(app.dcBlock);
+        }
     }
 
     ImGui::Separator();
@@ -1346,6 +1502,9 @@ int main(int, char**)
         if (app.active->running())
             updateVoiceFollow(app);
 
+        if (app.active->running())
+            updateRateChange(app);
+
         drawControls(app);
         drawSpectrum(app);
         drawWaterfall(app);
@@ -1372,6 +1531,7 @@ int main(int, char**)
     app.sdr.stop();
     app.wav.stop();
     app.server.stop();
+    app.hack.stop();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
