@@ -23,6 +23,9 @@ using socket_t = int;
 
 #include <zstd.h>
 
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -70,7 +73,9 @@ bool SdrppServerSource::recvAll(void* buf, int len)
 
 bool SdrppServerSource::sendCommand(uint32_t cmd, const void* args, uint32_t argLen)
 {
-    uint8_t buf[64];
+    uint8_t buf[1024];
+    if (argLen > sizeof(buf) - sizeof(PacketHeader) - 4)
+        return false;
     PacketHeader* h = (PacketHeader*)buf;
     h->type = PKT_COMMAND;
     h->size = sizeof(PacketHeader) + 4 + argLen; // + CommandHeader(cmd) + args
@@ -129,7 +134,8 @@ bool SdrppServerSource::start(int, SdrSampleCb cb, std::string& err)
     dbuf_.resize(kMaxPacket);
     cb_ = std::move(cb);
 
-    // Handshake + config (fire-and-forget; the worker drains any ACKs).
+    // Handshake + config (fire-and-forget; the worker parses any ACKs,
+    // including the GET_UI DrawList used to discover sample rates).
     sendCommand(CMD_GET_UI, nullptr, 0);
     uint8_t st = (uint8_t)sampleType_;
     sendCommand(CMD_SET_SAMPLE_TYPE, &st, 1);
@@ -138,6 +144,9 @@ bool SdrppServerSource::start(int, SdrSampleCb cb, std::string& err)
     double f = centerFreq_;
     sendCommand(CMD_SET_FREQUENCY, &f, sizeof(double));
     sendCommand(CMD_START, nullptr, 0);
+    // Re-request the UI after START (the running menu) and the actual rate.
+    sendCommand(CMD_GET_UI, nullptr, 0);
+    sendCommand(CMD_GET_SAMPLERATE, nullptr, 0);
 
     running_.store(true);
     thread_ = std::thread([this]() { worker(); });
@@ -166,6 +175,246 @@ void SdrppServerSource::setCenterFreq(double hz)
     centerFreq_ = hz;
     if (running_.load())
         sendCommand(CMD_SET_FREQUENCY, &hz, sizeof(double));
+}
+
+void SdrppServerSource::setSampleRate(double hz)
+{
+    reqSampleRate_ = hz;
+    if (hz <= 0.0)
+        return;
+
+    // If connected and we've parsed the server's rate combo, drive it via a
+    // UI action (the only way to change a server-side source's rate). The
+    // server then confirms the actual rate via COMMAND_SET_SAMPLERATE.
+    std::string id;
+    int idx = -1;
+    bool sync = false;
+    {
+        std::lock_guard<std::mutex> lk(uiMtx_);
+        if (!srComboId_.empty() && !srValues_.empty())
+        {
+            double best = 1e30;
+            for (size_t k = 0; k < srValues_.size(); ++k)
+            {
+                double d = std::fabs(srValues_[k] - hz);
+                if (d < best) { best = d; idx = (int)k; }
+            }
+            id = srComboId_;
+            sync = srForceSync_;
+        }
+    }
+    if (running_.load() && idx >= 0)
+        sendComboAction(id, idx, sync);
+}
+
+std::vector<std::string> SdrppServerSource::sampleRateLabels()
+{
+    std::lock_guard<std::mutex> lk(uiMtx_);
+    return srLabels_;
+}
+
+std::vector<double> SdrppServerSource::sampleRateValues()
+{
+    std::lock_guard<std::mutex> lk(uiMtx_);
+    return srValues_;
+}
+
+int SdrppServerSource::currentSampleRateIndex()
+{
+    std::lock_guard<std::mutex> lk(uiMtx_);
+    return srCurrentIdx_;
+}
+
+std::string SdrppServerSource::uiDebug()
+{
+    std::lock_guard<std::mutex> lk(uiMtx_);
+    return uiDebug_;
+}
+
+void SdrppServerSource::sendComboAction(const std::string& id, int index, bool sync)
+{
+    // UI_ACTION payload: [syncReq:1] storeItem(STRING id) storeItem(INT index)
+    // STRING elem: [type=4][u16 len][bytes];  INT elem: [type=2][i32]
+    uint8_t a[512];
+    int n = 0;
+    a[n++] = sync ? 1 : 0;
+    a[n++] = 4; // DRAW_LIST_ELEM_TYPE_STRING
+    uint16_t slen = (uint16_t)id.size();
+    std::memcpy(a + n, &slen, 2); n += 2;
+    std::memcpy(a + n, id.data(), slen); n += slen;
+    a[n++] = 2; // DRAW_LIST_ELEM_TYPE_INT
+    int32_t iv = index;
+    std::memcpy(a + n, &iv, 4); n += 4;
+    sendCommand(CMD_UI_ACTION, a, (uint32_t)n);
+}
+
+// Parse a rate label like "20MHz", "2.4 MHz", "250 kHz" into Hz.
+static double parseRateLabel(const std::string& s)
+{
+    const char* p = s.c_str();
+    char* end = nullptr;
+    double v = std::strtod(p, &end);
+    if (end == p)
+        return 0.0;
+    while (*end == ' ') ++end;
+    char u = *end;
+    if (u == 'G' || u == 'g') return v * 1e9;
+    if (u == 'M' || u == 'm') return v * 1e6;
+    if (u == 'k' || u == 'K') return v * 1e3;
+    if (v > 0.0 && v < 1000.0) return v * 1e6; // bare number: assume MHz
+    return v;                                   // already in Hz
+}
+
+void SdrppServerSource::parseUi(const uint8_t* data, int len)
+{
+    // Flatten the SmGui DrawList into typed elements.
+    struct Elem { uint8_t type; uint8_t step; bool fsync; int i; std::string str; };
+    std::vector<Elem> els;
+    int p = 0;
+    while (p < len)
+    {
+        Elem e{};
+        e.type = data[p++];
+        if (e.type == 0) // DRAW_STEP
+        {
+            if (p + 2 > len) break;
+            e.step = data[p++];
+            e.fsync = data[p++] != 0;
+        }
+        else if (e.type == 1) // BOOL
+        {
+            if (p + 1 > len) break;
+            e.i = data[p++];
+        }
+        else if (e.type == 2) // INT
+        {
+            if (p + 4 > len) break;
+            std::memcpy(&e.i, data + p, 4); p += 4;
+        }
+        else if (e.type == 3) // FLOAT
+        {
+            if (p + 4 > len) break;
+            p += 4;
+        }
+        else if (e.type == 4) // STRING
+        {
+            if (p + 2 > len) break;
+            uint16_t sl; std::memcpy(&sl, data + p, 2); p += 2;
+            if (p + (int)sl > len) break;
+            e.str.assign((const char*)data + p, (const char*)data + p + sl);
+            p += sl;
+        }
+        else break;
+        els.push_back(std::move(e));
+    }
+
+    // Find the sample-rate combo: a COMBO (step 0x80) whose label looks like a
+    // sample-rate selector and whose items parse as rates.
+    auto looksLikeRateId = [](std::string l) {
+        for (auto& c : l) c = (char)std::tolower((unsigned char)c);
+        if (l.find("type") != std::string::npos) return false;
+        return l.find("_sr") != std::string::npos ||
+               l.find("sr_sel") != std::string::npos ||
+               l.find("samp_rate") != std::string::npos ||
+               l.find("source_sr") != std::string::npos;
+    };
+
+    std::string foundId;
+    std::vector<double> vals;
+    std::vector<std::string> labels;
+    int cur = -1;
+    bool fsync = false;
+
+    std::string dbg = "elems=" + std::to_string(els.size()) + " combos:";
+    int comboCount = 0;
+
+    for (size_t j = 0; j + 4 < els.size(); ++j)
+    {
+        if (els[j].type != 0 || els[j].step != 0x80) continue;       // COMBO
+        if (els[j + 1].type != 4 || els[j + 2].type != 2 ||
+            els[j + 3].type != 4) continue;
+        const std::string& label = els[j + 1].str;
+
+        // Count items for the debug summary.
+        int itemCount = 0;
+        {
+            const std::string& it = els[j + 3].str;
+            size_t s0 = 0;
+            while (s0 < it.size())
+            {
+                size_t e0 = it.find('\0', s0);
+                if (e0 == std::string::npos) e0 = it.size();
+                if (e0 > s0) ++itemCount;
+                s0 = e0 + 1;
+            }
+        }
+        ++comboCount;
+        dbg += " [" + label + " x" + std::to_string(itemCount) + "]";
+
+        if (!looksLikeRateId(label)) continue;
+
+        // Split the zero-separated items string into rate options.
+        std::vector<double> v;
+        std::vector<std::string> lab;
+        const std::string& items = els[j + 3].str;
+        size_t s = 0;
+        while (s < items.size())
+        {
+            size_t e = items.find('\0', s);
+            if (e == std::string::npos) e = items.size();
+            std::string item = items.substr(s, e - s);
+            s = e + 1;
+            if (item.empty()) continue;
+            double hz = parseRateLabel(item);
+            if (hz <= 0.0) { v.clear(); break; }
+            v.push_back(hz);
+            lab.push_back(item);
+        }
+        if (v.empty()) continue;
+        foundId = label;
+        vals = std::move(v);
+        labels = std::move(lab);
+        cur = els[j + 2].i;
+        fsync = els[j].fsync;
+        // keep scanning to finish the debug summary
+    }
+    if (comboCount == 0)
+        dbg += " (none)";
+
+    bool apply = false;
+    int applyIdx = -1;
+    std::string applyId;
+    bool applySync = false;
+    {
+        std::lock_guard<std::mutex> lk(uiMtx_);
+        uiDebug_ = dbg;
+        if (!foundId.empty())
+        {
+            srComboId_ = foundId;
+            srValues_ = vals;
+            srLabels_ = labels;
+            srCurrentIdx_ = cur;
+            srForceSync_ = fsync;
+
+            // Apply a rate requested before the UI was known.
+            if (reqSampleRate_ > 0.0)
+            {
+                double best = 1e30; int idx = -1;
+                for (size_t k = 0; k < srValues_.size(); ++k)
+                {
+                    double d = std::fabs(srValues_[k] - reqSampleRate_);
+                    if (d < best) { best = d; idx = (int)k; }
+                }
+                if (idx >= 0 && idx != srCurrentIdx_)
+                {
+                    apply = true; applyIdx = idx; applyId = srComboId_; applySync = srForceSync_;
+                }
+                reqSampleRate_ = 0.0; // one-shot, avoid resync loops
+            }
+        }
+    }
+    if (apply)
+        sendComboAction(applyId, applyIdx, applySync);
 }
 
 void SdrppServerSource::handleBaseband(const uint8_t* data, int len)
@@ -233,6 +482,14 @@ void SdrppServerSource::worker()
                 sampleRate_.store(*(double*)(rbuf_.data() + 4));
             else if (cmd == CMD_DISCONNECT)
                 break;
+        }
+        else if (hdr.type == PKT_COMMAND_ACK)
+        {
+            // The GET_UI / UI_ACTION ack carries the source-module DrawList,
+            // from which we extract the sample-rate combo options.
+            uint32_t cmd = (payload >= 4) ? *(uint32_t*)rbuf_.data() : 0;
+            if ((cmd == CMD_GET_UI || cmd == CMD_UI_ACTION) && payload > 4)
+                parseUi(rbuf_.data() + 4, payload - 4);
         }
         else if (hdr.type == PKT_BASEBAND)
         {

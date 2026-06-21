@@ -32,6 +32,14 @@ if(NOT RTLSDR_FOUND)
     find_path(RTLSDR_INCLUDE_DIRS NAMES rtl-sdr.h REQUIRED)
 endif()
 
+# HackRF (native source). The MSYS2 libhackrf.pc has a hardcoded build-machine
+# libusb include path, so locate the header/library directly instead of via
+# pkg-config. hackrf.h itself doesn't pull in libusb, so no extra include is
+# needed for our wrapper.
+find_path(HACKRF_INCLUDE_DIRS NAMES libhackrf/hackrf.h hackrf.h
+          PATH_SUFFIXES libhackrf REQUIRED)
+find_library(HACKRF_LIBRARIES NAMES hackrf libhackrf REQUIRED)
+
 set(IMGUI_DIR   ${CMAKE_SOURCE_DIR}/third_party/imgui)
 set(IMPLOT_DIR  ${CMAKE_SOURCE_DIR}/third_party/implot)
 
@@ -111,6 +119,7 @@ target_include_directories(mbelib PUBLIC ${CMAKE_SOURCE_DIR}/third_party/mbelib)
 add_executable(FrameSync
     src/main.cpp
     src/sdr/rtl_sdr_source.cpp
+    src/sdr/hackrf_source.cpp
     src/sdr/wav_file_source.cpp
     src/sdr/sdrpp_server_source.cpp
     src/gui/waterfall.cpp
@@ -125,10 +134,11 @@ target_include_directories(FrameSync PRIVATE
     ${CMAKE_SOURCE_DIR}/third_party/mbelib
     ${CMAKE_SOURCE_DIR}/third_party/miniaudio
     ${RTLSDR_INCLUDE_DIRS}
+    ${HACKRF_INCLUDE_DIRS}
 )
 target_compile_definitions(FrameSync PRIVATE _USE_MATH_DEFINES)
 find_library(ZSTD_LIBRARIES NAMES zstd libzstd REQUIRED)
-target_link_libraries(FrameSync PRIVATE imgui jaero_dsp mbelib ${RTLSDR_LIBRARIES} ${ZSTD_LIBRARIES})
+target_link_libraries(FrameSync PRIVATE imgui jaero_dsp mbelib ${RTLSDR_LIBRARIES} ${HACKRF_LIBRARIES} ${ZSTD_LIBRARIES})
 target_link_directories(FrameSync PRIVATE ${RTLSDR_LIBRARY_DIRS})
 
 if(WIN32)
@@ -147,6 +157,7 @@ if(WIN32)
         libstdc++-6.dll
         glfw3.dll
         librtlsdr.dll
+        libhackrf.dll
         libusb-1.0.dll
         libzstd.dll
     )
