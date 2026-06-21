@@ -51,6 +51,7 @@ public:
     int    channelId() const { return channelId_; }
     uint64_t msgCount() const { return msgCount_.load(); }
     uint64_t voiceFrames() const { return voiceFrames_.load(); } // decoded AMBE frames
+    void   setVoiceAesId(uint32_t id) { voiceAesId_ = id; } // aircraft AES for recording tag
     bool   isVoice() const { return baud_ == 8400; }
     bool   isEgc() const { return baud_ == kEgcBaud; }
     int    egcBer() const;    // -1 if not EGC
@@ -114,6 +115,7 @@ private:
     void recordPcm(const int16_t* pcm, int n);
     std::atomic<bool> record_{false};   // recording requested
     std::atomic<bool> recActive_{false}; // a call file is currently open
+    std::uint32_t voiceAesId_ = 0;      // AES id of the voice call (for recording tag)
     std::string recordDir_ = "recordings";
     std::unique_ptr<WavWriter> rec_;
     std::chrono::steady_clock::time_point lastVoiceTime_;

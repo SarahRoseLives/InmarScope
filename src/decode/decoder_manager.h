@@ -46,7 +46,7 @@ public:
 
     void feed(const float* iq, int nComplex);
 
-    int  addDecoder(double freqHz, int baud);
+    int addDecoder(double freqHz, int baud, uint32_t aesId = 0);
     void removeDecoder(int channelId);
     void setDecoderFreq(int channelId, double freqHz);
     void removeAll();

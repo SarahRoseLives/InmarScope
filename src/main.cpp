@@ -16,6 +16,7 @@
 #include "sdr/wav_file_source.h"
 #include "sdr/sdrpp_server_source.h"
 #include "decode/decoder_manager.h"
+#include "decode/icao_country.h"
 #include "output/message_feed.h"
 #include "update/version_check.h"
 #include "version.h"
@@ -128,6 +129,8 @@ struct App
     bool   biasTeeB = false;
     float  ppmB = 0.0f;
     int newBaud = 1; // 0 = 600, 1 = 1200 (baud for click-added decoders)
+    bool   placingDecoder = false; // currently drag-placing a decoder with a preview line
+    double placingFreqMHz = 0.0;   // current preview line frequency
     int selectedDecoder = -1;     // channelId shown in the constellation panel
     std::vector<float> constBuf;  // interleaved I,Q scratch for the plot
     double constLim = 1.0;        // cached constellation axis limit (held steady)
@@ -427,7 +430,7 @@ static void updateVoiceFollow(App& app)
             app.viewB.resetView = true;
             if (app.viewB.curN > 0)
                 updateFreqAxis(app.viewB, bctr * 1e6, app.sdrB.sampleRate(), app.viewB.curN);
-            app.followChannelId = app.decodersB.addDecoder(rx * 1e6, 8400);
+            app.followChannelId = app.decodersB.addDecoder(rx * 1e6, 8400, pick->aesId);
             if (app.followChannelId < 0) return;
             app.decodersB.setVoiceMonitor(app.followChannelId);
             app.voiceCenterMHz = bctr; // park B here when the call ends
@@ -517,7 +520,7 @@ static void updateVoiceFollow(App& app)
             app.followRetuned = true;
         }
 
-        app.followChannelId = app.decoders.addDecoder(rx * 1e6, 8400);
+        app.followChannelId = app.decoders.addDecoder(rx * 1e6, 8400, pick->aesId);
         if (app.followChannelId < 0)
             return; // failed to spawn (e.g. manager not configured)
         app.decoders.setVoiceMonitor(app.followChannelId);
@@ -1219,20 +1222,58 @@ static void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const c
         if (bandValid)
             v.resetView = false;
 
-        if (ImPlot::IsPlotHovered() && ImGui::GetIO().KeyCtrl &&
-            ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        // Drag-to-place decoder: Ctrl+mousedown starts placing, move shows a white
+        // preview line through the spectrum and waterfall, release creates the decoder.
+        if (ImPlot::IsPlotHovered() && ImGui::GetIO().KeyCtrl)
         {
             ImPlotPoint mp = ImPlot::GetPlotMousePos();
-            int baud;
-            if (voiceView)
-                baud = 8400; // voice SDR: manual voice decoder
-            else
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
             {
-                static const int kBaudVals[] = {600, 1200, 8400, 10500, kEgcBaud};
-                int idx = app.newBaud < 0 ? 0 : (app.newBaud > 4 ? 4 : app.newBaud);
-                baud = kBaudVals[idx];
+                app.placingDecoder = true;
+                app.placingFreqMHz = mp.x;
             }
-            mgr.addDecoder(mp.x * 1e6, baud);
+            if (app.placingDecoder)
+            {
+                app.placingFreqMHz = mp.x;
+            }
+            if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && app.placingDecoder)
+            {
+                app.placingDecoder = false;
+                int baud;
+                if (voiceView)
+                    baud = 8400;
+                else
+                {
+                    static const int kBaudVals[] = {600, 1200, 8400, 10500, kEgcBaud};
+                    int idx = app.newBaud < 0 ? 0 : (app.newBaud > 4 ? 4 : app.newBaud);
+                    baud = kBaudVals[idx];
+                }
+                mgr.addDecoder(mp.x * 1e6, baud);
+            }
+        }
+        else if (app.placingDecoder)
+        {
+            // Ctrl released or cursor left the plot: cancel placing.
+            app.placingDecoder = false;
+        }
+
+        // White preview line while drag-placing (drawn on the ImDrawList over
+        // the plot so it appears in both the spectrum and waterfall).
+        if (app.placingDecoder)
+        {
+            ImPlotRect lim = ImPlot::GetPlotLimits();
+            float xMin = (float)lim.X.Min;
+            float xMax = (float)lim.X.Max;
+            if (xMax > xMin)
+            {
+                float frac = ((float)app.placingFreqMHz - xMin) / (xMax - xMin);
+                ImVec2 pp = ImPlot::GetPlotPos();
+                ImVec2 ps = ImPlot::GetPlotSize();
+                float px = pp.x + frac * ps.x;
+                ImDrawList* dl = ImGui::GetWindowDrawList();
+                dl->AddLine(ImVec2(px, pp.y), ImVec2(px, pp.y + ps.y),
+                            IM_COL32(255, 40, 40, 200), 1.5f);
+            }
         }
 
         ImPlot::EndPlot();
@@ -1282,7 +1323,30 @@ static void drawWaterfall(App& app, SpectrumView& v, const char* title)
     }
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + left);
 
+    ImVec2 wfP0 = ImGui::GetCursorScreenPos();
     v.waterfall.draw(ImVec2(w, avail.y), uMin, uMax, xLo, xHi);
+
+    // Drag-to-place preview line: white vertical line through the waterfall
+    // at the frequency the user is hovering, so they can centre on a signal.
+    if (app.placingDecoder && v.curN > 0)
+    {
+        double bandMin = v.freqMHz.front();
+        double bandMax = v.freqMHz.back();
+        double bandSpan = bandMax - bandMin;
+        double viewSpan = v.viewXmaxMHz - v.viewXminMHz;
+        double visLo = std::max(bandMin, v.viewXminMHz);
+        double visHi = std::min(bandMax, v.viewXmaxMHz);
+        if (bandSpan > 0 && viewSpan > 0 &&
+            app.placingFreqMHz >= visLo && app.placingFreqMHz <= visHi)
+        {
+            float u = (float)((app.placingFreqMHz - visLo) / (visHi - visLo));
+            float pixFrac = xLo + u * (xHi - xLo);
+            float px = wfP0.x + pixFrac * w;
+            ImDrawList* dl = ImGui::GetWindowDrawList();
+            dl->AddLine(ImVec2(px, wfP0.y), ImVec2(px, wfP0.y + avail.y),
+                        IM_COL32(255, 40, 40, 200), 1.5f);
+        }
+    }
     ImGui::End();
 }
 
@@ -1498,20 +1562,15 @@ static void drawMessages(App& app)
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(it->label.c_str());
             ImGui::TableNextColumn();
-            ImGui::TextUnformatted(it->text.c_str());
+            ImGui::TextWrapped("%s", it->text.c_str());
             if (it->hasPos)
                 ImGui::TextColored(ImVec4(0.3f, 0.9f, 1.0f, 1.0f),
                                    "POS %.4f, %.4f  %d ft", it->lat, it->lon, it->alt);
             if (!it->decoded.empty())
             {
-                if (ImGui::TreeNodeEx("decoded", ImGuiTreeNodeFlags_SpanAvailWidth,
-                                      "decoded (CPDLC/ADS-C/MIAM)"))
-                {
-                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
-                    ImGui::TextUnformatted(it->decoded.c_str());
-                    ImGui::PopStyleColor();
-                    ImGui::TreePop();
-                }
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
+                ImGui::TextWrapped("%s", it->decoded.c_str());
+                ImGui::PopStyleColor();
             }
             ImGui::PopID();
         }
@@ -1564,6 +1623,16 @@ static void drawAircraft(App& app)
             ImGui::Text("%06X", a.aesId);
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(a.icao.c_str());
+            if (!a.icao.empty())
+            {
+                uint32_t ihex = (uint32_t)std::strtoul(a.icao.c_str(), nullptr, 16);
+                const char* cc = icaoCountry(ihex);
+                if (cc)
+                {
+                    ImGui::SameLine();
+                    ImGui::TextDisabled(" %s", cc);
+                }
+            }
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(a.reg.c_str());
             ImGui::TableNextColumn();
@@ -1600,7 +1669,7 @@ static const char* cassignTypeName(uint8_t t)
 // Manually tune to a C-channel voice assignment: retune the SDR off the carrier
 // (DC avoidance) if it is out of band, then drop an 8400 voice decoder on it and
 // monitor it. Used by the C-Channel "Tune" button (works with auto-follow off).
-static void tuneToVoice(App& app, double rxMHz)
+static void tuneToVoice(App& app, double rxMHz, uint32_t aesId)
 {
     if (rxMHz <= 1.0 || !app.active->running())
         return;
@@ -1615,7 +1684,7 @@ static void tuneToVoice(App& app, double rxMHz)
         double off = std::min(0.2, 0.25 * fsMHz);
         retunePreserving(app, rxMHz - off); // move center off the carrier, keep decoders
     }
-    int id = app.decoders.addDecoder(rxMHz * 1e6, 8400);
+    int id = app.decoders.addDecoder(rxMHz * 1e6, 8400, aesId);
     if (id >= 0)
     {
         app.decoders.setVoiceMonitor(id);
@@ -1670,7 +1739,7 @@ static void drawCChannel(App& app)
                 ImGui::BeginDisabled(!app.active->running() ||
                                      (app.sourceMode == 1));
                 if (ImGui::SmallButton("Tune"))
-                    tuneToVoice(app, it.rxMHz);
+                    tuneToVoice(app, it.rxMHz, it.aesId);
                 ImGui::EndDisabled();
             }
             ImGui::PopID();

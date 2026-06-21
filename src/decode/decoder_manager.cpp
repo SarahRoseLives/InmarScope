@@ -73,7 +73,7 @@ void DecoderManager::feed(const float* iq, int nComplex)
     }
 }
 
-int DecoderManager::addDecoder(double freqHz, int baud)
+int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
 {
     if (Fs_ <= 0.0 || workers_.empty())
         return -1;
@@ -101,7 +101,10 @@ int DecoderManager::addDecoder(double freqHz, int baud)
                     voiceMonitorId_ = id;
                 }
                 if (baud == 8400)
+                {
                     dec->setRecording(recordOn_, recordDir_);
+                    dec->setVoiceAesId(aesId);
+                }
                 return id;
             }
         }
@@ -123,7 +126,10 @@ int DecoderManager::addDecoder(double freqHz, int baud)
         voiceMonitorId_ = id;
     }
     if (baud == 8400)
+    {
         dec->setRecording(recordOn_, recordDir_);
+        dec->setVoiceAesId(aesId);
+    }
     best->subbands.push_back(std::move(sb));
     best->count.fetch_add(1);
     return id;

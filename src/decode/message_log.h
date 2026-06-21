@@ -302,7 +302,15 @@ public:
         byId_.clear();
     }
 
+    std::string icao(uint32_t aesId) const
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        auto it = byId_.find(aesId);
+        if (it == byId_.end()) return {};
+        return it->second.icao;
+    }
+
 private:
-    std::mutex mtx_;
+    mutable std::mutex mtx_;
     std::map<uint32_t, AircraftEntry> byId_;
 };

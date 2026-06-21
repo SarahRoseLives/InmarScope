@@ -134,6 +134,7 @@ add_executable(InmarScope
     src/decode/decoder.cpp
     src/decode/decoder_manager.cpp
     src/decode/acars_apps.cpp
+    src/decode/icao_country.cpp
     src/decode/egc/egc_decoder.cpp
     src/voice/ambe_decoder.cpp
     src/voice/wav_writer.cpp

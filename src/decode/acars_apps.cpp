@@ -59,9 +59,13 @@ AcarsAppResult decodeAcarsApps(const std::string& label, const std::string& text
         la_vstring_destroy(vs, true);
     }
 
-    // Walk all ADS-C tags: position (basic report), flight id, airframe ICAO.
+    // Walk the ADS-C tags for position (basic report), flight id, airframe ICAO.
+    // Only downlink (air->ground) messages carry these: the SAME tag numbers
+    // (7/9/10/18/19/20) mean position reports on downlink but contract-request
+    // structures on uplink, so casting an uplink tag to a basic report yields
+    // garbage lat/lon/alt. Guard on direction and sanity-check the values.
     la_proto_node* adscNode = la_proto_tree_find_adsc(node);
-    if (adscNode && adscNode->data)
+    if (downlink && adscNode && adscNode->data)
     {
         la_adsc_msg_t* msg = static_cast<la_adsc_msg_t*>(adscNode->data);
         if (!msg->err)
@@ -74,10 +78,14 @@ AcarsAppResult decodeAcarsApps(const std::string& label, const std::string& text
                 if (!r.hasPos && isBasicReportTag(tag->tag))
                 {
                     auto* br = static_cast<la_adsc_basic_report_t*>(tag->data);
-                    r.hasPos = true;
-                    r.lat = br->lat;
-                    r.lon = br->lon;
-                    r.alt = br->alt;
+                    if (br->lat >= -90.0 && br->lat <= 90.0 && br->lon >= -180.0 &&
+                        br->lon <= 180.0 && br->alt > -1500 && br->alt < 70000)
+                    {
+                        r.hasPos = true;
+                        r.lat = br->lat;
+                        r.lon = br->lon;
+                        r.alt = br->alt;
+                    }
                 }
                 else if (tag->tag == 12) // flight id group
                 {
