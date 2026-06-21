@@ -186,6 +186,11 @@ struct App
     // retunes a live SDR so you can sweep the whole band (not for WAV files).
     bool   bandBrowse = true;
     std::chrono::steady_clock::time_point lastRetune;
+    double lastRetuneCtr = 0.0; // view center at the last band-browse retune
+    // Band-browse follow tuning (percentages are of the sample rate).
+    float  browseEdgePct = 24.5f;    // recenter when view edge is within this % of band edge
+    float  browseThrottleMs = 20.0f; // minimum time between retunes
+    float  browseMinMovePct = 0.10f; // minimum view movement before retuning
 
     // Last sample rate the decoder manager was configured with; if the source
     // rate changes (e.g. SDR++ server rate switch), the manager + FFT are
@@ -1134,16 +1139,26 @@ static void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const c
             app.active->running() && !v.resetView && !app.following)
         {
             double viewCtr = 0.5 * (v.viewXminMHz + v.viewXmaxMHz);
+            double viewHalf = 0.5 * (v.viewXmaxMHz - v.viewXminMHz);
             double sdrCtr = app.active->centerFreq() / 1e6;
             double fsMHz = app.active->sampleRate() / 1e6;
-            double deadband = fsMHz * 0.20;
+            double halfBand = 0.5 * fsMHz;
+            // Clear margin remaining between the view edge and the captured band
+            // edge. Recenter the SDR on the view *before* that margin runs out so
+            // no black gap ever reaches the screen -> buttery smooth panning.
+            double marginL = (viewCtr - viewHalf) - (sdrCtr - halfBand);
+            double marginR = (sdrCtr + halfBand) - (viewCtr + viewHalf);
+            double minMargin = std::min(marginL, marginR);
+            double trigger = fsMHz * (app.browseEdgePct * 0.01);
+            bool moved = std::fabs(viewCtr - app.lastRetuneCtr) > fsMHz * (app.browseMinMovePct * 0.01);
             auto now = std::chrono::steady_clock::now();
             double sinceMs =
                 std::chrono::duration<double, std::milli>(now - app.lastRetune).count();
-            if (fsMHz > 0.0 && std::fabs(viewCtr - sdrCtr) > deadband && sinceMs > 150.0)
+            if (fsMHz > 0.0 && minMargin < trigger && moved && sinceMs > app.browseThrottleMs)
             {
                 retunePreserving(app, viewCtr);
                 app.lastRetune = now;
+                app.lastRetuneCtr = viewCtr;
             }
         }
 
