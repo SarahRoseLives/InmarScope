@@ -150,6 +150,15 @@ if(WIN32)
     # MinGW provides a WinMain shim, so the existing int main() still works.
     set_target_properties(FrameSync PROPERTIES WIN32_EXECUTABLE TRUE)
 
+    # Embed the application icon (icon.ico in the project root). Windows and
+    # GLFW both pick up the first icon resource for the exe and window.
+    if(EXISTS "${CMAKE_SOURCE_DIR}/icon.ico")
+        enable_language(RC)
+        set(FRAMESYNC_ICON "${CMAKE_SOURCE_DIR}/icon.ico")
+        configure_file("${CMAKE_SOURCE_DIR}/app.rc.in" "${CMAKE_BINARY_DIR}/app.rc" @ONLY)
+        target_sources(FrameSync PRIVATE "${CMAKE_BINARY_DIR}/app.rc")
+    endif()
+
     # Copy MinGW runtime DLLs next to the executable so it runs standalone
     # (PyCharm, double-click) without the MSYS2 bin dir on PATH.
     get_filename_component(MINGW_BIN "${CMAKE_CXX_COMPILER}" DIRECTORY)
