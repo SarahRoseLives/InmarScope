@@ -101,6 +101,10 @@ struct App
     int  recordFormat = 0; // 0=WAV, 1=OGG
     char recordDir[256] = "recordings";
 
+    // Country blacklist — voice calls from these 2-letter country codes
+    // will not be monitored (they still record if recording is on).
+    std::vector<std::string> blacklistCountries;
+
     int  audioDevice = 0;
     std::vector<std::string> audioDevs;
 

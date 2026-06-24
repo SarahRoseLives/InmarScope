@@ -67,12 +67,13 @@ public:
     ChannelTable& channelTable() { return netTable_; }
     EgcLog& egcLog() { return egcLog_; }
     AircraftTable& aircraftTable() { return acTable_; }
+    const AircraftTable& aircraftTable() const { return acTable_; }
 
     // Voice: route one 8400 decoder's audio to the speakers.
     void setVoiceMonitor(int channelId);
     int  voiceMonitor() const { return voiceMonitorId_; }
     uint32_t voiceAes() const;  // AES of the currently monitored voice decoder
-    void autoMonitor();         // Pick a voice decoder to monitor if none selected
+    void autoMonitor(const std::vector<std::string>& blacklistCountries = {}); // Skip blacklisted
     float audioLevel() { return audio_.level(); }
 
     // Audio output device selection (index 0 = system default).

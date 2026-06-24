@@ -35,6 +35,22 @@ bool isVoiceAssign(uint8_t type)
     return type >= 0x31 && type <= 0x34;
 }
 
+// Returns true if the aircraft is from a blacklisted country.
+static bool voiceAesBlacklisted(const App& app, uint32_t aesId)
+{
+    if (app.blacklistCountries.empty() || aesId == 0)
+        return false;
+    std::string icao = app.decoders.aircraftTable().icao(aesId);
+    if (icao.empty())
+        return false;
+    uint32_t ihex = (uint32_t)std::strtoul(icao.c_str(), nullptr, 16);
+    const char* cc = icaoCountry(ihex);
+    if (!cc)
+        return false;
+    auto& bl = app.blacklistCountries;
+    return std::find(bl.begin(), bl.end(), std::string(cc)) != bl.end();
+}
+
 // Retune the active (live) source to a new center and re-point the decoder
 // manager there. Wipes all decoders -- callers restore what they need.
 void retuneActive(App& app, double centerMHz)
@@ -101,10 +117,9 @@ void updateVoiceFollow(App& app)
                 if (isVoiceAssign(it->type) && it->rxMHz > 1.0) { pick = &*it; break; }
             app.followSeenCount = total;
             if (!pick) return;
+            if (voiceAesBlacklisted(app, pick->aesId))
+                return; // blacklisted country — don't record, don't monitor
             double rx = pick->rxMHz;
-            // Offset SDR B's center off the voice carrier so it avoids the RTL
-            // DC spike (centering exactly on it gives a bad constellation / no
-            // audio). The decoder still sits at the absolute rx frequency.
             double fsBMHz = app.sdrB.sampleRate() / 1e6;
             double offB = std::min(0.2, 0.25 * fsBMHz);
             double bctr = rx - offB;
@@ -180,6 +195,9 @@ void updateVoiceFollow(App& app)
         if (!pick)
             return;
 
+        if (voiceAesBlacklisted(app, pick->aesId))
+            return; // blacklisted — don't record, don't monitor
+
         const double rx = pick->rxMHz;
         const double centerMHz = app.active->centerFreq() / 1e6;
         const double halfMHz = (app.active->sampleRate() / 1e6) * 0.45;
@@ -206,7 +224,7 @@ void updateVoiceFollow(App& app)
 
         app.followChannelId = app.decoders.addDecoder(rx * 1e6, 8400, pick->aesId);
         if (app.followChannelId < 0)
-            return; // failed to spawn (e.g. manager not configured)
+            return;
         app.decoders.setVoiceMonitor(app.followChannelId);
         app.selectedDecoder = app.followChannelId;
         app.following = true;
@@ -262,6 +280,8 @@ void tuneToVoice(App& app, double rxMHz, uint32_t aesId)
 {
     if (rxMHz <= 1.0 || !app.active->running())
         return;
+    if (voiceAesBlacklisted(app, aesId))
+        return; // blacklisted — don't spawn
     double centerMHz = app.active->centerFreq() / 1e6;
     double halfMHz = (app.active->sampleRate() / 1e6) * 0.45;
     bool inBand = std::fabs(rxMHz - centerMHz) <= halfMHz;

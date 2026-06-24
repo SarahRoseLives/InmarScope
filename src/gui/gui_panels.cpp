@@ -754,6 +754,41 @@ void drawDecoders(App& app)
     ImGui::InputText("Folder", app.recordDir, sizeof(app.recordDir));
     ImGui::EndDisabled();
 
+    // Country blacklist — voice calls from these countries won't be monitored.
+    {
+        ImGui::Spacing();
+        ImGui::Text("Voice country blacklist:");
+        static char blBuf[4] = "";
+        ImGui::SetNextItemWidth(50);
+        ImGui::SameLine();
+        ImGui::InputText("##blcode", blBuf, sizeof(blBuf),
+                         ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_EnterReturnsTrue);
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Add##bladd"))
+        {
+            if (blBuf[0] && blBuf[1] && !blBuf[2])
+            {
+                std::string cc(blBuf, 2);
+                auto& bl2 = app.blacklistCountries;
+                if (std::find(bl2.begin(), bl2.end(), cc) == bl2.end())
+                    bl2.push_back(cc);
+                blBuf[0] = blBuf[1] = blBuf[2] = 0;
+            }
+        }
+        for (size_t i = 0; i < app.blacklistCountries.size();)
+        {
+            ImGui::Text("%s", app.blacklistCountries[i].c_str());
+            ImGui::SameLine();
+            char xbtn[12];
+            std::snprintf(xbtn, sizeof(xbtn), "X##bl%zu", i);
+            if (ImGui::SmallButton(xbtn))
+                app.blacklistCountries.erase(app.blacklistCountries.begin() + (ptrdiff_t)i);
+            else
+                ++i;
+        }
+        ImGui::Spacing();
+    }
+
     ImGui::Separator();
 
     if (ImGui::BeginTable("##decs", 6,
@@ -939,12 +974,13 @@ void drawAircraft(App& app)
     std::sort(acs.begin(), acs.end(),
               [](const AircraftEntry& a, const AircraftEntry& b) { return a.lastSeen > b.lastSeen; });
 
-    if (ImGui::BeginTable("##aircraft", 9,
+    if (ImGui::BeginTable("##aircraft", 10,
                           ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                           ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
     {
         ImGui::TableSetupColumn("AES", ImGuiTableColumnFlags_WidthFixed, 58);
         ImGui::TableSetupColumn("ICAO", ImGuiTableColumnFlags_WidthFixed, 54);
+        ImGui::TableSetupColumn("Ctry", ImGuiTableColumnFlags_WidthFixed, 34);
         ImGui::TableSetupColumn("Reg", ImGuiTableColumnFlags_WidthFixed, 64);
         ImGui::TableSetupColumn("Flight", ImGuiTableColumnFlags_WidthFixed, 64);
         ImGui::TableSetupColumn("Lat", ImGuiTableColumnFlags_WidthFixed, 70);
@@ -964,15 +1000,12 @@ void drawAircraft(App& app)
             ImGui::Text("%06X", a.aesId);
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(a.icao.c_str());
+            ImGui::TableNextColumn();
             if (!a.icao.empty())
             {
                 uint32_t ihex = (uint32_t)std::strtoul(a.icao.c_str(), nullptr, 16);
                 const char* cc = icaoCountry(ihex);
-                if (cc)
-                {
-                    ImGui::SameLine();
-                    ImGui::TextDisabled(" %s", cc);
-                }
+                if (cc) ImGui::TextUnformatted(cc);
             }
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(a.reg.c_str());

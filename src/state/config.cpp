@@ -50,13 +50,15 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(voiceSdrEnabled); WI(deviceIndexB); WD(voiceCenterMHz); WI(sampleRateIdxB);
     WI(autoGainB); WF(gainDbB); WI(biasTeeB); WF(ppmB);
     WI(voiceFollow); WF(followHoldSec);
-    WI(recordVoice); WS(recordDir);
+    WS(recordDir);
     WI(recordFormat);
     WI(acPosOnly);
     WI(showEmptyMsgs);
     WI(outFile); WS(outFilePath); WI(outUdp); WS(outUdpHost); WI(outUdpPort);
     WI(outFormat); WS(outStation); WI(outSbs); WI(outSbsPort);
     WI(layoutVersion);
+    for (auto& cc : app.blacklistCountries)
+        buf->appendf("blacklistCC=%s\n", cc.c_str());
     buf->append("\n");
 #undef WI
 #undef WF
@@ -94,13 +96,21 @@ void cfgReadLine(App& app, const char* line)
     RB(voiceSdrEnabled); RI(deviceIndexB); RD(voiceCenterMHz); RI(sampleRateIdxB);
     RB(autoGainB); RF(gainDbB); RB(biasTeeB); RF(ppmB);
     RB(voiceFollow); RF(followHoldSec);
-    RB(recordVoice); RS(recordDir);
+    RS(recordDir);
     RI(recordFormat);
     RB(acPosOnly);
     RB(showEmptyMsgs);
     RB(outFile); RS(outFilePath); RB(outUdp); RS(outUdpHost); RI(outUdpPort);
     RI(outFormat); RS(outStation); RB(outSbs); RI(outSbsPort);
     RI(layoutVersion);
+    if (!std::strcmp(key, "blacklistCC") && val[0] && val[1] && !val[2])
+    {
+        std::string cc(val, 2);
+        auto& bl = app.blacklistCountries;
+        if (std::find(bl.begin(), bl.end(), cc) == bl.end())
+            bl.push_back(cc);
+        return;
+    }
 #undef RI
 #undef RB
 #undef RF

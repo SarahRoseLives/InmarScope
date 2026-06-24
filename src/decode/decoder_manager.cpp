@@ -1,5 +1,7 @@
 #include "decode/decoder_manager.h"
 
+#include "decode/icao_country.h"
+#include "voice/wav_writer.h"
 #include <algorithm>
 #include <cmath>
 
@@ -171,7 +173,7 @@ void DecoderManager::setVoiceMonitor(int channelId)
     audio_.clear();
 }
 
-void DecoderManager::autoMonitor()
+void DecoderManager::autoMonitor(const std::vector<std::string>& blacklistCountries)
 {
     // If the current monitor is still a live voice decoder, keep it.
     if (voiceMonitorId_ >= 0) {
@@ -184,17 +186,57 @@ void DecoderManager::autoMonitor()
         }
     }
     // Pick any available voice decoder.
-    for (auto& w : workers_) {
-        std::lock_guard<std::mutex> lk(w->dMtx);
-        for (auto& sb : w->subbands)
-            for (auto& d : sb->decoders)
-                if (d->isVoice()) {
+    if (blacklistCountries.empty()) {
+        for (auto& w : workers_) {
+            std::lock_guard<std::mutex> lk(w->dMtx);
+            for (auto& sb : w->subbands)
+                for (auto& d : sb->decoders)
+                    if (d->isVoice()) {
+                        voiceMonitorId_ = d->channelId();
+                        d->setMonitored(true);
+                        return;
+                    }
+        }
+    } else {
+        for (auto& w : workers_) {
+            std::lock_guard<std::mutex> lk(w->dMtx);
+            for (auto& sb : w->subbands)
+                for (auto& d : sb->decoders) {
+                    if (!d->isVoice()) continue;
+                    uint32_t aes = d->voiceAesId();
+                    if (aes == 0) continue; // no AES yet, skip for now
+                    std::string icao = acTable_.icao(aes);
+                    if (icao.empty()) continue;
+                    uint32_t ihex = (uint32_t)std::strtoul(icao.c_str(), nullptr, 16);
+                    const char* cc = icaoCountry(ihex);
+                    if (cc && std::find(blacklistCountries.begin(), blacklistCountries.end(), std::string(cc)) != blacklistCountries.end())
+                        continue; // blacklisted
                     voiceMonitorId_ = d->channelId();
                     d->setMonitored(true);
                     return;
                 }
+        }
     }
     voiceMonitorId_ = -1;
+
+    // Stop recording on any voice decoder whose country is blacklisted.
+    if (!blacklistCountries.empty()) {
+        for (auto& w : workers_) {
+            std::lock_guard<std::mutex> lk(w->dMtx);
+            for (auto& sb : w->subbands)
+                for (auto& d : sb->decoders) {
+                    if (!d->isVoice()) continue;
+                    uint32_t aes = d->voiceAesId();
+                    if (aes == 0) continue;
+                    std::string icao = acTable_.icao(aes);
+                    if (icao.empty()) continue;
+                    uint32_t ihex = (uint32_t)std::strtoul(icao.c_str(), nullptr, 16);
+                    const char* cc = icaoCountry(ihex);
+                    if (cc && std::find(blacklistCountries.begin(), blacklistCountries.end(), std::string(cc)) != blacklistCountries.end())
+                        d->setRecording(false, "", RecordFormat::WAV);
+                }
+        }
+    }
 }
 
 void DecoderManager::setRecording(bool on, const std::string& dir)
