@@ -5,7 +5,14 @@
 #include <ctime>
 #include <mutex>
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 namespace {
+
+constexpr long kMaxLogBytes = 1 * 1024 * 1024; // 1 MB
 
 std::mutex  g_logMtx;
 std::FILE*  g_logFile = nullptr;
@@ -14,6 +21,24 @@ void ensureOpen()
 {
     if (g_logFile)
         return;
+    g_logFile = std::fopen("log.txt", "ab");
+}
+
+void rotateLog()
+{
+    if (!g_logFile) return;
+    long sz = std::ftell(g_logFile);
+    if (sz < kMaxLogBytes) return;
+    std::fclose(g_logFile);
+    g_logFile = nullptr;
+#if defined(_WIN32)
+    // Windows can't rename an open file; we already closed it.
+    DeleteFileA("log.old.txt");
+    MoveFileA("log.txt", "log.old.txt");
+#else
+    std::remove("log.old.txt");
+    std::rename("log.txt", "log.old.txt");
+#endif
     g_logFile = std::fopen("log.txt", "ab");
 }
 
@@ -43,4 +68,6 @@ void logWrite(const char* fmt, ...)
 
     std::fputc('\n', g_logFile);
     std::fflush(g_logFile);
+
+    rotateLog();
 }
