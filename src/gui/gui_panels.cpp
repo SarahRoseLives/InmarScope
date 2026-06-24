@@ -496,8 +496,9 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
         for (auto& d : decs)
         {
             double x = d.freqMHz;
-            ImVec4 col = d.locked ? ImVec4(0.2f, 1.0f, 0.35f, 1.0f)
-                                  : ImVec4(0.9f, 0.7f, 0.2f, 1.0f);
+            ImVec4 col = d.monitored ? ImVec4(0.3f, 0.5f, 1.0f, 1.0f)   // blue = active monitor
+                       : d.locked    ? ImVec4(0.2f, 1.0f, 0.35f, 1.0f)  // green = locked
+                                     : ImVec4(0.9f, 0.7f, 0.2f, 1.0f); // orange = unlocked
             if (ImPlot::DragLineX(d.channelId, &x, col, 2.0f))
                 mgr.setDecoderFreq(d.channelId, x * 1e6);
         }
@@ -694,12 +695,9 @@ void drawDecoders(App& app)
     else
         ImGui::TextDisabled("Voice: (no 8400 decoder)");
     ImGui::SameLine();
-    float lvl = app.decoders.audioLevel() * 5.0f; // voice is quiet; scale for the meter
+    float lvl = app.decoders.audioLevel() * 5.0f;
     if (lvl > 1.0f) lvl = 1.0f;
     ImGui::ProgressBar(lvl, ImVec2(110, 0), "");
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Listen to selected"))
-        app.decoders.setVoiceMonitor(app.selectedDecoder);
 
     // Audio output device picker.
     if (app.audioDevs.empty())
@@ -780,11 +778,16 @@ void drawDecoders(App& app)
             if (ImGui::Selectable(selid, sel,
                                   ImGuiSelectableFlags_SpanAllColumns |
                                       ImGuiSelectableFlags_AllowOverlap))
+            {
                 app.selectedDecoder = d.channelId;
+                if (d.isVoice)
+                    app.decoders.setVoiceMonitor(d.channelId);
+            }
             ImGui::SameLine();
-            ImVec4 c = d.locked ? ImVec4(0.2f, 1.0f, 0.3f, 1.0f)
-                                : ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
-            ImGui::TextColored(c, "%s", d.locked ? "LOCK" : "--");
+            ImVec4 c = d.monitored ? ImVec4(0.3f, 0.5f, 1.0f, 1.0f)   // blue = active monitor
+                     : d.locked    ? ImVec4(0.2f, 1.0f, 0.3f, 1.0f)   // green = locked
+                                   : ImVec4(0.5f, 0.5f, 0.5f, 1.0f);  // gray
+            ImGui::TextColored(c, "%s", d.monitored ? "MON" : d.locked ? "LOCK" : "--");
             ImGui::TableNextColumn();
             ImGui::Text("%.4f", d.freqMHz);
             ImGui::TableNextColumn();
@@ -1138,8 +1141,21 @@ void drawFlightMap(App& app)
     std::sort(acs.begin(), acs.end(),
               [](const AircraftEntry& a, const AircraftEntry& b) { return a.lastSeen > b.lastSeen; });
     const AircraftEntry* pick = nullptr;
-    for (auto& a : acs)
-        if (!a.icao.empty()) { pick = &a; break; }
+
+    // Prefer the ICAO of the voice call the user is currently listening to.
+    uint32_t monitoredAes = app.decoders.voiceAes();
+    if (monitoredAes) {
+        std::string monitoredIcao = app.decoders.aircraftTable().icao(monitoredAes);
+        if (!monitoredIcao.empty()) {
+            for (auto& a : acs) {
+                if (a.aesId == monitoredAes) { pick = &a; break; }
+            }
+        }
+    }
+    if (!pick) {
+        for (auto& a : acs)
+            if (!a.icao.empty()) { pick = &a; break; }
+    }
 
     if (pick && !app.flightMapWv.isReady())
     {

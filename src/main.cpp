@@ -165,6 +165,10 @@ int main(int, char**)
         if (app.active->running())
             updateRateChange(app);
 
+        app.decoders.autoMonitor();
+        if (app.dualMode)
+            app.decodersB.autoMonitor();
+
         updateFeed(app);
 
         drawControls(app);

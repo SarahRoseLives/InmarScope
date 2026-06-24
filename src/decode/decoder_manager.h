@@ -31,6 +31,8 @@ public:
         uint64_t msgs;
         int egcBer;     // -1 unless EGC
         int egcFrames;  // 0 unless EGC
+        bool monitored = false; // audio routed to speakers
+        bool isVoice   = false; // 8400 voice decoder
     };
 
     ~DecoderManager() { stop(); }
@@ -69,6 +71,8 @@ public:
     // Voice: route one 8400 decoder's audio to the speakers.
     void setVoiceMonitor(int channelId);
     int  voiceMonitor() const { return voiceMonitorId_; }
+    uint32_t voiceAes() const;  // AES of the currently monitored voice decoder
+    void autoMonitor();         // Pick a voice decoder to monitor if none selected
     float audioLevel() { return audio_.level(); }
 
     // Audio output device selection (index 0 = system default).

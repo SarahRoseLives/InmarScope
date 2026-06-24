@@ -53,6 +53,7 @@ public:
     uint64_t msgCount() const { return msgCount_.load(); }
     uint64_t voiceFrames() const { return voiceFrames_.load(); } // decoded AMBE frames
     void   setVoiceAesId(uint32_t id) { voiceAesId_ = id; } // aircraft AES for recording tag
+    uint32_t voiceAesId() const { return voiceAesId_; }
     bool   isVoice() const { return baud_ == 8400; }
     bool   isEgc() const { return baud_ == kEgcBaud; }
     int    egcBer() const;    // -1 if not EGC

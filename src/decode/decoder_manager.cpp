@@ -171,6 +171,32 @@ void DecoderManager::setVoiceMonitor(int channelId)
     audio_.clear();
 }
 
+void DecoderManager::autoMonitor()
+{
+    // If the current monitor is still a live voice decoder, keep it.
+    if (voiceMonitorId_ >= 0) {
+        for (auto& w : workers_) {
+            std::lock_guard<std::mutex> lk(w->dMtx);
+            for (auto& sb : w->subbands)
+                for (auto& d : sb->decoders)
+                    if (d->isVoice() && d->channelId() == voiceMonitorId_)
+                        return; // still alive
+        }
+    }
+    // Pick any available voice decoder.
+    for (auto& w : workers_) {
+        std::lock_guard<std::mutex> lk(w->dMtx);
+        for (auto& sb : w->subbands)
+            for (auto& d : sb->decoders)
+                if (d->isVoice()) {
+                    voiceMonitorId_ = d->channelId();
+                    d->setMonitored(true);
+                    return;
+                }
+    }
+    voiceMonitorId_ = -1;
+}
+
 void DecoderManager::setRecording(bool on, const std::string& dir)
 {
     recordOn_ = on;
@@ -242,6 +268,20 @@ uint64_t DecoderManager::voiceFrames(int channelId)
     return 0;
 }
 
+uint32_t DecoderManager::voiceAes() const
+{
+    if (voiceMonitorId_ < 0) return 0;
+    for (auto& w : workers_)
+    {
+        std::lock_guard<std::mutex> lk(w->dMtx);
+        for (auto& sb : w->subbands)
+            for (auto& d : sb->decoders)
+                if (d->channelId() == voiceMonitorId_)
+                    return d->voiceAesId();
+    }
+    return 0;
+}
+
 void DecoderManager::removeAll()
 {
     for (auto& w : workers_)
@@ -252,6 +292,7 @@ void DecoderManager::removeAll()
         std::lock_guard<std::mutex> ql(w->qMtx);
         w->queue.clear();
     }
+    voiceMonitorId_ = -1;
 }
 
 int DecoderManager::decoderCount()
@@ -283,7 +324,8 @@ std::vector<DecoderManager::Status> DecoderManager::status()
             for (auto& d : sb->decoders)
                 out.push_back({d->channelId(), d->freqMHz(), d->baud(),
                                d->locked(), d->ebno(), d->msgCount(),
-                               d->egcBer(), d->egcFrames()});
+                               d->egcBer(), d->egcFrames(),
+                               d->monitored(), d->isVoice()});
     }
     std::sort(out.begin(), out.end(),
               [](const Status& a, const Status& b) { return a.freqMHz < b.freqMHz; });
