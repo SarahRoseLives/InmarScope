@@ -32,12 +32,9 @@ void rotateLog()
     std::fclose(g_logFile);
     g_logFile = nullptr;
 #if defined(_WIN32)
-    // Windows can't rename an open file; we already closed it.
-    DeleteFileA("log.old.txt");
-    MoveFileA("log.txt", "log.old.txt");
+    DeleteFileA("log.txt");
 #else
-    std::remove("log.old.txt");
-    std::rename("log.txt", "log.old.txt");
+    std::remove("log.txt");
 #endif
     g_logFile = std::fopen("log.txt", "ab");
 }
