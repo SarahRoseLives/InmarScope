@@ -38,6 +38,7 @@ public:
 
     void feedAcars(const DecodedMessage& m);
     void feedEgc(const EgcMessage& m);
+    void feedLes(const LesMessage& m);
 
 private:
     void emit(const std::string& line);

@@ -119,7 +119,7 @@ struct App
     MessageFeed feed;
     VersionCheck verCheck;
     FlightMapWebView flightMapWv;
-    uint64_t lastAcarsFed = 0, lastEgcFed = 0;
+    uint64_t lastAcarsFed = 0, lastEgcFed = 0, lastLesFed = 0;
     bool   outFile = false;
     char   outFilePath[512] = "messages.jsonl";
     bool   outUdp = false;
@@ -208,4 +208,4 @@ constexpr const char* kFftLabels[] = {"1024", "2048", "4096", "8192", "16384", "
 constexpr int kNumFftSizes = (int)(sizeof(kFftSizes) / sizeof(kFftSizes[0]));
 
 // Dock layout version: bump when the built-in default layout changes.
-constexpr int kLayoutVersion = 6;
+constexpr int kLayoutVersion = 7;

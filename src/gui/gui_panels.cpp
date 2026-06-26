@@ -1464,6 +1464,53 @@ void drawMes(App& app)
     ImGui::End();
 }
 
+void drawLes(App& app)
+{
+    ImGui::Begin("LES");
+
+    ImGui::Text("%llu message(s)", (unsigned long long)app.decoders.lesLog().count());
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Clear"))
+        app.decoders.lesLog().clear();
+    ImGui::TextDisabled("LES private ship/shore messages (0xAA non-EGC).");
+    ImGui::Separator();
+
+    auto msgs = app.decoders.lesLog().snapshot();
+    if (ImGui::BeginTable("##les", 6,
+                          ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                          ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
+    {
+        ImGui::TableSetupColumn("Time", ImGuiTableColumnFlags_WidthFixed, 64);
+        ImGui::TableSetupColumn("LES", ImGuiTableColumnFlags_WidthFixed, 160);
+        ImGui::TableSetupColumn("Sat", ImGuiTableColumnFlags_WidthFixed, 52);
+        ImGui::TableSetupColumn("Ch", ImGuiTableColumnFlags_WidthFixed, 32);
+        ImGui::TableSetupColumn("Pkt", ImGuiTableColumnFlags_WidthFixed, 40);
+        ImGui::TableSetupColumn("Message");
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableHeadersRow();
+
+        for (auto it = msgs.rbegin(); it != msgs.rend(); ++it)
+        {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(it->timeUtc.c_str());
+            ImGui::TableNextColumn();
+            ImGui::Text("%s LES %02d", it->satName.c_str(), it->lesId);
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(it->satName.c_str());
+            ImGui::TableNextColumn();
+            if (it->channel >= 0) ImGui::Text("%d", it->channel);
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", it->pktNo);
+            ImGui::TableNextColumn();
+            ImGui::TextWrapped("%s", it->text.c_str());
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+
 ImPlotPoint constGetter(int idx, void* data)
 {
     const float* p = static_cast<const float*>(data);
@@ -1622,6 +1669,7 @@ void drawDockHost(App& app)
         ImGui::DockBuilderDockWindow("Network", rbot);
         ImGui::DockBuilderDockWindow("EGC", rbot);
         ImGui::DockBuilderDockWindow("MES", rbot);
+        ImGui::DockBuilderDockWindow("LES", rbot);
         ImGui::DockBuilderDockWindow("Aircraft", rbot);
         ImGui::DockBuilderDockWindow("Constellation", rcon);
         ImGui::DockBuilderFinish(dockId);

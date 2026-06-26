@@ -444,3 +444,38 @@ void MessageFeed::feedEgc(const EgcMessage& m)
     s += ",\"timestamp\":" + std::to_string(sec) + "}";
     emit(s);
 }
+
+void MessageFeed::feedLes(const LesMessage& m)
+{
+    if (!enabled()) return;
+    long sec, usec; nowUnix(sec, usec);
+
+    if (format_ == JAERO_TEXT)
+    {
+        std::string out = m.timeUtc + " UTC LES " + m.lesLabel + " ch=" + std::to_string(m.channel);
+        if (!m.text.empty())
+        {
+            out += "\n\t";
+            for (char c : m.text) { if (c == '\r') continue; out += (c == '\n') ? "\n\t" : std::string(1, c); }
+        }
+        emit(out);
+        return;
+    }
+
+    std::string s = "{\"source\":\"InmarScope\",\"type\":\"les\"";
+    s += ",\"les_id\":" + std::to_string(m.lesId);
+    s += ",\"les_label\":\"" + jsonEscape(m.lesLabel) + "\"";
+    s += ",\"sat\":\"" + jsonEscape(m.satName) + "\"";
+    s += ",\"channel\":" + std::to_string(m.channel);
+    s += ",\"pkt_no\":" + std::to_string(m.pktNo);
+    if (m.frameNumber > 0) s += ",\"frame\":" + std::to_string(m.frameNumber);
+    if (!m.timeUtc.empty()) s += ",\"time_utc\":\"" + jsonEscape(m.timeUtc) + "\"";
+    if (m.freqMHz > 0.0)
+    {
+        char f[16]; std::snprintf(f, sizeof(f), "%.4f", m.freqMHz);
+        s += std::string(",\"downlink_mhz\":") + f;
+    }
+    s += ",\"text\":\"" + jsonEscape(m.text) + "\"";
+    s += ",\"timestamp\":" + std::to_string(sec) + "}";
+    emit(s);
+}

@@ -227,6 +227,56 @@ private:
     std::map<uint32_t, MesEntry> entries_;
 };
 
+// A decoded LES (Land Earth Station) private message — non-EGC Inmarsat-C
+// ship-to-shore / shore-to-ship text extracted from 0xAA packets.
+struct LesMessage
+{
+    int channelId = 0;
+    double freqMHz = 0.0;
+    int frameNumber = 0;
+    std::string timeUtc;
+    std::string satName;   // "AOR-W", "AOR-E", etc.
+    int lesId = -1;
+    std::string lesLabel;  // e.g. "AOR-E LES 02 (Stratos Global...)"
+    int channel = -1;
+    int pktNo = 0;
+    std::string text;      // decoded IA5 message text
+};
+
+class LesLog
+{
+public:
+    void add(const LesMessage& m)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        msgs_.push_back(m);
+        if (msgs_.size() > kMax)
+            msgs_.erase(msgs_.begin(), msgs_.begin() + (msgs_.size() - kMax));
+        ++count_;
+    }
+    std::vector<LesMessage> snapshot()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        return msgs_;
+    }
+    uint64_t count()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        return count_;
+    }
+    void clear()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        msgs_.clear();
+    }
+
+private:
+    static constexpr size_t kMax = 2000;
+    std::mutex mtx_;
+    std::vector<LesMessage> msgs_;
+    uint64_t count_ = 0;
+};
+
 // A channel discovered from the network's own system-table broadcasts.
 struct NetworkChannel
 {

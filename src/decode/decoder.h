@@ -33,7 +33,7 @@ public:
             int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink,
             CassignLog* cassignLog, ChannelTable* netTable, EgcLog* egcLog = nullptr,
             AircraftTable* acTable = nullptr,
-            MesLog* mesLog = nullptr);
+            MesLog* mesLog = nullptr, LesLog* lesLog = nullptr);
     ~Decoder();
 
     // Process a block of sub-band interleaved double IQ (decode thread).

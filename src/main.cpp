@@ -189,6 +189,7 @@ int main(int, char**)
         drawNetwork(app);
         drawEgc(app);
         drawMes(app);
+        drawLes(app);
         drawAircraft(app);
         drawFlightMap(app);
         drawConstellation(app);

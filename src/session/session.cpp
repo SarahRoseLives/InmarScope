@@ -61,6 +61,17 @@ void updateFeed(App& app)
             app.feed.feedEgc(snap[i]);
         app.lastEgcFed = et;
     }
+    auto& llog = app.decoders.lesLog();
+    uint64_t lt = llog.count();
+    if (lt > app.lastLesFed)
+    {
+        auto snap = llog.snapshot();
+        uint64_t newN = lt - app.lastLesFed;
+        if (newN > snap.size()) newN = snap.size();
+        for (size_t i = snap.size() - (size_t)newN; i < snap.size(); ++i)
+            app.feed.feedLes(snap[i]);
+        app.lastLesFed = lt;
+    }
 }
 
 void startActive(App& app)

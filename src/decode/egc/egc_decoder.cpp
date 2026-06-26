@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -456,6 +457,70 @@ static std::string frameTimeStr(int frameNo)
     return buf;
 }
 
+// --- LES name lookup (sat 0-3 + lesId 0-63 → name) ---
+static const char* lesNameLookup(int sat, int lesId)
+{
+    if (lesId < 0 || lesId > 63) return "";
+    switch (sat * 100 + lesId) {
+    case   1: case 101: case 201: case 301: return "Vizada-Telenor, USA";
+    case   2: case 102: case 302: return "Stratos Global (Burum-2), Netherlands";
+    case 202: return "Stratos Global (Auckland), New Zealand";
+    case   3: case 103: case 203: case 303: return "KDDI, Japan";
+    case   4: case 104: case 204: case 304: return "Vizada-Telenor, Norway";
+    case  44: case 144: case 244: case 344: return "NCS";
+    case 105: case 335: return "Telecom, Italy";
+    case 305: case 120: return "OTESTAT, Greece";
+    case 306: return "VSNL, India";
+    case 110: case 310: return "Turk Telecom, Turkey";
+    case 211: case 311: return "Beijing MCN, China";
+    case  12: case 112: case 212: case 312: return "Stratos Global (Burum), Netherlands";
+    case 114: return "Embratel, Brazil";
+    case 116: case 316: return "Telekomunikacja Polska, Poland";
+    case 117: case 217: case 317: return "Morsviazsputnik, Russia";
+    case  21: case 121: case 221: case 321: return "Vizada (FT), France";
+    case 127: case 327: return "Bezeq, Israel";
+    case 210: case 328: return "Singapore Telecom, Singapore";
+    case 330: return "VISHIPEL, Vietnam";
+    default: return "";
+    }
+}
+static std::string lesName(int sat, int lesId)
+{
+    const char* n = lesNameLookup(sat, lesId);
+    return n && n[0] ? n : "";
+}
+static std::string lesLabel(int sat, int lesId)
+{
+    const char* n = lesNameLookup(sat, lesId);
+    if (n && n[0]) return std::string(satName(sat)) + " LES " + std::to_string(lesId) + " (" + n + ")";
+    return std::string(satName(sat)) + " LES " + std::to_string(lesId);
+}
+
+// Services bitmask strings (16-bit, used in 0xAB LES List and 0x92 Login ACK)
+static std::string servicesText(uint16_t svc)
+{
+    std::string s;
+    if (svc & 0x8000) s += "MaritimeDistressAlert ";
+    if (svc & 0x4000) s += "SafetyNet ";
+    if (svc & 0x2000) s += "InmarsatC ";
+    if (svc & 0x1000) s += "StoreFwd ";
+    if (svc & 0x0800) s += "HalfDuplex ";
+    if (svc & 0x0400) s += "FullDuplex ";
+    if (svc & 0x0200) s += "ClosedNet ";
+    if (svc & 0x0100) s += "FleetNet ";
+    if (svc & 0x0080) s += "PrefixSF ";
+    if (svc & 0x0040) s += "LandMobileAlert ";
+    if (svc & 0x0020) s += "AeroC ";
+    if (svc & 0x0010) s += "ITA2 ";
+    if (svc & 0x0008) s += "DATA ";
+    if (svc & 0x0004) s += "BasicX400 ";
+    if (svc & 0x0002) s += "EnhancedX400 ";
+    if (svc & 0x0001) s += "LowPowerCMES ";
+    if (s.empty()) return "None";
+    s.pop_back();
+    return s;
+}
+
 // TDM slot decoding (Signalling Channel):
 // 7 bytes → 28 slots of 2 bits each. Returns a compact hex string.
 static std::string tdmSlots(const uint8_t* d)
@@ -475,6 +540,7 @@ struct EgcDecoder::Impl
     double fs;
     EgcLog* log;
     MesLog* mesLog = nullptr;
+    LesLog* lesLog = nullptr;
     double mixPhase = 0.0;
     RDemodulator demod;
     UWFinder uw{25};
@@ -492,6 +558,8 @@ struct EgcDecoder::Impl
     std::vector<uint8_t> mfaData;
     int mfaExpected = 0, mfaFilled = 0;
     bool mfaActive = false;
+    // Multi-packet AA (LES message) assembly: key = sat*10000+les*100+channel
+    std::map<int, std::pair<int, std::string>> aaBuf;
 
     void emitTerminal(const char* tag, const char* desc,
                       uint32_t mesId = 0, const char* sat = "", int les = -1, int channel = -1)
@@ -541,6 +609,145 @@ struct EgcDecoder::Impl
                  priorityName(priority), msgId, payLen,
                  m.text.empty() ? "(binary)" : m.text.c_str());
         if (log) log->add(m);
+    }
+
+    // Decode a single AA packet. Returns true if text was emitted to lesLog.
+    bool handleAaPacket(const uint8_t* f, int pos, int plen)
+    {
+        // Header bytes: pos+2=sat/les, pos+3=logical channel, pos+4=pktNo
+        int sat = readSat(f, pos + 2), les = readLes(f, pos + 2);
+        int lch = f[pos + 3], pktNo = f[pos + 4];
+        int payOff = pos + 5;
+        int payLen = plen - 5 - 2; // exclude header(5) + CRC(2)
+        if (payLen < 0) payLen = 0;
+
+        // Build hex dump + IA5 preview (mask high bit per scytaleC IsBinary)
+        char hex[256] = ""; int hp = 0;
+        std::string ia5, ita2Text;
+        for (int i = 0; i < payLen; ++i)
+        {
+            uint8_t c = f[payOff + i];
+            if (hp < (int)sizeof(hex) - 4)
+                hp += std::snprintf(hex + hp, sizeof(hex) - hp, "%02X ", c);
+            // Strip high bit: many AA messages mark the 8th bit
+            uint8_t c7 = c & 0x7F;
+            if (c7 >= 0x20 || c7 == '\r' || c7 == '\n' || c7 == '\t')
+                ia5 += (char)c7;
+            else if (c7 != 0)
+                ia5 += '.';
+        }
+        // ITA2 (Baudot) 5-bit decoding — pack 8-bit bytes into 5-bit codewords
+        // per scytaleC Ita2Decoder.cs
+        {
+            // Baudot character tables (indexed by 5-bit value)
+            static const char* kChars[] = {
+                "",   "E",  "\n", "A",  " ",  "S",  "I",  "U",
+                "\n", "D",  "R",  "J",  "N",  "F",  "C",  "K",
+                "T",  "Z",  "L",  "W",  "H",  "Y",  "P",  "Q",
+                "O",  "B",  "G",  "",   "M",  "X",  "V",  ""
+            };
+            static const char* kFigs[] = {
+                "",   "3",  "\n", "-",  " ",  "'",  "8",  "7",
+                "\n", "{ENQ}","4","{BEL}",",","!"," ",":","(",
+                "5",  "+",  ")",  "2",  "{LB}", "6","0","1",
+                "9",  "?",  "&",  "",   ".",  "/",  ";",  ""
+            };
+            bool fig = false;
+            uint32_t bits = 0; int nBits = 0;
+            for (int i = 0; i < payLen; ++i)
+            {
+                bits = (bits << 8) | f[payOff + i];
+                nBits += 8;
+                while (nBits >= 5)
+                {
+                    int code = (bits >> (nBits - 5)) & 0x1F;
+                    nBits -= 5;
+                    if (code == 27)      { fig = true;  continue; }
+                    else if (code == 31) { fig = false; continue; }
+                    const char* tbl = fig ? kFigs[code] : kChars[code];
+                    if (tbl[0] == '{') {
+                        // skip special tokens like {ENQ} {BEL} {LB}
+                        while (tbl[0] && tbl[0] != '}') ++tbl;
+                        if (tbl[0] == '}') ++tbl;
+                        if (tbl[0]) ita2Text += tbl;
+                    } else {
+                        ita2Text += tbl;
+                    }
+                }
+            }
+        }
+
+        // Terminal log: compact hex + best text preview
+        char buf[1024];
+        std::snprintf(buf, sizeof(buf),
+                      "on %s LES %02d ch %d pkt %d [%d bytes] %s",
+                      satName(sat), les, lch, pktNo, payLen, hex);
+        int blen = (int)std::strlen(buf);
+        int space = (int)sizeof(buf) - blen - 4;
+        std::string* preview = &ia5;
+        if (preview->empty() && !ita2Text.empty()) preview = &ita2Text;
+        if (space > 0 && !preview->empty())
+        {
+            buf[blen++] = '|'; buf[blen++] = ' ';
+            int cp = (int)preview->size() < (space - 1) ? (int)preview->size() : (space - 1);
+            if (cp > 60) cp = 60;
+            std::memcpy(buf + blen, preview->data(), cp);
+            blen += cp;
+            buf[blen] = 0;
+        }
+        emitTerminal("Message", buf);
+
+        // Auto-detect encoding for best text
+        int hiBits = 0;
+        for (int i = 0; i < payLen; ++i)
+            if (f[payOff + i] & 0x80) ++hiBits;
+        bool useIta2 = (hiBits > payLen / 3) && !ita2Text.empty();
+        std::string bestText = useIta2 ? ita2Text : ia5;
+
+        // Zap test
+        bool isZap = (payLen >= 36 &&
+                      f[payOff + 0] == 0x61 && f[payOff + 1] == 0x62 &&
+                      f[payOff + 2] == 0x63 && f[payOff + 3] == 0x64);
+        if (isZap) return false;
+
+        // Multi-packet assembly
+        int mrfKey = (sat * 10000) + (les * 100) + lch;
+        auto& mrf = aaBuf[mrfKey];
+        if (pktNo <= 1) { mrf.first = pktNo; mrf.second = bestText; }
+        else if (pktNo == mrf.first + 1 && (int)mrf.second.size() + (int)bestText.size() < 4096)
+            { mrf.second += bestText; mrf.first = pktNo; }
+        else { mrf.first = pktNo; mrf.second = bestText; }
+
+        // Emit to LesLog with hex + both text previews
+        if (lesLog && payLen > 2)
+        {
+            LesMessage lm;
+            lm.channelId = channelId;
+            lm.freqMHz = freqMHz;
+            lm.frameNumber = curFrameNo;
+            lm.timeUtc = curTime;
+            lm.satName = satName(sat);
+            lm.lesId = les;
+            lm.lesLabel = lesLabel(sat, les);
+            lm.channel = lch;
+            lm.pktNo = pktNo;
+            char txt[1024]; int tp = 0;
+            tp += std::snprintf(txt + tp, sizeof(txt) - tp,
+                                "%s LES %02d ch %d pkt %d  [%d bytes]\n",
+                                satName(sat), les, lch, pktNo, payLen);
+            tp += std::snprintf(txt + tp, sizeof(txt) - tp, "HEX: %s\n", hex);
+            if (!ia5.empty())
+                tp += std::snprintf(txt + tp, sizeof(txt) - tp, "IA5: %s\n", ia5.c_str());
+            if (!ita2Text.empty())
+                tp += std::snprintf(txt + tp, sizeof(txt) - tp, "ITA2: %s\n", ita2Text.c_str());
+            if ((int)mrf.second.size() > 8)
+                tp += std::snprintf(txt + tp, sizeof(txt) - tp, "--- assembled (%s) ---\n%s",
+                                    useIta2 ? "ITA2" : "IA5", mrf.second.c_str());
+            lm.text = txt;
+            lesLog->add(lm);
+        }
+        return false;
+        return false;
     }
 
     void decodeFrame(const uint8_t* f, int flen)
@@ -596,18 +803,48 @@ struct EgcDecoder::Impl
                     int ep = packetLength(mfaData.data(), 0, mfaExpected);
                     if ((ed == 0xB1 || ed == 0xB2) && crcOk(mfaData.data(), 0, ep))
                         emitEgc(mfaData.data(), 0, ep);
+                    else if (ed == 0xAA && crcOk(mfaData.data(), 0, ep))
+                        handleAaPacket(mfaData.data(), 0, ep);
                 }
                 mfaActive = false;
             }
             // --- STD-C terminal activity packets ---
             else if (d == 0x92 && ok)
             {
-                // Login ACK
+                // Login ACK  — layout per scytaleC PacketDecoder92.cs:
+                //   pos+0=0x92, pos+1=LoginAckLength, pos+2-4=3-byte-LES,
+                //   pos+5-6=downlink, pos+7=separator, if len>7: pos+8=count, pos+9=stations
                 uint32_t lesHex = ((uint32_t)f[pos+2] << 16) | ((uint32_t)f[pos+3] << 8) | f[pos+4];
-                double dl = downlinkMHz(f, pos + 5);
-                char buf[128];
-                std::snprintf(buf, sizeof(buf), "LES %06X on %s ch down %.4f MHz",
-                              lesHex, satName(0), dl);
+                double dl = 0.0;
+                if (f[pos+5] != 0xFF || f[pos+6] != 0xFF)
+                    dl = downlinkMHz(f, pos + 5);
+                char buf[1024];
+                int bp = 0;
+                bp += std::snprintf(buf + bp, sizeof(buf) - bp,
+                                    "LES %06X on %s ch", lesHex, satName(0));
+                if (dl > 0.0)
+                    bp += std::snprintf(buf + bp, sizeof(buf) - bp, " down %.4f MHz", dl);
+                bp += std::snprintf(buf + bp, sizeof(buf) - bp, " (len=%d)", f[pos+1]);
+                // If LoginAckLength > 7, station table follows
+                int ackLen = f[pos + 1];
+                if (ackLen > 7)
+                {
+                    int cnt = f[pos + 8];
+                    bp += std::snprintf(buf + bp, sizeof(buf) - bp, "\nStation table (%d station(s)):", cnt);
+                    int off = pos + 9;
+                    for (int i = 0; i < cnt && off + 6 <= pos + plen; ++i)
+                    {
+                        int ssat = (f[off] >> 6) & 3;
+                        int sles = f[off] & 0x3F;
+                        uint16_t svcBits = ((uint16_t)f[off + 2] << 8) | f[off + 3];
+                        double sdl = downlinkMHz(f, off + 4);
+                        bp += std::snprintf(buf + bp, sizeof(buf) - bp,
+                                            "\n  %s LES %02d svc=[%s] down %.3f MHz",
+                                            satName(ssat), sles,
+                                            servicesText(svcBits).c_str(), sdl);
+                        off += 6;
+                    }
+                }
                 emitTerminal("Login ACK", buf);
             }
             else if (d == 0x81 && ok)
@@ -667,13 +904,7 @@ struct EgcDecoder::Impl
             }
             else if (d == 0xAA && ok)
             {
-                // Message (non-EGC)
-                int sat = readSat(f, pos + 2), les = readLes(f, pos + 2);
-                int lch = f[pos + 3], pktNo = f[pos + 4];
-                char buf[128];
-                std::snprintf(buf, sizeof(buf), "on %s LES %02d ch %d pkt %d",
-                              satName(sat), les, lch, pktNo);
-                emitTerminal("Message", buf);
+                handleAaPacket(f, pos, plen);
             }
             else if (d == 0x08 && ok)
             {
@@ -711,10 +942,24 @@ struct EgcDecoder::Impl
             }
             else if (d == 0xAB && ok)
             {
-                // LES List
+                // LES List — decode each station entry (6 bytes per record)
                 int cnt = f[pos + 3];
-                char buf[256];
-                std::snprintf(buf, sizeof(buf), "%d LES entries", cnt);
+                char buf[768];
+                int bp = 0;
+                bp += std::snprintf(buf + bp, sizeof(buf) - bp, "%d LES entry(s):", cnt);
+                int off = pos + 4;
+                for (int i = 0; i < cnt && off + 6 <= pos + plen; ++i)
+                {
+                    int ssat = (f[off] >> 6) & 3;
+                    int sles = f[off] & 0x3F;
+                    uint16_t svcBits = ((uint16_t)f[off + 2] << 8) | f[off + 3];
+                    double dl = downlinkMHz(f, off + 4);
+                    bp += std::snprintf(buf + bp, sizeof(buf) - bp,
+                                        "\n  %s LES %02d svc=[%s] down %.3f MHz",
+                                        satName(ssat), sles,
+                                        servicesText(svcBits).c_str(), dl);
+                    off += 6;
+                }
                 emitTerminal("LES List", buf);
             }
             pos += plen;
@@ -723,13 +968,14 @@ struct EgcDecoder::Impl
 };
 
 EgcDecoder::EgcDecoder(int channelId, double freqMHz, double sampleRate, EgcLog* log,
-                       MesLog* mesLog)
+                       MesLog* mesLog, LesLog* lesLog)
     : p_(new Impl(sampleRate))
 {
     p_->channelId = channelId;
     p_->freqMHz = freqMHz;
     p_->log = log;
     p_->mesLog = mesLog;
+    p_->lesLog = lesLog;
     p_->mixPhase = 0.0;
 }
 

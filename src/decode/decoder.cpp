@@ -79,7 +79,7 @@ static const char* suTypeName(uint8_t t)
 Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud,
                  int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink,
                  CassignLog* cassignLog, ChannelTable* netTable, EgcLog* egcLog,
-                 AircraftTable* acTable, MesLog* mesLog)
+                 AircraftTable* acTable, MesLog* mesLog, LesLog* lesLog)
     : ddc_(subRate, chanFreqHz - subCenterHz, ddcRate(baud), ddcBw(baud)),
       log_(log),
       suLog_(suLog),
@@ -95,7 +95,7 @@ Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud
 {
     if (baud == kEgcBaud)
     {
-        egc_ = std::make_unique<EgcDecoder>(channelId, chanFreqHz / 1e6, ddc_.outputRate(), egcLog_, mesLog);
+            egc_ = std::make_unique<EgcDecoder>(channelId, chanFreqHz / 1e6, ddc_.outputRate(), egcLog_, mesLog, lesLog);
     }
     else if (baud == 10500 || baud == 8400)
     {

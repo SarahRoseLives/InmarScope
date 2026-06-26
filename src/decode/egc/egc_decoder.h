@@ -11,12 +11,13 @@
 
 class EgcLog;
 class MesLog;
+class LesLog;
 
 class EgcDecoder
 {
 public:
     EgcDecoder(int channelId, double freqMHz, double sampleRate, EgcLog* log,
-               MesLog* mesLog = nullptr);
+               MesLog* mesLog = nullptr, LesLog* lesLog = nullptr);
     ~EgcDecoder();
 
     // Feed a block of 48 kHz complex baseband (interleaved double I,Q).
