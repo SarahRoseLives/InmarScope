@@ -560,6 +560,7 @@ struct EgcDecoder::Impl
     bool mfaActive = false;
     // Multi-packet AA (LES message) assembly: key = sat*10000+les*100+channel
     std::map<int, std::pair<int, std::string>> aaBuf;
+    int lastLesKey = -1;            // de-dupe per-channel LesLog entries
 
     void emitTerminal(const char* tag, const char* desc,
                       uint32_t mesId = 0, const char* sat = "", int les = -1, int channel = -1)
@@ -697,12 +698,10 @@ struct EgcDecoder::Impl
         }
         emitTerminal("Message", buf);
 
-        // Auto-detect encoding for best text
+        // Count high-bit bytes for encoding detection
         int hiBits = 0;
         for (int i = 0; i < payLen; ++i)
             if (f[payOff + i] & 0x80) ++hiBits;
-        bool useIta2 = (hiBits > payLen / 3) && !ita2Text.empty();
-        std::string bestText = useIta2 ? ita2Text : ia5;
 
         // Zap test
         bool isZap = (payLen >= 36 &&
@@ -710,43 +709,90 @@ struct EgcDecoder::Impl
                       f[payOff + 2] == 0x63 && f[payOff + 3] == 0x64);
         if (isZap) return false;
 
-        // Multi-packet assembly
+        // Multi-packet assembly with encoding locked by pkt 1.
+        // mrf.first encodes both pktNo and encoding type:
+        //   > 10000 = ITA2 chain (mrf.first - 10000 = last pktNo)
+        //   < -10000 = IA5 chain (-10000 - mrf.first = last pktNo)
         int mrfKey = (sat * 10000) + (les * 100) + lch;
         auto& mrf = aaBuf[mrfKey];
-        if (pktNo <= 1) { mrf.first = pktNo; mrf.second = bestText; }
-        else if (pktNo == mrf.first + 1 && (int)mrf.second.size() + (int)bestText.size() < 4096)
-            { mrf.second += bestText; mrf.first = pktNo; }
-        else { mrf.first = pktNo; mrf.second = bestText; }
+        bool lockIta2;
+        int lastPkt;
+        if (mrf.first > 10000)      { lockIta2 = true;  lastPkt = mrf.first - 10000; }
+        else if (mrf.first < -10000) { lockIta2 = false; lastPkt = -10000 - mrf.first; }
+        else                         { lockIta2 = false; lastPkt = 0; }
 
-        // Emit to LesLog with hex + both text previews
+        // Determine encoding for this packet
+        bool useIta2;
+        if (lastPkt == 0) {
+            useIta2 = (hiBits > payLen / 3) && !ita2Text.empty();
+        } else {
+            useIta2 = lockIta2; // follow pkt 1's encoding
+        }
+        std::string bestText = useIta2 ? ita2Text : ia5;
+
+        // Assemble: append on any packet increase, clear on pkt 1.
+        // Gaps (e.g. pkt 4 → pkt 6) don't break the chain — just skip the gap.
+        if (pktNo <= 1)
+            mrf.second = bestText;
+        else if (pktNo > lastPkt)
+            mrf.second += bestText;
+        else
+            mrf.second = bestText; // out-of-order or duplicate pktNo
+        // Store encoding + pktNo
+        int code = useIta2 ? 10000 + pktNo : -10000 - pktNo;
+        mrf.first = code;
+
+        // Emit to LesLog with hex + text previews.
+        // Skip if this chain already has a recent decoded entry (avoid duplicates).
         if (lesLog && payLen > 2)
         {
-            LesMessage lm;
-            lm.channelId = channelId;
-            lm.freqMHz = freqMHz;
-            lm.frameNumber = curFrameNo;
-            lm.timeUtc = curTime;
-            lm.satName = satName(sat);
-            lm.lesId = les;
-            lm.lesLabel = lesLabel(sat, les);
-            lm.channel = lch;
-            lm.pktNo = pktNo;
-            char txt[1024]; int tp = 0;
-            tp += std::snprintf(txt + tp, sizeof(txt) - tp,
-                                "%s LES %02d ch %d pkt %d  [%d bytes]\n",
-                                satName(sat), les, lch, pktNo, payLen);
-            tp += std::snprintf(txt + tp, sizeof(txt) - tp, "HEX: %s\n", hex);
-            if (!ia5.empty())
-                tp += std::snprintf(txt + tp, sizeof(txt) - tp, "IA5: %s\n", ia5.c_str());
-            if (!ita2Text.empty())
-                tp += std::snprintf(txt + tp, sizeof(txt) - tp, "ITA2: %s\n", ita2Text.c_str());
-            if ((int)mrf.second.size() > 8)
-                tp += std::snprintf(txt + tp, sizeof(txt) - tp, "--- assembled (%s) ---\n%s",
-                                    useIta2 ? "ITA2" : "IA5", mrf.second.c_str());
-            lm.text = txt;
-            lesLog->add(lm);
+            // Determine readability by raw byte analysis. Encrypted data
+            // has nearly uniform byte distribution (~35% in printable ASCII
+            // range). Clean text has >70% printable bytes.
+            int printable = 0;
+            for (int i = 0; i < payLen; ++i)
+            {
+                uint8_t c = f[payOff + i];
+                if ((c >= 0x20 && c < 0x7F) || c == '\r' || c == '\n' || c == '\t')
+                    ++printable;
+            }
+            bool hasReadable = (payLen > 16 && printable > payLen * 2 / 3);
+            // Only log each chain once: skip if we already emitted this chain
+            // earlier in the same frame (mrf.first > 10000 means already emitted)
+            static int lastLoggedKey = -1;
+            if (lastLesKey == mrfKey) { /* already emitted this frame */ }
+            else
+            {
+                LesMessage lm;
+                lm.channelId = channelId;
+                lm.freqMHz = freqMHz;
+                lm.frameNumber = curFrameNo;
+                lm.timeUtc = curTime;
+                lm.satName = satName(sat);
+                lm.lesId = les;
+                lm.lesLabel = lesLabel(sat, les);
+                lm.channel = lch;
+                lm.pktNo = pktNo;
+                char txt[1024]; int tp = 0;
+                tp += std::snprintf(txt + tp, sizeof(txt) - tp,
+                                    "%s LES %02d ch %d pkt %d/%d  [%d bytes]\n",
+                                    satName(sat), les, lch, pktNo,
+                                    (int)std::abs(mrf.first) % 10000, payLen);
+                tp += std::snprintf(txt + tp, sizeof(txt) - tp, "HEX: %s\n", hex);
+                if (!ia5.empty())
+                    tp += std::snprintf(txt + tp, sizeof(txt) - tp, "IA5: %s\n", ia5.c_str());
+                if (!ita2Text.empty())
+                    tp += std::snprintf(txt + tp, sizeof(txt) - tp, "ITA2: %s\n", ita2Text.c_str());
+                if (!hasReadable)
+                    tp += std::snprintf(txt + tp, sizeof(txt) - tp, "--- [encrypted] ---\n");
+                else if ((int)mrf.second.size() > 8)
+                    tp += std::snprintf(txt + tp, sizeof(txt) - tp, "--- assembled (%s) ---\n%s",
+                                        useIta2 ? "ITA2" : "IA5", mrf.second.c_str());
+                lm.text = txt;
+                lesLog->add(lm);
+                lastLesKey = mrfKey;
+            }
         }
-        return false;
         return false;
     }
 
