@@ -56,7 +56,7 @@ struct App
     SdrppServerSource server;
     HackRfSource    hack;
     SdrSource*      active = &sdr;
-    int  sourceMode = 0; // 0 = RTL-SDR, 1 = WAV, 2 = SDR++ Server, 3 = HackRF
+    int  sourceMode = 0; // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL
     char wavPath[512] = "";
     bool wavLoop = true;
     char serverHost[128] = "localhost";
@@ -79,11 +79,10 @@ struct App
     RtlSdrSource     sdrB;
 
     // Dual-SDR
-    bool   voiceSdrEnabled = false;
     bool   dualMode = false;
     int    deviceIndexB = 1;
-    double voiceCenterMHz = 1545.0;
-    int    sampleRateIdxB = 0;
+    double centerFreqMHzB = 1545.0;
+    int    sampleRateIdxB = 9;  // 2.4 MHz
     bool   autoGainB = false;
     float  gainDbB = 40.0f;
     bool   biasTeeB = false;
@@ -103,7 +102,8 @@ struct App
     int  recordFormat = 0; // 0=WAV, 1=OGG
     char recordDir[256] = "recordings";
     bool saveDecoders = false; // save non-8400 decoders in INI for restart
-    std::vector<std::pair<double,int>> savedDecoders; // freqMHz, baud
+    std::vector<std::pair<double,int>> savedDecoders;  // freqMHz, baud  (spectrum A)
+    std::vector<std::pair<double,int>> savedDecodersB; // freqMHz, baud  (spectrum B)
 
     // Country blacklist — voice calls from these 2-letter country codes
     // will not be monitored (they still record if recording is on).
@@ -174,10 +174,13 @@ struct App
     bool   acPosOnly = false;
     bool   showEmptyMsgs = false;
     bool   showBandPlan = false;
-    std::vector<std::string> bandPlanNames;  // display names
-    std::vector<std::string> bandPlanPaths;  // full file paths
+    bool   showBandPlanB = false;
+    std::vector<std::string> bandPlanNames;  // display names (shared)
+    std::vector<std::string> bandPlanPaths;  // full file paths (shared)
     int    bandPlanIdx = 0;
+    int    bandPlanIdxB = 0;
     BandPlan bandPlanLoaded;
+    BandPlan bandPlanLoadedB;
     char   bandPlanDir[256] = "bandplans";
 
     // CallHunter
@@ -210,4 +213,4 @@ constexpr const char* kFftLabels[] = {"1024", "2048", "4096", "8192", "16384", "
 constexpr int kNumFftSizes = (int)(sizeof(kFftSizes) / sizeof(kFftSizes[0]));
 
 // Dock layout version: bump when the built-in default layout changes.
-constexpr int kLayoutVersion = 7;
+constexpr int kLayoutVersion = 10;

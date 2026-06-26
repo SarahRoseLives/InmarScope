@@ -47,7 +47,7 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WS(serverHost); WI(serverPort); WI(serverCompression); WI(serverSampleType);
     WD(serverSampleRateMHz);
     WD(hackSampleRateMHz); WI(hackLna); WI(hackVga); WI(hackAmp); WI(hackBias);
-    WI(voiceSdrEnabled); WI(deviceIndexB); WD(voiceCenterMHz); WI(sampleRateIdxB);
+    WI(deviceIndexB); WD(centerFreqMHzB); WI(sampleRateIdxB);
     WI(autoGainB); WF(gainDbB); WI(biasTeeB); WF(ppmB);
     WI(voiceFollow); WF(followHoldSec);
     WS(recordDir);
@@ -55,7 +55,7 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(saveDecoders);
     WI(acPosOnly);
     WI(showEmptyMsgs);
-    WI(showBandPlan); WI(bandPlanIdx); WS(bandPlanDir);
+    WI(showBandPlan); WI(bandPlanIdx); WI(showBandPlanB); WI(bandPlanIdxB); WS(bandPlanDir);
     WI(outFile); WS(outFilePath); WI(outUdp); WS(outUdpHost); WI(outUdpPort);
     WI(outFormat); WS(outStation); WI(outSbs); WI(outSbsPort);
     WI(layoutVersion);
@@ -63,12 +63,10 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
         buf->appendf("blacklistCC=%s\n", cc.c_str());
     if (app.saveDecoders)
     {
-        for (auto& st : app.decoders.status())
-            if (st.baud != 8400)
-                buf->appendf("savedDecoder=%.3f,%d\n", st.freqMHz, st.baud);
-        for (auto& st : app.decodersB.status())
-            if (st.baud != 8400)
-                buf->appendf("savedDecoder=%.3f,%d\n", st.freqMHz, st.baud);
+        for (auto& sd : app.savedDecoders)
+            buf->appendf("savedDecoder=%.3f,%d\n", sd.first, sd.second);
+        for (auto& sd : app.savedDecodersB)
+            buf->appendf("savedDecoderB=%.3f,%d\n", sd.first, sd.second);
     }
     buf->append("\n");
 #undef WI
@@ -104,7 +102,7 @@ void cfgReadLine(App& app, const char* line)
     RS(serverHost); RI(serverPort); RB(serverCompression); RI(serverSampleType);
     RD(serverSampleRateMHz);
     RD(hackSampleRateMHz); RI(hackLna); RI(hackVga); RB(hackAmp); RB(hackBias);
-    RB(voiceSdrEnabled); RI(deviceIndexB); RD(voiceCenterMHz); RI(sampleRateIdxB);
+    RI(deviceIndexB); RD(centerFreqMHzB); RI(sampleRateIdxB);
     RB(autoGainB); RF(gainDbB); RB(biasTeeB); RF(ppmB);
     RB(voiceFollow); RF(followHoldSec);
     RS(recordDir);
@@ -117,9 +115,16 @@ void cfgReadLine(App& app, const char* line)
             app.savedDecoders.push_back({f, b});
         return;
     }
+    if (!std::strcmp(key, "savedDecoderB"))
+    {
+        double f = 0.0; int b = 0;
+        if (std::sscanf(val, "%lf,%d", &f, &b) == 2 && f > 0.0 && b > 0)
+            app.savedDecodersB.push_back({f, b});
+        return;
+    }
     RB(acPosOnly);
     RB(showEmptyMsgs);
-    RB(showBandPlan); RI(bandPlanIdx); RS(bandPlanDir);
+    RB(showBandPlan); RI(bandPlanIdx); RB(showBandPlanB); RI(bandPlanIdxB); RS(bandPlanDir);
     RB(outFile); RS(outFilePath); RB(outUdp); RS(outUdpHost); RI(outUdpPort);
     RI(outFormat); RS(outStation); RB(outSbs); RI(outSbsPort);
     RI(layoutVersion);

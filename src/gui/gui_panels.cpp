@@ -38,8 +38,8 @@ void drawControls(App& app)
     bool running = app.active->running();
 
     ImGui::BeginDisabled(running);
-    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF"};
-    ImGui::Combo("Source", &app.sourceMode, modes, 4);
+    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF", "Dual RTL"};
+    ImGui::Combo("Source", &app.sourceMode, modes, 5);
     ImGui::EndDisabled();
 
     ImGui::Separator();
@@ -260,7 +260,7 @@ void drawControls(App& app)
         }
         ImGui::TextDisabled("Gain and device are configured on the SDR++ server.");
     }
-    else
+    else if (app.sourceMode == 3)
     {
         // ---- HackRF (native) ----
         if (ImGui::Button("Refresh devices"))
@@ -320,6 +320,68 @@ void drawControls(App& app)
         {
             if (running) app.hack.setDcBlock(app.dcBlock);
         }
+    }
+    if (app.sourceMode == 4)
+    {
+        // ---- Dual RTL: two independent RTL-SDRs ----
+        ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "RTL A (Spectrum / Waterfall A)");
+        ImGui::Separator();
+        if (ImGui::Button("Refresh A"))
+            app.devices = app.sdr.listDevices();
+        ImGui::SameLine();
+        ImGui::Text("(%d found)", (int)app.devices.size());
+        if (!app.devices.empty())
+        {
+            std::string preview = app.devices[std::min(app.deviceIndex, (int)app.devices.size() - 1)].name;
+            if (ImGui::BeginCombo("Device A", preview.c_str()))
+            {
+                for (int i = 0; i < (int)app.devices.size(); ++i)
+                {
+                    bool sel = (app.deviceIndex == i);
+                    std::string label = std::to_string(i) + ": " + app.devices[i].name + " [" + app.devices[i].serial + "]";
+                    if (ImGui::Selectable(label.c_str(), sel)) app.deviceIndex = i;
+                }
+                ImGui::EndCombo();
+            }
+        }
+        if (ImGui::InputDouble("Center A (MHz)", &app.centerFreqMHz, 0.1, 1.0, "%.4f"))
+            app.viewA.resetView = true;
+        ImGui::Combo("Rate A (MHz)", &app.sampleRateIdx, kRateLabels, kNumRates);
+        if (ImGui::Checkbox("Auto gain A", &app.autoGain)) {}
+        if (!app.autoGain)
+            ImGui::SliderFloat("Gain A (dB)", &app.gainDb, 0.0f, 50.0f, "%.1f");
+        ImGui::Checkbox("Bias-T A", &app.biasTee);
+        ImGui::InputFloat("PPM A", &app.ppm, 0.1f, 1.0f, "%.2f");
+        ImGui::Checkbox("DC block A", &app.dcBlock);
+
+        ImGui::Spacing();
+        ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.5f, 1.0f), "RTL B (Spectrum / Waterfall B)");
+        ImGui::Separator();
+        if (ImGui::Button("Refresh B"))
+            app.devices = app.sdrB.listDevices();
+        if (!app.devices.empty())
+        {
+            std::string preview = app.devices[std::min(app.deviceIndexB, (int)app.devices.size() - 1)].name;
+            if (ImGui::BeginCombo("Device B", preview.c_str()))
+            {
+                for (int i = 0; i < (int)app.devices.size(); ++i)
+                {
+                    bool sel = (app.deviceIndexB == i);
+                    std::string label = std::to_string(i) + ": " + app.devices[i].name + " [" + app.devices[i].serial + "]";
+                    if (ImGui::Selectable(label.c_str(), sel)) app.deviceIndexB = i;
+                }
+                ImGui::EndCombo();
+            }
+        }
+        if (ImGui::InputDouble("Center B (MHz)", &app.centerFreqMHzB, 0.1, 1.0, "%.4f"))
+            app.viewB.resetView = true;
+        ImGui::Combo("Rate B (MHz)", &app.sampleRateIdxB, kRateLabels, kNumRates);
+        if (ImGui::Checkbox("Auto gain B", &app.autoGainB)) {}
+        if (!app.autoGainB)
+            ImGui::SliderFloat("Gain B (dB)", &app.gainDbB, 0.0f, 50.0f, "%.1f");
+        ImGui::Checkbox("Bias-T B", &app.biasTeeB);
+        ImGui::InputFloat("PPM B", &app.ppmB, 0.1f, 1.0f, "%.2f");
+        ImGui::Checkbox("DC block B", &app.dcBlock); // same dcblock toggle
     }
 
     ImGui::Separator();
@@ -382,6 +444,27 @@ void drawControls(App& app)
         }
     }
 
+    if (app.dualMode)
+    {
+        if (ImGui::Checkbox("Band Plan (B)", &app.showBandPlanB));
+        if (app.showBandPlanB && !app.bandPlanNames.empty())
+        {
+            if (app.bandPlanIdxB >= (int)app.bandPlanNames.size())
+                app.bandPlanIdxB = 0;
+            ImGui::SetNextItemWidth(-1);
+            if (ImGui::Combo("##bplan-sel-b", &app.bandPlanIdxB,
+                             [](void* data, int idx) -> const char* {
+                                 auto& v = *(std::vector<std::string>*)data;
+                                 return idx >= 0 && idx < (int)v.size() ? v[idx].c_str() : "";
+                             },
+                             &app.bandPlanNames, (int)app.bandPlanNames.size()))
+            {
+                if (app.bandPlanIdxB >= 0 && app.bandPlanIdxB < (int)app.bandPlanPaths.size())
+                    app.bandPlanLoadedB = loadBandPlan(app.bandPlanPaths[app.bandPlanIdxB]);
+            }
+        }
+    }
+
     ImGui::Separator();
     const char* bauds[] = {"600", "1200", "8400", "10500", "Inmarsat-C/EGC"};
     ImGui::Combo("Decode baud", &app.newBaud, bauds, 5);
@@ -421,29 +504,6 @@ void drawControls(App& app)
             ImGui::TextDisabled("Candidates: %d tracked, %d decoders active", candN, activeN);
         if (app.following)
             ImGui::TextDisabled("(paused — voice‑follow is active)");
-    }
-
-    ImGui::Separator();
-    if (ImGui::CollapsingHeader("Voice SDR (2nd RTL)"))
-    {
-        ImGui::BeginDisabled(running);
-        ImGui::Checkbox("Enable dedicated voice SDR", &app.voiceSdrEnabled);
-        ImGui::InputInt("Device index", &app.deviceIndexB);
-        if (app.deviceIndexB == app.deviceIndex)
-            ImGui::TextColored(ImVec4(1, 0.5f, 0.3f, 1), "  must differ from primary (%d)", app.deviceIndex);
-        ImGui::Combo("Voice rate (MHz)", &app.sampleRateIdxB, kRateLabels, kNumRates);
-        ImGui::Checkbox("Voice auto gain", &app.autoGainB);
-        if (!app.autoGainB)
-            ImGui::SliderFloat("Voice gain (dB)", &app.gainDbB, 0.0f, 50.0f, "%.1f");
-        ImGui::Checkbox("Voice Bias-T", &app.biasTeeB);
-        ImGui::InputFloat("Voice PPM", &app.ppmB, 0.1f, 1.0f, "%.2f");
-        ImGui::EndDisabled();
-        ImGui::InputDouble("Voice park (MHz)", &app.voiceCenterMHz, 0.1, 1.0, "%.4f");
-        if (app.dualMode)
-            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.35f, 1.0f),
-                               "  voice SDR active (dual mode)");
-        else if (app.voiceSdrEnabled)
-            ImGui::TextDisabled("  starts on next Start (uses 2 RTLs)");
     }
 
     ImGui::Separator();
@@ -510,11 +570,6 @@ void drawControls(App& app)
 
     if (running)
     {
-        ImGui::Separator();
-        ImGui::Text("  Sample rate:   %.4f MHz", app.active->sampleRate() / 1e6);
-        ImGui::Text("  Input level:   %.1f dBFS", app.viewA.rmsDbfs);
-        ImGui::Text("  Spectrum:      %.0f .. %.0f dB", app.viewA.frameDbMin, app.viewA.frameDbMax);
-
         if (app.sourceMode == 0)
         {
             double maxF = app.sdr.tunerMaxFreq();
@@ -575,17 +630,22 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
         v.viewXminMHz = lim.X.Min;
         v.viewXmaxMHz = lim.X.Max;
 
+        // Band-browse retuning: in dual mode use explicit SDR pointers,
+        // otherwise use app.active (which covers RTL/WAV/SDR++/HackRF).
+        SdrSource* browseSdr;
+        if (app.dualMode)
+            browseSdr = voiceView ? static_cast<SdrSource*>(&app.sdrB)
+                                  : static_cast<SdrSource*>(&app.sdr);
+        else
+            browseSdr = app.active;
         if (allowBandBrowse && app.bandBrowse && app.sourceMode != 1 &&
-            app.active->running() && !v.resetView && !app.following)
+            browseSdr->running() && !v.resetView && !app.following)
         {
             double viewCtr = 0.5 * (v.viewXminMHz + v.viewXmaxMHz);
             double viewHalf = 0.5 * (v.viewXmaxMHz - v.viewXminMHz);
-            double sdrCtr = app.active->centerFreq() / 1e6;
-            double fsMHz = app.active->sampleRate() / 1e6;
+            double sdrCtr = browseSdr->centerFreq() / 1e6;
+            double fsMHz = browseSdr->sampleRate() / 1e6;
             double halfBand = 0.5 * fsMHz;
-            // Clear margin remaining between the view edge and the captured band
-            // edge. Recenter the SDR on the view *before* that margin runs out so
-            // no black gap ever reaches the screen -> buttery smooth panning.
             double marginL = (viewCtr - viewHalf) - (sdrCtr - halfBand);
             double marginR = (sdrCtr + halfBand) - (viewCtr + viewHalf);
             double minMargin = std::min(marginL, marginR);
@@ -596,7 +656,23 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
                 std::chrono::duration<double, std::milli>(now - app.lastRetune).count();
             if (fsMHz > 0.0 && minMargin < trigger && moved && sinceMs > app.browseThrottleMs)
             {
-                retunePreserving(app, viewCtr);
+                if (voiceView)
+                {
+                    // Retune SDR B preserving decoders on manager B
+                    std::vector<std::pair<double, int>> keep;
+                    for (auto& s : app.decodersB.status())
+                        keep.push_back({s.freqMHz, s.baud});
+                    app.centerFreqMHzB = viewCtr;
+                    app.sdrB.setCenterFreq(viewCtr * 1e6);
+                    app.decodersB.removeAll();
+                    app.decodersB.configure(app.sdrB.sampleRate(), app.sdrB.centerFreq());
+                    for (auto& k : keep)
+                        app.decodersB.addDecoder(k.first * 1e6, k.second);
+                }
+                else
+                {
+                    retunePreserving(app, viewCtr);
+                }
                 app.lastRetune = now;
                 app.lastRetuneCtr = viewCtr;
             }
@@ -621,7 +697,7 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
                 app.placingVoiceView = voiceView;
                 app.placingFreqMHz = mp.x;
             }
-            if (app.placingDecoder)
+        if (app.placingDecoder && app.placingVoiceView == voiceView)
             {
                 app.placingFreqMHz = mp.x;
             }
@@ -629,14 +705,9 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
             {
                 app.placingDecoder = false;
                 int baud;
-                if (voiceView)
-                    baud = 8400;
-                else
-                {
-                    static const int kBaudVals[] = {600, 1200, 8400, 10500, kEgcBaud};
-                    int idx = app.newBaud < 0 ? 0 : (app.newBaud > 4 ? 4 : app.newBaud);
-                    baud = kBaudVals[idx];
-                }
+                static const int kBaudVals[] = {600, 1200, 8400, 10500, kEgcBaud};
+                int idx = app.newBaud < 0 ? 0 : (app.newBaud > 4 ? 4 : app.newBaud);
+                baud = kBaudVals[idx];
                 mgr.addDecoder(mp.x * 1e6, baud);
             }
         }
@@ -646,9 +717,8 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
             app.placingDecoder = false;
         }
 
-        // White preview line while drag-placing (drawn on the ImDrawList over
-        // the plot so it appears in both the spectrum and waterfall).
-        if (app.placingDecoder)
+        // Drag-to-place preview line redraw
+        if (app.placingDecoder && app.placingVoiceView == voiceView)
         {
             ImPlotRect lim = ImPlot::GetPlotLimits();
             float xMin = (float)lim.X.Min;
@@ -665,11 +735,11 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
             }
         }
 
-        // --- Band plan: solid coloured bar along the bottom (on top of everything) ---
-        if (app.showBandPlan && app.bandPlanLoaded.valid && v.curN > 0 &&
-            app.bandPlanIdx >= 0 && app.bandPlanIdx < (int)app.bandPlanNames.size())
+        // --- Band plan: solid coloured bar along the bottom ---
+        bool showBp = voiceView ? app.showBandPlanB : app.showBandPlan;
+        const BandPlan& bp = voiceView ? app.bandPlanLoadedB : app.bandPlanLoaded;
+        if (showBp && bp.valid && v.curN > 0)
         {
-            const auto& bp = app.bandPlanLoaded;
             const ImPlotRect vp = ImPlot::GetPlotLimits();
             double viewLo = vp.X.Min, viewHi = vp.X.Max;
             if (viewHi <= viewLo) { viewLo = v.freqMHz.front(); viewHi = v.freqMHz.back(); }
@@ -751,7 +821,7 @@ void drawWaterfall(App& app, SpectrumView& v, const char* title)
 
     // Drag-to-place preview line: white vertical line through the waterfall
     // at the frequency the user is hovering, so they can centre on a signal.
-    if (app.placingDecoder && v.curN > 0)
+    if (app.placingDecoder && app.placingVoiceView == (&v == &app.viewB) && v.curN > 0)
     {
         double bandMin = v.freqMHz.front();
         double bandMax = v.freqMHz.back();
@@ -778,9 +848,16 @@ void drawDecoders(App& app)
     ImGui::Begin("Decoders");
 
     auto decs = app.decoders.status();
+    if (app.dualMode)
+    {
+        auto decsB = app.decodersB.status();
+        for (auto& d : decsB) d.isB = true;
+        decs.insert(decs.end(), decsB.begin(), decsB.end());
+    }
     ImGui::Text("%d active  |  %d sub-band(s)  %d threads", (int)decs.size(),
-                app.decoders.subbandCount(), app.decoders.workerCount());
-    uint64_t drops = app.decoders.drops();
+                app.decoders.subbandCount() + (app.dualMode ? app.decodersB.subbandCount() : 0),
+                app.decoders.workerCount() + (app.dualMode ? app.decodersB.workerCount() : 0));
+    uint64_t drops = app.decoders.drops() + (app.dualMode ? app.decodersB.drops() : 0);
     ImGui::SameLine();
     if (drops > 0)
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f), "  drops: %llu",
@@ -789,12 +866,18 @@ void drawDecoders(App& app)
         ImGui::TextDisabled("  drops: 0");
     ImGui::SameLine();
     if (ImGui::SmallButton("Remove all"))
+    {
         app.decoders.removeAll();
+        if (app.dualMode) app.decodersB.removeAll();
+    }
 
     int vm = app.decoders.voiceMonitor();
-    if (vm >= 0)
-        ImGui::Text("Voice: monitoring ch %d", vm);
-    else
+    int vmB = app.dualMode ? app.decodersB.voiceMonitor() : -1;
+    if (vm >= 0 || vmB >= 0)
+    {
+        if (vm >= 0) ImGui::Text("Voice: monitoring ch %d", vm);
+        if (vmB >= 0) ImGui::Text("Voice B: monitoring ch %d", vmB);
+    }
         ImGui::TextDisabled("Voice: (no 8400 decoder)");
     ImGui::SameLine();
     float lvl = app.decoders.audioLevel() * 5.0f;
@@ -922,25 +1005,28 @@ void drawDecoders(App& app)
         ImGui::TableHeadersRow();
 
         int toRemove = -1;
+    bool toRemoveB = false;
         for (auto& d : decs)
         {
+            int uid = d.channelId + (d.isB ? 100000 : 0);
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            bool sel = (app.selectedDecoder == d.channelId);
             char selid[24];
-            std::snprintf(selid, sizeof(selid), "##sel%d", d.channelId);
-            if (ImGui::Selectable(selid, sel,
-                                  ImGuiSelectableFlags_SpanAllColumns |
-                                      ImGuiSelectableFlags_AllowOverlap))
+            std::snprintf(selid, sizeof(selid), "##sel%d", uid);
+            ImVec4 c = d.monitored ? ImVec4(0.3f, 0.5f, 1.0f, 1.0f)
+                     : d.locked    ? ImVec4(0.2f, 1.0f, 0.3f, 1.0f)
+                                   : ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+            ImGui::PushStyleColor(ImGuiCol_Header, c);
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(c.x*1.3f, c.y*1.3f, c.z*1.3f, 1.0f));
+            bool sel = (app.selectedDecoder == d.channelId);
+            if (ImGui::Selectable(selid, sel, ImGuiSelectableFlags_None))
             {
                 app.selectedDecoder = d.channelId;
-                if (d.isVoice)
+                if (d.isVoice && !d.isB)
                     app.decoders.setVoiceMonitor(d.channelId);
             }
+            ImGui::PopStyleColor(2);
             ImGui::SameLine();
-            ImVec4 c = d.monitored ? ImVec4(0.3f, 0.5f, 1.0f, 1.0f)   // blue = active monitor
-                     : d.locked    ? ImVec4(0.2f, 1.0f, 0.3f, 1.0f)   // green = locked
-                                   : ImVec4(0.5f, 0.5f, 0.5f, 1.0f);  // gray
             ImGui::TextColored(c, "%s", d.monitored ? "MON" : d.locked ? "LOCK" : "--");
             ImGui::TableNextColumn();
             ImGui::Text("%.4f", d.freqMHz);
@@ -977,13 +1063,19 @@ void drawDecoders(App& app)
             ImGui::Text("%llu", (unsigned long long)d.msgs);
             ImGui::TableNextColumn();
             char btn[24];
-            std::snprintf(btn, sizeof(btn), "X##%d", d.channelId);
+            std::snprintf(btn, sizeof(btn), "X##%d", uid);
             if (ImGui::SmallButton(btn))
+            {
                 toRemove = d.channelId;
+                toRemoveB = d.isB;
+            }
         }
         ImGui::EndTable();
         if (toRemove >= 0)
-            app.decoders.removeDecoder(toRemove);
+        {
+            if (toRemoveB) app.decodersB.removeDecoder(toRemove);
+            else           app.decoders.removeDecoder(toRemove);
+        }
     }
 
     ImGui::End();
@@ -993,13 +1085,25 @@ void drawSUs(App& app)
 {
     ImGui::Begin("SUs");
 
-    ImGui::Text("%llu total", (unsigned long long)app.decoders.suLog().count());
+    unsigned long long suTotal = app.decoders.suLog().count();
+    if (app.dualMode) suTotal += app.decodersB.suLog().count();
+    ImGui::Text("%llu total", suTotal);
     ImGui::SameLine();
     if (ImGui::SmallButton("Clear"))
+    {
         app.decoders.suLog().clear();
+        if (app.dualMode) app.decodersB.suLog().clear();
+    }
     ImGui::Separator();
 
     auto msgs = app.decoders.suLog().snapshot();
+    if (app.dualMode)
+    {
+        auto b = app.decodersB.suLog().snapshot();
+        msgs.insert(msgs.end(), b.begin(), b.end());
+    }
+    std::sort(msgs.begin(), msgs.end(),
+              [](const DecodedMessage& a, const DecodedMessage& b) { return a.timeSec > b.timeSec; });
     if (ImGui::BeginTable("##sus", 3,
                           ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                           ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
@@ -1010,7 +1114,7 @@ void drawSUs(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
-        for (auto it = msgs.rbegin(); it != msgs.rend(); ++it)
+        for (auto it = msgs.begin(); it != msgs.end(); ++it)
         {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
@@ -1030,15 +1134,25 @@ void drawMessages(App& app)
 {
     ImGui::Begin("Messages");
 
-    ImGui::Text("%llu total", (unsigned long long)app.decoders.log().count());
+    unsigned long long msgTotal = app.decoders.log().count();
+    if (app.dualMode) msgTotal += app.decodersB.log().count();
+    ImGui::Text("%llu total", msgTotal);
     ImGui::SameLine();
     if (ImGui::SmallButton("Clear"))
+    {
         app.decoders.log().clear();
+        if (app.dualMode) app.decodersB.log().clear();
+    }
     ImGui::SameLine();
     ImGui::Checkbox("Show empty", &app.showEmptyMsgs);
     ImGui::Separator();
 
     auto msgs = app.decoders.log().snapshot();
+    if (app.dualMode)
+    {
+        auto b = app.decodersB.log().snapshot();
+        msgs.insert(msgs.end(), b.begin(), b.end());
+    }
     if (ImGui::BeginTable("##msgs", 6,
                           ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                           ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
@@ -1181,13 +1295,23 @@ void drawCChannel(App& app)
 {
     ImGui::Begin("C-Channel");
 
-    ImGui::Text("%llu assignment(s)", (unsigned long long)app.decoders.cassignLog().count());
+    unsigned long long cTotal = app.decoders.cassignLog().count();
+    if (app.dualMode) cTotal += app.decodersB.cassignLog().count();
+    ImGui::Text("%llu assignment(s)", cTotal);
     ImGui::SameLine();
     if (ImGui::SmallButton("Clear"))
+    {
         app.decoders.cassignLog().clear();
+        if (app.dualMode) app.decodersB.cassignLog().clear();
+    }
     ImGui::Separator();
 
     auto items = app.decoders.cassignLog().snapshot();
+    if (app.dualMode)
+    {
+        auto b = app.decodersB.cassignLog().snapshot();
+        items.insert(items.end(), b.begin(), b.end());
+    }
     if (ImGui::BeginTable("##cchan", 6,
                           ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                           ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
@@ -1371,10 +1495,15 @@ void drawEgc(App& app)
 {
     ImGui::Begin("EGC");
 
-    ImGui::Text("%llu message(s)", (unsigned long long)app.decoders.egcLog().count());
+    unsigned long long egcTotal = app.decoders.egcLog().count();
+    if (app.dualMode) egcTotal += app.decodersB.egcLog().count();
+    ImGui::Text("%llu message(s)", egcTotal);
     ImGui::SameLine();
     if (ImGui::SmallButton("Clear"))
+    {
         app.decoders.egcLog().clear();
+        if (app.dualMode) app.decodersB.egcLog().clear();
+    }
     ImGui::SameLine();
     static bool showEgc = true, showTerminal = true;
     ImGui::Checkbox("EGC", &showEgc); ImGui::SameLine();
@@ -1383,6 +1512,11 @@ void drawEgc(App& app)
     ImGui::Separator();
 
     auto msgs = app.decoders.egcLog().snapshot();
+    if (app.dualMode)
+    {
+        auto b = app.decodersB.egcLog().snapshot();
+        msgs.insert(msgs.end(), b.begin(), b.end());
+    }
     if (ImGui::BeginTable("##egc", 5,
                           ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
                           ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
@@ -1423,10 +1557,18 @@ void drawMes(App& app)
     ImGui::Begin("MES");
 
     auto entries = app.decoders.mesLog().snapshot();
+    if (app.dualMode)
+    {
+        auto b = app.decodersB.mesLog().snapshot();
+        entries.insert(entries.end(), b.begin(), b.end());
+    }
     ImGui::Text("%zu terminal(s)", entries.size());
     ImGui::SameLine();
     if (ImGui::SmallButton("Clear"))
+    {
         app.decoders.mesLog().clear();
+        if (app.dualMode) app.decodersB.mesLog().clear();
+    }
     ImGui::Separator();
 
     std::sort(entries.begin(), entries.end(),
@@ -1475,10 +1617,15 @@ void drawLes(App& app)
 {
     ImGui::Begin("LES");
 
-    ImGui::Text("%llu message(s)", (unsigned long long)app.decoders.lesLog().count());
+    unsigned long long lesTotal = app.decoders.lesLog().count();
+    if (app.dualMode) lesTotal += app.decodersB.lesLog().count();
+    ImGui::Text("%llu message(s)", lesTotal);
     ImGui::SameLine();
     if (ImGui::SmallButton("Clear"))
+    {
         app.decoders.lesLog().clear();
+        if (app.dualMode) app.decodersB.lesLog().clear();
+    }
     ImGui::SameLine();
     static bool hideEncrypted = false;
     ImGui::Checkbox("Hide encrypted", &hideEncrypted);
@@ -1486,6 +1633,11 @@ void drawLes(App& app)
     ImGui::Separator();
 
     auto msgs = app.decoders.lesLog().snapshot();
+    if (app.dualMode)
+    {
+        auto b = app.decodersB.lesLog().snapshot();
+        msgs.insert(msgs.end(), b.begin(), b.end());
+    }
     if (ImGui::BeginTable("##les", 6,
                           ImGuiTableFlags_Borders |
                           ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
@@ -1538,6 +1690,12 @@ void drawConstellation(App& app)
     ImGui::Begin("Constellation");
 
     auto decs = app.decoders.status();
+    if (app.dualMode)
+    {
+        auto decsB = app.decodersB.status();
+        for (auto& d : decsB) d.isB = true;
+        decs.insert(decs.end(), decsB.begin(), decsB.end());
+    }
     int chan = app.selectedDecoder;
     bool valid = false;
     double freq = 0.0;
@@ -1569,8 +1727,9 @@ void drawConstellation(App& app)
         for (auto& d : decs)
         {
             char label[64];
-            std::snprintf(label, sizeof(label), "ch %d  %.4f MHz  @%d",
-                          d.channelId, d.freqMHz, d.baud);
+            std::snprintf(label, sizeof(label), "ch %d  %.4f MHz  @%d%s",
+                          d.channelId, d.freqMHz, d.baud,
+                          d.isB ? " [B]" : "");
             if (ImGui::Selectable(label, d.channelId == chan))
             {
                 app.selectedDecoder = d.channelId;
@@ -1582,6 +1741,8 @@ void drawConstellation(App& app)
     }
 
     int pairs = app.decoders.getConstellation(chan, app.constBuf, 1024);
+    if (pairs == 0 && app.dualMode)
+        pairs = app.decodersB.getConstellation(chan, app.constBuf, 1024);
     ImGui::SameLine();
     ImGui::TextDisabled("(%d pts)", pairs);
 
@@ -1666,18 +1827,19 @@ void drawDockHost(App& app)
         ImGui::DockBuilderDockWindow("Control", ctrl);
         ImGui::DockBuilderDockWindow("Decoders", dec);
 
-        // In dual-SDR mode, split the spectrum and waterfall rows side-by-side
-        // so the voice SDR (B) gets its own live spectrum/waterfall.
-        if (app.dualMode)
+        ImGui::DockBuilderDockWindow("Spectrum", rtop);
+        ImGui::DockBuilderDockWindow("Waterfall", rmid);
+        // Always split for potential dual-mode: B windows are invisible when
+        // not in dual mode, and the A windows fill the space.
         {
             ImGuiID rtopR, rmidR;
             ImGui::DockBuilderSplitNode(rtop, ImGuiDir_Right, 0.5f, &rtopR, &rtop);
             ImGui::DockBuilderSplitNode(rmid, ImGuiDir_Right, 0.5f, &rmidR, &rmid);
-            ImGui::DockBuilderDockWindow("Spectrum (Voice)", rtopR);
-            ImGui::DockBuilderDockWindow("Waterfall (Voice)", rmidR);
+            ImGui::DockBuilderDockWindow("Spectrum", rtop);
+            ImGui::DockBuilderDockWindow("Waterfall", rmid);
+            ImGui::DockBuilderDockWindow("Spectrum (B)", rtopR);
+            ImGui::DockBuilderDockWindow("Waterfall (B)", rmidR);
         }
-        ImGui::DockBuilderDockWindow("Spectrum", rtop);
-        ImGui::DockBuilderDockWindow("Waterfall", rmid);
         ImGui::DockBuilderDockWindow("Flight Map", rmid);
         ImGui::DockBuilderDockWindow("SUs", rbot);
         ImGui::DockBuilderDockWindow("Messages", rbot);

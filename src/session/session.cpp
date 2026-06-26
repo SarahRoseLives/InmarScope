@@ -103,6 +103,18 @@ void startActive(App& app)
         app.sdr.setDcBlock(app.dcBlock);
         ok = app.sdr.start(app.deviceIndex, cb, err);
     }
+    else if (app.sourceMode == 4)
+    {
+        // Dual RTL: RTL A uses same config as mode 0
+        app.active = &app.sdr;
+        app.sdr.setSampleRate(kRates[app.sampleRateIdx]);
+        app.sdr.setCenterFreq(app.centerFreqMHz * 1e6);
+        app.sdr.setGain(app.autoGain ? -1.0 : (double)app.gainDb);
+        app.sdr.setBiasTee(app.biasTee);
+        app.sdr.setPpm((double)app.ppm);
+        app.sdr.setDcBlock(app.dcBlock);
+        ok = app.sdr.start(app.deviceIndex, cb, err);
+    }
     else if (app.sourceMode == 1)
     {
         app.active = &app.wav;
@@ -147,22 +159,24 @@ void startActive(App& app)
 
     if (ok)
     {
-        // Optional dedicated voice SDR (2nd RTL). Start it first so we know
-        // whether to run in dual mode before configuring the primary's audio.
+        // Dual RTL mode: start second RTL with independent tuning
         bool startedB = false;
-        if (app.voiceSdrEnabled && app.deviceIndexB != app.deviceIndex)
+        if (app.sourceMode == 4)
         {
             app.viewB.ring.clear();
             app.viewB.waterfall.clear();
             app.viewB.resetView = true;
             IqRing* ringB = &app.viewB.ring;
             DecoderManager* mgrB = &app.decodersB;
-            auto cbB = [ringB, mgrB](const float* iq, int n) {
+            IqRecorder* iqr = &app.iqRecorder;
+            auto cbB = [ringB, mgrB, iqr](const float* iq, int n) {
                 ringB->push(iq, (size_t)n);
                 mgrB->feed(iq, n);
+                if (iqr->isRecording())
+                    iqr->write(iq, n);
             };
             app.sdrB.setSampleRate(kRates[app.sampleRateIdxB]);
-            app.sdrB.setCenterFreq(app.voiceCenterMHz * 1e6);
+            app.sdrB.setCenterFreq(app.centerFreqMHzB * 1e6);
             app.sdrB.setGain(app.autoGainB ? -1.0 : (double)app.gainDbB);
             app.sdrB.setBiasTee(app.biasTeeB);
             app.sdrB.setPpm((double)app.ppmB);
@@ -173,19 +187,18 @@ void startActive(App& app)
             {
                 app.decodersB.removeAll();
                 app.decodersB.configure(app.sdrB.sampleRate(), app.sdrB.centerFreq());
-                app.decodersB.setAudioEnabled(true);   // voice audio comes from B
                 app.decodersB.setMaxWorkers(2);
                 app.decodersB.setRecording(app.recordVoice, app.recordDir);
                 app.decodersB.start();
             }
             else
-                app.status = "Voice SDR error: " + errB;
+                app.status = "Dual RTL B error: " + errB;
         }
         app.dualMode = startedB;
 
         app.decoders.removeAll();
         app.decoders.configure(app.active->sampleRate(), app.active->centerFreq());
-        app.decoders.setAudioEnabled(!app.dualMode); // A is silent in dual mode
+        app.decoders.setAudioEnabled(true); // A keeps audio in dual mode (both SDRs have voice capability)
         app.decoders.start();
         app.lastConfiguredFs = app.active->sampleRate();
         // Don't auto-follow assignments left over from a previous session.
@@ -200,8 +213,16 @@ void startActive(App& app)
             for (auto& sd : app.savedDecoders)
                 app.decoders.addDecoder(sd.first * 1e6, sd.second);
         }
+        if (app.dualMode && app.saveDecoders && !app.savedDecodersB.empty())
+        {
+            for (auto& sd : app.savedDecodersB)
+                app.decodersB.addDecoder(sd.first * 1e6, sd.second);
+        }
         if (!app.saveDecoders)
+        {
             app.savedDecoders.clear();
+            app.savedDecodersB.clear();
+        }
     }
 
     // If the IQ recorder was active, restart it with the new sample rate

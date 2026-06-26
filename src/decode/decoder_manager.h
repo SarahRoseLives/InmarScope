@@ -33,6 +33,7 @@ public:
         int egcFrames;  // 0 unless EGC
         bool monitored = false; // audio routed to speakers
         bool isVoice   = false; // 8400 voice decoder
+        bool isB       = false; // from decodersB (dual RTL)
     };
 
     ~DecoderManager() { stop(); }
