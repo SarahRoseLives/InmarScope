@@ -13,7 +13,9 @@
 #include "decode/decoder_manager.h"
 #include "output/message_feed.h"
 #include "update/version_check.h"
+#if defined(_WIN32)
 #include "web/flight_map_webview.h"
+#endif
 
 #include <chrono>
 #include <string>
@@ -120,7 +122,9 @@ struct App
     // Output
     MessageFeed feed;
     VersionCheck verCheck;
+    #if defined(_WIN32)
     FlightMapWebView flightMapWv;
+    #endif
     uint64_t lastAcarsFed = 0, lastEgcFed = 0, lastLesFed = 0;
     bool   outFile = false;
     char   outFilePath[512] = "messages.jsonl";

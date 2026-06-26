@@ -124,46 +124,88 @@ add_subdirectory(third_party/libacars ${CMAKE_BINARY_DIR}/libacars EXCLUDE_FROM_
 # ---------------------------------------------------------------------------
 # InmarScope application
 # ---------------------------------------------------------------------------
-add_executable(InmarScope
-    src/main.cpp
-    src/signal/processing.cpp
-    src/voice/voice_ops.cpp
-    src/gui/gui_panels.cpp
-    src/session/session.cpp
-    src/state/config.cpp
-    src/sdr/rtl_sdr_source.cpp
-    src/sdr/hackrf_source.cpp
-    src/sdr/wav_file_source.cpp
-    src/sdr/sdrpp_server_source.cpp
-    src/sdr/iq_recorder.cpp
-    src/gui/waterfall.cpp
-    src/decode/decoder.cpp
-    src/decode/decoder_manager.cpp
-    src/decode/acars_apps.cpp
-    src/decode/icao_country.cpp
-    src/decode/band_plan.cpp
-    src/decode/json_mini.cpp
-    src/util/log.cpp
-    src/decode/egc/egc_decoder.cpp
-    src/voice/ambe_decoder.cpp
-    src/voice/wav_writer.cpp
-    src/audio/audio_output.cpp
-    src/output/message_feed.cpp
-    src/update/version_check.cpp
-    src/web/flight_map_webview.cpp
-)
-# Microsoft Edge WebView2 for the embedded Flight Map browser.
-set(WEBVIEW2_ROOT ${CMAKE_SOURCE_DIR}/third_party/webview2/build/native)
-find_library(WEBVIEW2_LIB WebView2Loader.dll PATHS ${WEBVIEW2_ROOT}/x64 NO_DEFAULT_PATH REQUIRED)
-target_include_directories(InmarScope PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/third_party/mbelib
-    ${CMAKE_SOURCE_DIR}/third_party/miniaudio
-    ${CMAKE_SOURCE_DIR}/third_party/libacars
-    ${WEBVIEW2_ROOT}/include
-    ${RTLSDR_INCLUDE_DIRS}
-    ${HACKRF_INCLUDE_DIRS}
-)
+if(LINUX)
+    add_executable(InmarScope
+        src/main.cpp
+        src/signal/processing.cpp
+        src/voice/voice_ops.cpp
+        src/gui/gui_panels.cpp
+        src/session/session.cpp
+        src/state/config.cpp
+        src/sdr/rtl_sdr_source.cpp
+        src/sdr/hackrf_source.cpp
+        src/sdr/wav_file_source.cpp
+        src/sdr/sdrpp_server_source.cpp
+        src/sdr/iq_recorder.cpp
+        src/gui/waterfall.cpp
+        src/decode/decoder.cpp
+        src/decode/decoder_manager.cpp
+        src/decode/acars_apps.cpp
+        src/decode/icao_country.cpp
+        src/decode/band_plan.cpp
+        src/decode/json_mini.cpp
+        src/util/log.cpp
+        src/decode/egc/egc_decoder.cpp
+        src/voice/ambe_decoder.cpp
+        src/voice/wav_writer.cpp
+        src/audio/audio_output.cpp
+        src/output/message_feed.cpp
+        src/update/version_check.cpp
+    )
+    target_compile_definitions(InmarScope PRIVATE _LINUX)
+    target_include_directories(InmarScope PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/third_party/mbelib
+        ${CMAKE_SOURCE_DIR}/third_party/miniaudio
+        ${CMAKE_SOURCE_DIR}/third_party/libacars
+        ${RTLSDR_INCLUDE_DIRS}
+        ${HACKRF_INCLUDE_DIRS}
+    )
+endif()
+
+if(WIN32)
+    add_executable(InmarScope
+        src/main.cpp
+        src/signal/processing.cpp
+        src/voice/voice_ops.cpp
+        src/gui/gui_panels.cpp
+        src/session/session.cpp
+        src/state/config.cpp
+        src/sdr/rtl_sdr_source.cpp
+        src/sdr/hackrf_source.cpp
+        src/sdr/wav_file_source.cpp
+        src/sdr/sdrpp_server_source.cpp
+        src/sdr/iq_recorder.cpp
+        src/gui/waterfall.cpp
+        src/decode/decoder.cpp
+        src/decode/decoder_manager.cpp
+        src/decode/acars_apps.cpp
+        src/decode/icao_country.cpp
+        src/decode/band_plan.cpp
+        src/decode/json_mini.cpp
+        src/util/log.cpp
+        src/decode/egc/egc_decoder.cpp
+        src/voice/ambe_decoder.cpp
+        src/voice/wav_writer.cpp
+        src/audio/audio_output.cpp
+        src/output/message_feed.cpp
+        src/update/version_check.cpp
+        src/web/flight_map_webview.cpp
+    )
+    # Microsoft Edge WebView2 for the embedded Flight Map browser.
+    set(WEBVIEW2_ROOT ${CMAKE_SOURCE_DIR}/third_party/webview2/build/native)
+    find_library(WEBVIEW2_LIB WebView2Loader.dll PATHS ${WEBVIEW2_ROOT}/x64 NO_DEFAULT_PATH REQUIRED)
+    target_include_directories(InmarScope PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/third_party/mbelib
+        ${CMAKE_SOURCE_DIR}/third_party/miniaudio
+        ${CMAKE_SOURCE_DIR}/third_party/libacars
+        ${WEBVIEW2_ROOT}/include
+        ${RTLSDR_INCLUDE_DIRS}
+        ${HACKRF_INCLUDE_DIRS}
+    )
+endif()
+
 target_compile_definitions(InmarScope PRIVATE _USE_MATH_DEFINES)
 find_library(ZSTD_LIBRARIES NAMES zstd libzstd REQUIRED)
 find_library(ZLIB_LIB NAMES z libz zlib REQUIRED)
@@ -180,10 +222,18 @@ if(NOT OGG_FOUND OR NOT VORBIS_FOUND)
     find_library(VORBISENC_LIBRARIES NAMES vorbisenc libvorbisenc REQUIRED)
 endif()
 
-target_link_libraries(InmarScope PRIVATE imgui jaero_dsp mbelib acars_static ${ZLIB_LIB} ${RTLSDR_LIBRARIES} ${HACKRF_LIBRARIES} ${ZSTD_LIBRARIES} ${OGG_LIBRARIES} ${VORBIS_LIBRARIES} ${VORBISENC_LIBRARIES} ${WEBVIEW2_LIB})
-target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS})
+# compile for platform
+if(LINUX)
+    message(STATUS "Building InmarScope for GNU/Linux")
+    target_link_libraries(InmarScope PRIVATE imgui jaero_dsp mbelib acars_static ${ZLIB_LIB} ${RTLSDR_LIBRARIES} ${HACKRF_LIBRARIES} ${ZSTD_LIBRARIES} ${OGG_LIBRARIES} ${VORBIS_LIBRARIES} ${VORBISENC_LIBRARIES})
+    target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS})
+    target_link_libraries(InmarScope PRIVATE jansson xml2)
+endif()
 
 if(WIN32)
+    message(STATUS "Building InmarScope for Microsoft Windows")
+    target_link_libraries(InmarScope PRIVATE imgui jaero_dsp mbelib acars_static ${ZLIB_LIB} ${RTLSDR_LIBRARIES} ${HACKRF_LIBRARIES} ${ZSTD_LIBRARIES} ${OGG_LIBRARIES} ${VORBIS_LIBRARIES} ${VORBISENC_LIBRARIES} ${WEBVIEW2_LIB})
+    target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS})
     target_link_libraries(InmarScope PRIVATE opengl32 gdi32 comdlg32 ole32 winmm ws2_32 winhttp shell32)
 
     # Build as a GUI-subsystem app so no console window opens alongside the GUI.

@@ -1,5 +1,11 @@
 #include "output/message_feed.h"
 
+#if defined(_LINUX)
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#endif
+
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #ifndef NOMINMAX
