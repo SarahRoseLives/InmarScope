@@ -52,6 +52,7 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(voiceFollow); WF(followHoldSec);
     WS(recordDir);
     WI(recordFormat);
+    WI(saveDecoders);
     WI(acPosOnly);
     WI(showEmptyMsgs);
     WI(showBandPlan); WI(bandPlanIdx); WS(bandPlanDir);
@@ -60,6 +61,15 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(layoutVersion);
     for (auto& cc : app.blacklistCountries)
         buf->appendf("blacklistCC=%s\n", cc.c_str());
+    if (app.saveDecoders)
+    {
+        for (auto& st : app.decoders.status())
+            if (st.baud != 8400)
+                buf->appendf("savedDecoder=%.3f,%d\n", st.freqMHz, st.baud);
+        for (auto& st : app.decodersB.status())
+            if (st.baud != 8400)
+                buf->appendf("savedDecoder=%.3f,%d\n", st.freqMHz, st.baud);
+    }
     buf->append("\n");
 #undef WI
 #undef WF
@@ -98,7 +108,15 @@ void cfgReadLine(App& app, const char* line)
     RB(autoGainB); RF(gainDbB); RB(biasTeeB); RF(ppmB);
     RB(voiceFollow); RF(followHoldSec);
     RS(recordDir);
-    RI(recordFormat);
+    RI(recordFormat); RB(saveDecoders);
+    // savedDecoder lines: freqMHz,baud (e.g. "1545.020,600")
+    if (!std::strcmp(key, "savedDecoder"))
+    {
+        double f = 0.0; int b = 0;
+        if (std::sscanf(val, "%lf,%d", &f, &b) == 2 && f > 0.0 && b > 0)
+            app.savedDecoders.push_back({f, b});
+        return;
+    }
     RB(acPosOnly);
     RB(showEmptyMsgs);
     RB(showBandPlan); RI(bandPlanIdx); RS(bandPlanDir);

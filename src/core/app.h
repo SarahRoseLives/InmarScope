@@ -102,6 +102,8 @@ struct App
     bool recordVoice = false;
     int  recordFormat = 0; // 0=WAV, 1=OGG
     char recordDir[256] = "recordings";
+    bool saveDecoders = false; // save non-8400 decoders in INI for restart
+    std::vector<std::pair<double,int>> savedDecoders; // freqMHz, baud
 
     // Country blacklist — voice calls from these 2-letter country codes
     // will not be monitored (they still record if recording is on).

@@ -193,6 +193,15 @@ void startActive(App& app)
         app.following = false;
         app.followChannelId = -1;
         app.followHome.clear();
+
+        // Restore saved decoders (non-8400 only, from inmarscope.ini)
+        if (app.saveDecoders && !app.savedDecoders.empty())
+        {
+            for (auto& sd : app.savedDecoders)
+                app.decoders.addDecoder(sd.first * 1e6, sd.second);
+        }
+        if (!app.saveDecoders)
+            app.savedDecoders.clear();
     }
 
     // If the IQ recorder was active, restart it with the new sample rate

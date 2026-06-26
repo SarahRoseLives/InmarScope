@@ -862,6 +862,13 @@ void drawDecoders(App& app)
     ImGui::InputText("Folder", app.recordDir, sizeof(app.recordDir));
     ImGui::EndDisabled();
 
+    if (ImGui::Checkbox("Save decoders on restart", &app.saveDecoders))
+    {
+        // Don't save 8400 decoders since voice frequencies change
+    }
+    ImGui::SameLine();
+    ImGui::TextDisabled("(excludes 8400 voice)");
+
     // Country blacklist — voice calls from these countries won't be monitored.
     {
         ImGui::Spacing();
