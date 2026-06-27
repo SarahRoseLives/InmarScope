@@ -239,6 +239,17 @@ void DecoderManager::autoMonitor(const std::vector<std::string>& blacklistCountr
     }
 }
 
+void DecoderManager::setCpuReduce(bool on)
+{
+    for (auto& w : workers_)
+    {
+        std::lock_guard<std::mutex> lk(w->dMtx);
+        for (auto& sb : w->subbands)
+            for (auto& d : sb->decoders)
+                d->setCpuReduce(on);
+    }
+}
+
 void DecoderManager::setRecording(bool on, const std::string& dir)
 {
     recordOn_ = on;

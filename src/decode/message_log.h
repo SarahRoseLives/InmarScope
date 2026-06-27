@@ -22,6 +22,7 @@ struct DecodedMessage
     char blockId = 0;  // ACARS block id char
     std::string text;  // printable rendering of the payload
     std::string hex;   // hex rendering
+    uint8_t suType = 0;  // SU type byte (0x30=Call progress, 0x21=Call announce, etc.)
     std::string decoded; // libacars-decoded application text (CPDLC/ADS-C/...), empty if none
     bool   hasPos = false; // a position was extracted (ADS-C)
     double lat = 0.0;

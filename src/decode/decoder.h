@@ -62,6 +62,9 @@ public:
     void   setMonitored(bool on) { monitored_.store(on); }
     bool   monitored() const { return monitored_.load(); }
 
+    // CPU reduction: slow down coarse frequency estimator (cuts demod CPU ~30%).
+    void   setCpuReduce(bool on);
+
     // Voice call recording (8400 only). When enabled, each contiguous voice
     // call is written to its own WAV file in dir, regardless of monitoring.
     void   setRecording(bool on, const std::string& dir,

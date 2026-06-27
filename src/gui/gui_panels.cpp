@@ -38,8 +38,13 @@ void drawControls(App& app)
     bool running = app.active->running();
 
     ImGui::BeginDisabled(running);
+#ifdef HAS_AIRSPY
+    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF", "Dual RTL", "Airspy"};
+    ImGui::Combo("Source", &app.sourceMode, modes, 6);
+#else
     const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF", "Dual RTL"};
     ImGui::Combo("Source", &app.sourceMode, modes, 5);
+#endif
     ImGui::EndDisabled();
 
     ImGui::Separator();
@@ -321,6 +326,104 @@ void drawControls(App& app)
             if (running) app.hack.setDcBlock(app.dcBlock);
         }
     }
+#ifdef HAS_AIRSPY
+    else if (app.sourceMode == 5)
+    {
+        // ---- Airspy (native) ----
+        if (ImGui::Button("Refresh devices"))
+            app.devices = app.airspy.listDevices();
+        ImGui::SameLine();
+        ImGui::Text("(%d found)", (int)app.devices.size());
+        if (!app.devices.empty())
+        {
+            std::string preview = app.devices[std::min(app.deviceIndex, (int)app.devices.size() - 1)].name;
+            if (ImGui::BeginCombo("Device", preview.c_str()))
+            {
+                for (int i = 0; i < (int)app.devices.size(); ++i)
+                {
+                    bool sel = (app.deviceIndex == i);
+                    std::string label = std::to_string(i) + ": " + app.devices[i].name +
+                                        " [" + app.devices[i].serial + "]";
+                    if (ImGui::Selectable(label.c_str(), sel))
+                        app.deviceIndex = i;
+                }
+                ImGui::EndCombo();
+            }
+        }
+
+        if (ImGui::InputDouble("Center (MHz)", &app.centerFreqMHz, 0.1, 1.0, "%.4f"))
+        {
+            app.viewA.resetView = true;
+            if (running)
+                app.airspy.setCenterFreq(app.centerFreqMHz * 1e6);
+        }
+        if (ImGui::Combo("Sample rate (MHz)", &app.airspySampleRateIdx, kAirspyRateLabels, kAirspyNumRates))
+        {
+            app.viewA.resetView = true;
+            if (running)
+                app.airspy.setSampleRate(kAirspyRates[app.airspySampleRateIdx]);
+        }
+
+        ImGui::Separator();
+        if (ImGui::RadioButton("Sensitive", app.airspyGainMode == 0)) app.airspyGainMode = 0;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Linear", app.airspyGainMode == 1)) app.airspyGainMode = 1;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Free", app.airspyGainMode == 2)) app.airspyGainMode = 2;
+
+        if (app.airspyGainMode == 0)
+        {
+            if (ImGui::SliderInt("Sensitivity gain", &app.airspySenseGain, 0, 21))
+            {
+                if (running) app.airspy.setGainMode(0), app.airspy.setSenseGain(app.airspySenseGain);
+            }
+        }
+        else if (app.airspyGainMode == 1)
+        {
+            if (ImGui::SliderInt("Linearity gain", &app.airspyLinearGain, 0, 21))
+            {
+                if (running) app.airspy.setGainMode(1), app.airspy.setLinearGain(app.airspyLinearGain);
+            }
+        }
+        else
+        {
+            if (ImGui::Checkbox("LNA AGC", &app.airspyLnaAgc))
+            {
+                if (running) app.airspy.setLnaAgc(app.airspyLnaAgc);
+            }
+            ImGui::BeginDisabled(app.airspyLnaAgc);
+            if (ImGui::SliderInt("LNA gain", &app.airspyLnaGain, 0, 15))
+            {
+                if (running) app.airspy.setLnaGain(app.airspyLnaGain);
+            }
+            ImGui::EndDisabled();
+
+            if (ImGui::Checkbox("Mixer AGC", &app.airspyMixerAgc))
+            {
+                if (running) app.airspy.setMixerAgc(app.airspyMixerAgc);
+            }
+            ImGui::BeginDisabled(app.airspyMixerAgc);
+            if (ImGui::SliderInt("Mixer gain", &app.airspyMixerGain, 0, 15))
+            {
+                if (running) app.airspy.setMixerGain(app.airspyMixerGain);
+            }
+            ImGui::EndDisabled();
+
+            if (ImGui::SliderInt("VGA gain", &app.airspyVgaGain, 0, 15))
+            {
+                if (running) app.airspy.setVgaGain(app.airspyVgaGain);
+            }
+        }
+        if (ImGui::Checkbox("Bias T (antenna power)", &app.airspyBias))
+        {
+            if (running) app.airspy.setBiasTee(app.airspyBias);
+        }
+        if (ImGui::Checkbox("DC block", &app.dcBlock))
+        {
+            if (running) app.airspy.setDcBlock(app.dcBlock);
+        }
+    }
+#endif
     if (app.sourceMode == 4)
     {
         // ---- Dual RTL: two independent RTL-SDRs ----
@@ -890,6 +993,13 @@ void drawDecoders(App& app)
         app.decodersB.setVoiceMute(app.voiceMuted);
     }
 
+    ImGui::SameLine();
+    if (ImGui::Checkbox("CPU reduce", &app.cpuReduce))
+    {
+        app.decoders.setCpuReduce(app.cpuReduce);
+        app.decodersB.setCpuReduce(app.cpuReduce);
+    }
+
     // Audio output device picker.
     if (app.audioDevs.empty())
         app.audioDevs = app.decoders.audioDevices();
@@ -1117,10 +1227,20 @@ void drawSUs(App& app)
         for (auto it = msgs.begin(); it != msgs.end(); ++it)
         {
             ImGui::TableNextRow();
+
+            // Colorize by SU type
+            ImVec4 col = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); // default gray
+            if (it->suType == 0x30)                         // Call progress
+                col = ImVec4(1.0f, 0.65f, 0.0f, 1.0f);     // orange
+            else if (it->suType == 0x21)                    // Call announcement
+                col = ImVec4(1.0f, 0.85f, 0.2f, 1.0f);     // gold
+            else if (it->suType >= 0x31 && it->suType <= 0x34) // C-channel assignment
+                col = ImVec4(0.3f, 0.7f, 1.0f, 1.0f);     // blue
+
             ImGui::TableNextColumn();
             ImGui::Text("%.3f", it->freqMHz);
             ImGui::TableNextColumn();
-            ImGui::TextUnformatted(it->text.c_str());
+            ImGui::TextColored(col, "%s", it->text.c_str());
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(it->hex.c_str());
         }

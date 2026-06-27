@@ -40,6 +40,16 @@ find_path(HACKRF_INCLUDE_DIRS NAMES libhackrf/hackrf.h hackrf.h
           PATH_SUFFIXES libhackrf REQUIRED)
 find_library(HACKRF_LIBRARIES NAMES hackrf libhackrf REQUIRED)
 
+# Airspy (native source, optional).
+# Vendored headers always available; library detection is optional.
+set(AIRSPY_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/third_party/airspy)
+find_library(AIRSPY_LIBRARIES NAMES airspy libairspy)
+set(AIRSPY_FOUND FALSE)
+if(AIRSPY_LIBRARIES)
+    set(AIRSPY_FOUND TRUE)
+    message(STATUS "Airspy link library found: ${AIRSPY_LIBRARIES}")
+endif()
+
 set(IMGUI_DIR   ${CMAKE_SOURCE_DIR}/third_party/imgui)
 set(IMPLOT_DIR  ${CMAKE_SOURCE_DIR}/third_party/implot)
 
@@ -133,6 +143,7 @@ add_executable(InmarScope
     src/state/config.cpp
     src/sdr/rtl_sdr_source.cpp
     src/sdr/hackrf_source.cpp
+    
     src/sdr/wav_file_source.cpp
     src/sdr/sdrpp_server_source.cpp
     src/sdr/iq_recorder.cpp
@@ -165,6 +176,11 @@ target_include_directories(InmarScope PRIVATE
     ${HACKRF_INCLUDE_DIRS}
 )
 target_compile_definitions(InmarScope PRIVATE _USE_MATH_DEFINES)
+if(AIRSPY_FOUND)
+    target_sources(InmarScope PRIVATE src/sdr/airspy_source.cpp)
+    target_compile_definitions(InmarScope PRIVATE HAS_AIRSPY=1)
+    target_include_directories(InmarScope PRIVATE ${AIRSPY_INCLUDE_DIRS})
+endif()
 find_library(ZSTD_LIBRARIES NAMES zstd libzstd REQUIRED)
 find_library(ZLIB_LIB NAMES z libz zlib REQUIRED)
 
@@ -181,6 +197,9 @@ if(NOT OGG_FOUND OR NOT VORBIS_FOUND)
 endif()
 
 target_link_libraries(InmarScope PRIVATE imgui jaero_dsp mbelib acars_static ${ZLIB_LIB} ${RTLSDR_LIBRARIES} ${HACKRF_LIBRARIES} ${ZSTD_LIBRARIES} ${OGG_LIBRARIES} ${VORBIS_LIBRARIES} ${VORBISENC_LIBRARIES} ${WEBVIEW2_LIB})
+if(AIRSPY_FOUND)
+    target_link_libraries(InmarScope PRIVATE ${AIRSPY_LIBRARIES})
+endif()
 target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS})
 
 if(WIN32)
@@ -217,6 +236,9 @@ if(WIN32)
         libvorbisenc-2.dll
         WebView2Loader.dll
     )
+    if(AIRSPY_FOUND)
+        list(APPEND FRAMESYNC_RUNTIME_DLLS libairspy.dll)
+    endif()
     foreach(dll ${FRAMESYNC_RUNTIME_DLLS})
         if(EXISTS "${MINGW_BIN}/${dll}")
             add_custom_command(TARGET InmarScope POST_BUILD

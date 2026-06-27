@@ -6,6 +6,9 @@
 #include "gui/waterfall.h"
 #include "sdr/rtl_sdr_source.h"
 #include "sdr/hackrf_source.h"
+#ifdef HAS_AIRSPY
+#include "sdr/airspy_source.h"
+#endif
 #include "sdr/wav_file_source.h"
 #include "sdr/sdrpp_server_source.h"
 #include "sdr/iq_recorder.h"
@@ -55,8 +58,11 @@ struct App
     WavFileSource   wav;
     SdrppServerSource server;
     HackRfSource    hack;
+#ifdef HAS_AIRSPY
+    AirspySource    airspy;
+#endif
     SdrSource*      active = &sdr;
-    int  sourceMode = 0; // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL
+    int  sourceMode = 0; // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL, 5=Airspy
     char wavPath[512] = "";
     bool wavLoop = true;
     char serverHost[128] = "localhost";
@@ -71,6 +77,20 @@ struct App
     int    hackVga = 16;
     bool   hackAmp = false;
     bool   hackBias = false;
+
+    // Airspy
+#ifdef HAS_AIRSPY
+    int    airspySampleRateIdx = 3;  // index into kAirspyRates (3 = 10 MHz)
+    int    airspyGainMode = 0;      // 0=Sensitivity, 1=Linear, 2=Free
+    int    airspySenseGain = 10;    // 0-21
+    int    airspyLinearGain = 10;   // 0-21
+    int    airspyLnaGain = 8;       // 0-15
+    int    airspyMixerGain = 8;     // 0-15
+    int    airspyVgaGain = 4;       // 0-15
+    bool   airspyLnaAgc = false;
+    bool   airspyMixerAgc = false;
+    bool   airspyBias = false;
+#endif
 
     SpectrumView     viewA;
     SpectrumView     viewB;
@@ -115,6 +135,7 @@ struct App
 
     int  audioDevice = 0;
     bool voiceMuted = false;
+    bool cpuReduce = false;
     std::vector<std::string> audioDevs;
 
     // Output
@@ -207,6 +228,11 @@ constexpr const char* kRateLabels[] = {
     "0.25", "0.9", "1.024", "1.2", "1.4", "1.536",
     "1.8", "1.92", "2.048", "2.4", "2.56", "2.88", "3.2"};
 constexpr int kNumRates = (int)(sizeof(kRates) / sizeof(kRates[0]));
+
+// Airspy sample rates (MHz values as doubles, and index-to-label).
+constexpr double kAirspyRates[] = {2.5e6, 3.0e6, 6.0e6, 10.0e6};
+constexpr const char* kAirspyRateLabels[] = {"2.5", "3.0", "6.0", "10.0"};
+constexpr int kAirspyNumRates = (int)(sizeof(kAirspyRates) / sizeof(kAirspyRates[0]));
 
 constexpr int    kFftSizes[] = {1024, 2048, 4096, 8192, 16384, 32768, 65536};
 constexpr const char* kFftLabels[] = {"1024", "2048", "4096", "8192", "16384", "32768", "65536"};

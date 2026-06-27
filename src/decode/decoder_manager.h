@@ -86,6 +86,9 @@ public:
     void setVoiceMute(bool m) { audio_.setMuted(m); }
     bool voiceMuted() const { return audio_.muted(); }
 
+    // Forward cpuReduce to all decoders.
+    void setCpuReduce(bool on);
+
     // Voice call recording: every 8400 decoder writes its calls to WAV files
     // (one per call) in dir, independent of which channel is being monitored.
     void setRecording(bool on, const std::string& dir);

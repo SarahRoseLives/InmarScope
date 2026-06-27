@@ -38,7 +38,7 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
 #define WD(f) buf->appendf(#f "=%.10g\n", (double)app.f)
 #define WS(f) buf->appendf(#f "=%s\n", app.f)
     WI(sourceMode); WI(deviceIndex); WI(sampleRateIdx); WI(newBaud); WI(fftSizeIdx);
-    WI(audioDevice); WI(voiceMuted);
+    WI(audioDevice); WI(voiceMuted); WI(cpuReduce);
     WD(centerFreqMHz);
     WI(autoGain); WF(gainDb); WI(biasTee); WF(ppm); WI(dcBlock);
     WI(autoScale); WI(bandBrowse); WF(avgAlpha); WF(dbMin); WF(dbMax);
@@ -47,6 +47,11 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WS(serverHost); WI(serverPort); WI(serverCompression); WI(serverSampleType);
     WD(serverSampleRateMHz);
     WD(hackSampleRateMHz); WI(hackLna); WI(hackVga); WI(hackAmp); WI(hackBias);
+#ifdef HAS_AIRSPY
+    WI(airspySampleRateIdx); WI(airspyGainMode); WI(airspySenseGain); WI(airspyLinearGain);
+    WI(airspyLnaGain); WI(airspyMixerGain); WI(airspyVgaGain);
+    WI(airspyLnaAgc); WI(airspyMixerAgc); WI(airspyBias);
+#endif
     WI(deviceIndexB); WD(centerFreqMHzB); WI(sampleRateIdxB);
     WI(autoGainB); WF(gainDbB); WI(biasTeeB); WF(ppmB);
     WI(voiceFollow); WF(followHoldSec);
@@ -93,7 +98,7 @@ void cfgReadLine(App& app, const char* line)
 #define RD(f) if (!std::strcmp(key, #f)) { app.f = std::atof(val); return; }
 #define RS(f) if (!std::strcmp(key, #f)) { std::strncpy(app.f, val, sizeof(app.f) - 1); app.f[sizeof(app.f) - 1] = 0; return; }
     RI(sourceMode); RI(deviceIndex); RI(sampleRateIdx); RI(newBaud); RI(fftSizeIdx);
-    RI(audioDevice); RB(voiceMuted);
+    RI(audioDevice); RB(voiceMuted); RB(cpuReduce);
     RD(centerFreqMHz);
     RB(autoGain); RF(gainDb); RB(biasTee); RF(ppm); RB(dcBlock);
     RB(autoScale); RB(bandBrowse); RF(avgAlpha); RF(dbMin); RF(dbMax);
@@ -102,6 +107,11 @@ void cfgReadLine(App& app, const char* line)
     RS(serverHost); RI(serverPort); RB(serverCompression); RI(serverSampleType);
     RD(serverSampleRateMHz);
     RD(hackSampleRateMHz); RI(hackLna); RI(hackVga); RB(hackAmp); RB(hackBias);
+#ifdef HAS_AIRSPY
+    RI(airspySampleRateIdx); RI(airspyGainMode); RI(airspySenseGain); RI(airspyLinearGain);
+    RI(airspyLnaGain); RI(airspyMixerGain); RI(airspyVgaGain);
+    RB(airspyLnaAgc); RB(airspyMixerAgc); RB(airspyBias);
+#endif
     RI(deviceIndexB); RD(centerFreqMHzB); RI(sampleRateIdxB);
     RB(autoGainB); RF(gainDbB); RB(biasTeeB); RF(ppmB);
     RB(voiceFollow); RF(followHoldSec);

@@ -103,7 +103,6 @@ Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud
                                          nullptr, nullptr);
         if (oqpsk_)
         {
-            jaero_oqpsk_cont_set_cpu_reduce(oqpsk_, 1);
             jaero_oqpsk_cont_set_acars2_callback(oqpsk_, &Decoder::acars2Trampoline, this);
             jaero_oqpsk_cont_set_decoded_callback(oqpsk_, &Decoder::decodedTrampoline, this);
             jaero_oqpsk_cont_set_cassign_callback(oqpsk_, &Decoder::cassignTrampoline, this);
@@ -121,7 +120,6 @@ Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud
                                   nullptr, nullptr);
         if (pmsk_)
         {
-            jaero_pmsk_set_cpu_reduce(pmsk_, 1);
             jaero_pmsk_set_acars2_callback(pmsk_, &Decoder::acars2Trampoline, this);
             jaero_pmsk_set_decoded_callback(pmsk_, &Decoder::decodedTrampoline, this);
             jaero_pmsk_set_cassign_callback(pmsk_, &Decoder::cassignTrampoline, this);
@@ -163,6 +161,14 @@ void Decoder::setFreq(double chanFreqHz)
 {
     chanFreqHz_ = chanFreqHz;
     ddc_.setOffset(chanFreqHz - subCenterHz_);
+}
+
+void Decoder::setCpuReduce(bool on)
+{
+    if (pmsk_)
+        jaero_pmsk_set_cpu_reduce(pmsk_, on ? 1 : 0);
+    if (oqpsk_)
+        jaero_oqpsk_cont_set_cpu_reduce(oqpsk_, on ? 1 : 0);
 }
 
 bool Decoder::locked() const
@@ -317,6 +323,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
     DecodedMessage m;
     m.channelId = channelId_;
     m.freqMHz = chanFreqHz_ / 1e6;
+    m.suType = data[0];
 
     // First decoded byte is the P-channel SU type descriptor.
     m.text = suTypeName(data[0]);
