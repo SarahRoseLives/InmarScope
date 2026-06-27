@@ -41,6 +41,7 @@ void drawAircraft(App&);
 void drawFlightMap(App&);
 void drawConstellation(App&);
 void drawVoiceCalls(App&);
+void drawLesFreq(App&);
 void drawAbout(App&);
 
 // state/config.cpp

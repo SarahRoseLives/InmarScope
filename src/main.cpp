@@ -141,6 +141,15 @@ int main(int, char**)
     if (app.bandPlanIdxB >= 0 && app.bandPlanIdxB < (int)app.bandPlanPaths.size())
         app.bandPlanLoadedB = loadBandPlan(app.bandPlanPaths[app.bandPlanIdxB]);
     app.decoders.voiceCallLog().scanDir(app.recordDir);
+    // Start web server if previously enabled
+    if (app.webServerEnabled)
+    {
+        app.webServer.decodersA = &app.decoders;
+        app.webServer.decodersB = &app.decodersB;
+        app.webServer.dualMode = &app.dualMode;
+        app.webServer.active = &app.active;
+        app.webServer.start(app.webServerPort);
+    }
 #if defined(_WIN32)
     app.flightMapWv.init(glfwGetWin32Window(window));
 #endif
@@ -208,6 +217,7 @@ int main(int, char**)
         drawLes(app);
         drawAircraft(app);
         drawVoiceCalls(app);
+        drawLesFreq(app);
         drawFlightMap(app);
         drawConstellation(app);
         drawAbout(app);
@@ -249,6 +259,7 @@ int main(int, char**)
     app.wav.stop();
     app.server.stop();
     app.hack.stop();
+    app.webServer.stop();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

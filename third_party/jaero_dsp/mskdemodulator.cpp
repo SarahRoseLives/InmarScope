@@ -52,7 +52,7 @@ MskDemodulator::MskDemodulator()
     }
 
     agc = new AGC(1, Fs);
-    ebnomeasure = new MSKEbNoMeasure(2.0 * Fs);
+    ebnomeasure = new MSKEbNoMeasure(0.5 * Fs);
     pointmean = new MovingAverage(100);
 
     mixer_center.SetFreq(freq_center, Fs);
@@ -139,7 +139,7 @@ void MskDemodulator::setSettings(Settings s)
     agc = new AGC(1, Fs);
 
     delete ebnomeasure;
-    ebnomeasure = new MSKEbNoMeasure(2.0 * Fs);
+    ebnomeasure = new MSKEbNoMeasure(0.5 * Fs);
 
     pointbuff.assign(100, cpx_type(0, 0));
     pointbuff_ptr = 0;

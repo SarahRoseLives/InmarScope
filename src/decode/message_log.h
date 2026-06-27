@@ -445,7 +445,69 @@ private:
     std::map<uint32_t, AircraftEntry> byId_;
 };
 
-// A recorded voice call, either live (recording==true) or completed.
+// A discovered LES TDM downlink frequency, extracted from 0xAB LES List
+// or 0x81/0x83/0x92 channel assignment packets on the NCS common channel.
+struct LesFreqEntry
+{
+    double freqMHz = 0.0;
+    int satId = -1;
+    int lesId = -1;
+    std::string satName;
+    std::string lesLabel;
+    uint16_t services = 0;
+    double lastSeen = 0.0;
+    int hits = 0;
+    bool hasDecoder = false;
+};
+
+class LesFreqTable
+{
+public:
+    void add(double freqMHz, int satId, int lesId, const std::string& satName,
+             const std::string& lesLabel, uint16_t services, double nowSec)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        for (auto& e : entries_)
+        {
+            if (std::fabs(e.freqMHz - freqMHz) < 0.001)
+            {
+                e.satId = satId;
+                e.lesId = lesId;
+                e.satName = satName;
+                e.lesLabel = lesLabel;
+                e.services = services;
+                e.lastSeen = nowSec;
+                ++e.hits;
+                return;
+            }
+        }
+        entries_.push_back({freqMHz, satId, lesId, satName, lesLabel, services, nowSec, 1, false});
+    }
+
+    void setHasDecoder(double freqMHz, bool on)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        for (auto& e : entries_)
+            if (std::fabs(e.freqMHz - freqMHz) < 0.001)
+                { e.hasDecoder = on; return; }
+    }
+
+    std::vector<LesFreqEntry> snapshot()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        return entries_;
+    }
+
+    void clear()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        entries_.clear();
+    }
+
+private:
+    std::mutex mtx_;
+    std::vector<LesFreqEntry> entries_;
+};
 struct VoiceCallRecord
 {
     double timeSec = 0.0;        // epoch of call start

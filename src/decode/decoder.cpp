@@ -79,7 +79,8 @@ static const char* suTypeName(uint8_t t)
 Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud,
                  int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink,
                  CassignLog* cassignLog, ChannelTable* netTable, EgcLog* egcLog,
-                 AircraftTable* acTable, MesLog* mesLog, LesLog* lesLog)
+                 AircraftTable* acTable, MesLog* mesLog, LesLog* lesLog,
+                 LesFreqTable* lesFreqTable)
     : ddc_(subRate, chanFreqHz - subCenterHz, ddcRate(baud), ddcBw(baud)),
       log_(log),
       suLog_(suLog),
@@ -95,7 +96,7 @@ Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud
 {
     if (baud == kEgcBaud)
     {
-            egc_ = std::make_unique<EgcDecoder>(channelId, chanFreqHz / 1e6, ddc_.outputRate(), egcLog_, mesLog, lesLog);
+            egc_ = std::make_unique<EgcDecoder>(channelId, chanFreqHz / 1e6, ddc_.outputRate(), egcLog_, mesLog, lesLog, lesFreqTable);
     }
     else if (baud == 10500 || baud == 8400)
     {
@@ -207,6 +208,7 @@ int Decoder::getConstellation(double* iqOut, int maxPairs) const
 
 int Decoder::egcBer() const { return egc_ ? egc_->lastBer() : -1; }
 int Decoder::egcFrames() const { return egc_ ? egc_->framesSynced() : 0; }
+int Decoder::egcChannelType() const { return egc_ ? egc_->channelType() : 0; }
 
 void Decoder::acarsTrampoline(const uint8_t* data, int len, int, uint32_t aes_id,
                               uint8_t ges_id, uint8_t, uint8_t, int downlink,

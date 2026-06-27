@@ -13,6 +13,7 @@
 #include "sdr/sdrpp_server_source.h"
 #include "sdr/iq_recorder.h"
 #include "audio/audio_player.h"
+#include "web/web_server.h"
 #include "decode/band_plan.h"
 #include "decode/decoder_manager.h"
 #include "output/message_feed.h"
@@ -140,6 +141,11 @@ struct App
     bool voiceMuted = false;
     bool cpuReduce = false;
     bool showAbout = false;
+    bool autoAddLes = true;       // auto-create decoders for discovered LES frequencies
+    int  maxLesAutoDecoders = 4;  // cap on auto-created LES decoders
+    bool webServerEnabled = false;
+    int  webServerPort = 8080;
+    WebServer webServer;
     AudioPlayer audioPlayer;
     std::vector<std::string> audioDevs;
 
@@ -244,4 +250,4 @@ constexpr const char* kFftLabels[] = {"1024", "2048", "4096", "8192", "16384", "
 constexpr int kNumFftSizes = (int)(sizeof(kFftSizes) / sizeof(kFftSizes[0]));
 
 // Dock layout version: bump when the built-in default layout changes.
-constexpr int kLayoutVersion = 11;
+constexpr int kLayoutVersion = 12;

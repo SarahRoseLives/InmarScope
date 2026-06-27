@@ -39,6 +39,8 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
 #define WS(f) buf->appendf(#f "=%s\n", app.f)
     WI(sourceMode); WI(deviceIndex); WI(sampleRateIdx); WI(newBaud); WI(fftSizeIdx);
     WI(audioDevice); WI(voiceMuted); WI(cpuReduce);
+    WI(autoAddLes); WI(maxLesAutoDecoders);
+    WI(webServerEnabled); WI(webServerPort);
     WD(centerFreqMHz);
     WF(iqBufferSec);
     WI(autoGain); WF(gainDb); WI(biasTee); WF(ppm); WI(dcBlock);
@@ -100,6 +102,8 @@ void cfgReadLine(App& app, const char* line)
 #define RS(f) if (!std::strcmp(key, #f)) { std::strncpy(app.f, val, sizeof(app.f) - 1); app.f[sizeof(app.f) - 1] = 0; return; }
     RI(sourceMode); RI(deviceIndex); RI(sampleRateIdx); RI(newBaud); RI(fftSizeIdx);
     RI(audioDevice); RB(voiceMuted); RB(cpuReduce);
+    RB(autoAddLes); RI(maxLesAutoDecoders);
+    RB(webServerEnabled); RI(webServerPort);
     RD(centerFreqMHz);
     RF(iqBufferSec);
     RB(autoGain); RF(gainDb); RB(biasTee); RF(ppm); RB(dcBlock);

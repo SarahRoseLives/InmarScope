@@ -161,6 +161,7 @@ add_executable(InmarScope
     src/audio/audio_output.cpp
     src/audio/audio_player.cpp
     src/audio/miniaudio_impl.cpp
+    src/web/web_server.cpp
     src/output/message_feed.cpp
     src/update/version_check.cpp
     src/web/flight_map_webview.cpp

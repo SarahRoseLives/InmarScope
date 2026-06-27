@@ -727,6 +727,49 @@ void drawControls(App& app)
         }
     }
 
+    // ---- Web Dashboard ----
+    ImGui::Separator();
+    if (ImGui::CollapsingHeader("Web Dashboard"))
+    {
+        if (ImGui::Checkbox("Enable server", &app.webServerEnabled))
+        {
+            if (app.webServerEnabled)
+            {
+                app.webServer.decodersA = &app.decoders;
+                app.webServer.decodersB = &app.decodersB;
+                app.webServer.dualMode = &app.dualMode;
+                app.webServer.active = &app.active;
+                app.webServer.start(app.webServerPort);
+            }
+            else
+                app.webServer.stop();
+        }
+        if (!app.webServer.running())
+        {
+            ImGui::SetNextItemWidth(80);
+            if (ImGui::InputInt("Port", &app.webServerPort))
+            {
+                if (app.webServerPort < 1) app.webServerPort = 1;
+                if (app.webServerPort > 65535) app.webServerPort = 65535;
+            }
+        }
+        else
+        {
+            char url[64];
+            std::snprintf(url, sizeof(url), "http://localhost:%d", app.webServerPort);
+            ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Running on port %d", app.webServerPort);
+            ImGui::SameLine();
+            if (ImGui::SmallButton("Open in browser"))
+            {
+#if defined(_WIN32)
+                ShellExecuteA(nullptr, "open", url, nullptr, nullptr, SW_SHOWNORMAL);
+#endif
+            }
+            ImGui::SameLine();
+            ImGui::TextDisabled(url);
+        }
+    }
+
     ImGui::End();
 }
 
@@ -1183,7 +1226,14 @@ void drawDecoders(App& app)
             ImGui::Text("%.4f", d.freqMHz);
             ImGui::TableNextColumn();
             if (d.baud == kEgcBaud)
-                ImGui::TextUnformatted("EGC");
+            {
+                if (d.egcCType == 1)
+                    ImGui::TextUnformatted("EGC (NCS)");
+                else if (d.egcCType == 2)
+                    ImGui::TextUnformatted("EGC (LES)");
+                else
+                    ImGui::TextUnformatted("EGC");
+            }
             else
                 ImGui::Text("%d", d.baud);
             ImGui::TableNextColumn();
@@ -2058,6 +2108,150 @@ void drawVoiceCalls(App& app)
 }
 
 // ---------------------------------------------------------------------------
+// LES Frequencies browser
+// ---------------------------------------------------------------------------
+
+void drawLesFreq(App& app)
+{
+    ImGui::Begin("LES Freq");
+
+    if (app.autoAddLes && app.active->running())
+    {
+        double center = app.active->centerFreq();
+        double halfSpan = app.active->sampleRate() / 2.0;
+        auto ents = app.decoders.lesFreqTable().snapshot();
+        int added = 0;
+        for (auto& e : ents)
+        {
+            if (e.hasDecoder) continue;
+            if (added >= app.maxLesAutoDecoders) break;
+            double offset = std::fabs(e.freqMHz * 1e6 - center);
+            if (offset > halfSpan * 0.95) continue;
+            bool dup = false;
+            for (auto& s : app.decoders.status())
+                if (std::fabs(s.freqMHz - e.freqMHz) < 0.001 && s.baud == kEgcBaud)
+                    { dup = true; break; }
+            if (dup) continue;
+            int id = app.decoders.addDecoder(e.freqMHz * 1e6, kEgcBaud);
+            if (id >= 0)
+            {
+                app.decoders.lesFreqTable().setHasDecoder(e.freqMHz, true);
+                ++added;
+            }
+        }
+        if (app.dualMode && app.sdrB.running())
+        {
+            double centerB = app.sdrB.centerFreq();
+            double halfSpanB = app.sdrB.sampleRate() / 2.0;
+            for (auto& e : ents)
+            {
+                if (e.hasDecoder) continue;
+                if (added >= app.maxLesAutoDecoders) break;
+                double offset = std::fabs(e.freqMHz * 1e6 - centerB);
+                if (offset > halfSpanB * 0.95) continue;
+                bool dup = false;
+                for (auto& s : app.decodersB.status())
+                    if (std::fabs(s.freqMHz - e.freqMHz) < 0.001 && s.baud == kEgcBaud)
+                        { dup = true; break; }
+                if (dup) continue;
+                int id = app.decodersB.addDecoder(e.freqMHz * 1e6, kEgcBaud);
+                if (id >= 0)
+                {
+                    app.decodersB.lesFreqTable().setHasDecoder(e.freqMHz, true);
+                    ++added;
+                }
+            }
+        }
+    }
+
+    auto ents = app.decoders.lesFreqTable().snapshot();
+    if (app.dualMode)
+    {
+        auto b = app.decodersB.lesFreqTable().snapshot();
+        for (auto& e : b)
+        {
+            bool dup = false;
+            for (auto& ea : ents)
+                if (std::fabs(ea.freqMHz - e.freqMHz) < 0.001) { dup = true; break; }
+            if (!dup) ents.push_back(e);
+        }
+    }
+    std::sort(ents.begin(), ents.end(),
+              [](const LesFreqEntry& a, const LesFreqEntry& b) { return a.freqMHz < b.freqMHz; });
+
+    ImGui::Text("%d discovered", (int)ents.size());
+    ImGui::SameLine();
+    ImGui::Checkbox("Auto-add", &app.autoAddLes);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(42);
+    ImGui::SliderInt("max", &app.maxLesAutoDecoders, 0, 8);
+
+    if (ImGui::BeginTable("##lesft", 6,
+                          ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                          ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
+    {
+        ImGui::TableSetupColumn("Freq", ImGuiTableColumnFlags_WidthFixed, 78);
+        ImGui::TableSetupColumn("Sat");
+        ImGui::TableSetupColumn("LES");
+        ImGui::TableSetupColumn("Svc", ImGuiTableColumnFlags_WidthFixed, 72);
+        ImGui::TableSetupColumn("Seen");
+        ImGui::TableSetupColumn("+");
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableHeadersRow();
+
+        for (auto& e : ents)
+        {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("%.3f", e.freqMHz);
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(e.satName.c_str());
+            ImGui::TableNextColumn();
+            if (e.lesLabel.empty())
+                ImGui::TextDisabled("LES %02d", e.lesId);
+            else
+                ImGui::TextUnformatted(e.lesLabel.c_str());
+            ImGui::TableNextColumn();
+            char svc[32];
+            std::snprintf(svc, sizeof(svc), "%04X", e.services);
+            ImGui::TextUnformatted(svc);
+            ImGui::TableNextColumn();
+            double age = (double)std::time(nullptr) - e.lastSeen;
+            if (age < 60.0)
+                ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "%.0fs", age);
+            else
+                ImGui::TextDisabled("%.0fs", age);
+            ImGui::TableNextColumn();
+            if (e.hasDecoder)
+                ImGui::TextDisabled("ON");
+            else
+            {
+                char lbl[24];
+                std::snprintf(lbl, sizeof(lbl), "Add##lesf%d", (int)(e.freqMHz * 10000));
+                if (ImGui::SmallButton(lbl))
+                {
+                    double offsetA = app.active->running() ? std::fabs(e.freqMHz * 1e6 - app.active->centerFreq()) : 1e12;
+                    double offsetB = (app.dualMode && app.sdrB.running()) ? std::fabs(e.freqMHz * 1e6 - app.sdrB.centerFreq()) : 1e12;
+                    if (offsetA < app.active->sampleRate() / 2.0)
+                    {
+                        app.decoders.addDecoder(e.freqMHz * 1e6, kEgcBaud);
+                        app.decoders.lesFreqTable().setHasDecoder(e.freqMHz, true);
+                    }
+                    else if (offsetB < app.sdrB.sampleRate() / 2.0)
+                    {
+                        app.decodersB.addDecoder(e.freqMHz * 1e6, kEgcBaud);
+                        app.decodersB.lesFreqTable().setHasDecoder(e.freqMHz, true);
+                    }
+                }
+            }
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+
+// ---------------------------------------------------------------------------
 // About dialog
 // ---------------------------------------------------------------------------
 
@@ -2165,6 +2359,7 @@ void drawDockHost(App& app)
         ImGui::DockBuilderDockWindow("LES", rbot);
         ImGui::DockBuilderDockWindow("Aircraft", rbot);
         ImGui::DockBuilderDockWindow("Voice Calls", rbot);
+        ImGui::DockBuilderDockWindow("LES Freq", rbot);
         ImGui::DockBuilderDockWindow("Constellation", rcon);
         ImGui::DockBuilderFinish(dockId);
     }

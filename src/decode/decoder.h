@@ -20,6 +20,7 @@ class AmbeDecoder;
 class AudioOutput;
 class WavWriter;
 class EgcDecoder;
+class LesFreqTable;
 
 // Special "baud" code selecting the Inmarsat-C / EGC decoder.
 static constexpr int kEgcBaud = 1;
@@ -33,7 +34,8 @@ public:
             int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink,
             CassignLog* cassignLog, ChannelTable* netTable, EgcLog* egcLog = nullptr,
             AircraftTable* acTable = nullptr,
-            MesLog* mesLog = nullptr, LesLog* lesLog = nullptr);
+            MesLog* mesLog = nullptr, LesLog* lesLog = nullptr,
+            LesFreqTable* lesFreqTable = nullptr);
     ~Decoder();
 
     // Process a block of sub-band interleaved double IQ (decode thread).
@@ -59,6 +61,7 @@ public:
     bool   isEgc() const { return baud_ == kEgcBaud; }
     int    egcBer() const;    // -1 if not EGC
     int    egcFrames() const; // 0 if not EGC
+    int    egcChannelType() const; // 0=unknown, 1=NCS, 2=LES TDM, 3=Joint, 4=Standby
     void   setMonitored(bool on) { monitored_.store(on); }
     bool   monitored() const { return monitored_.load(); }
 

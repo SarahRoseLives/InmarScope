@@ -9,10 +9,19 @@
 #include <cstring>
 #include <filesystem>
 
-// Shared front-end IF rate and passband. ~250 kHz IF -> ±100 kHz usable
-// coverage per sub-band; decoders within ±90 kHz of a sub-band centre share it.
+// Shared front-end IF rate and passband. ~250 kHz IF -> ±150 kHz usable
+// coverage per sub-band; decoders within ±135 kHz of a sub-band centre share it.
 static constexpr double kSubRateTarget = 250000.0;
-static constexpr double kSubBW = 200000.0;
+static constexpr double kSubBW = 300000.0;
+
+// Heavier decoders consume more CPU per block.  EGC is very light, OQPSK
+// moderate, MSK the heaviest (coarse frequency estimator + matched filters).
+static int decoderWeight(int baud)
+{
+    if (baud == kEgcBaud) return 1;
+    if (baud == 8400 || baud == 10500) return 2;
+    return 3; // 600 / 1200 MSK
+}
 
 void DecoderManager::configure(double Fs, double centerHz)
 {
@@ -96,11 +105,12 @@ int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
         std::lock_guard<std::mutex> lk(w->dMtx);
         for (auto& sb : w->subbands)
         {
-            if (std::fabs(freqHz - sb->centerHz) < 0.40 * sb->subRate)
+            if (std::fabs(freqHz - sb->centerHz) < 0.45 * sb->subRate)
             {
                 Decoder* dec = sb->decoders.emplace_back(std::make_unique<Decoder>(
-                    sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_)).get();
+                    sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_, &lesFreqTable_)).get();
                 w->count.fetch_add(1);
+                w->weight.fetch_add(decoderWeight(baud));
                 if (baud == 8400 && voiceMonitorId_ < 0)
                 {
                     dec->setMonitored(true);
@@ -119,16 +129,16 @@ int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
         }
     }
 
-    // 2) No covering sub-band -> create a new one on the least-loaded worker.
+    // 2) No covering sub-band -> create a new one on the lightest worker.
     Worker* best = workers_[0].get();
     for (auto& w : workers_)
-        if (w->count.load() < best->count.load())
+        if (w->weight.load() < best->weight.load())
             best = w.get();
 
     std::lock_guard<std::mutex> lk(best->dMtx);
     auto sb = std::make_unique<SubBand>(Fs_, centerHz_, freqHz, kSubRateTarget, kSubBW);
     Decoder* dec = sb->decoders.emplace_back(std::make_unique<Decoder>(
-        sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_)).get();
+        sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_, &lesFreqTable_)).get();
     if (baud == 8400 && voiceMonitorId_ < 0)
     {
         dec->setMonitored(true);
@@ -144,6 +154,7 @@ int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
     }
     best->subbands.push_back(std::move(sb));
     best->count.fetch_add(1);
+    best->weight.fetch_add(decoderWeight(baud));
     return id;
 }
 
@@ -164,8 +175,10 @@ void DecoderManager::removeDecoder(int channelId)
                         double dur = (double)(*it)->voiceFrames() * 0.02; // 20 ms per AMBE frame
                         voiceCallLog_.updateEnd(channelId, dur, (*it)->recordingPath());
                     }
+                    int baudOfRemoved = (*it)->baud();
                     decs.erase(it);
                     w->count.fetch_sub(1);
+                    w->weight.fetch_sub(decoderWeight(baudOfRemoved));
                     if (decs.empty())
                         w->subbands.erase(sbIt); // drop now-empty sub-band
                     if (channelId == voiceMonitorId_)
@@ -482,7 +495,7 @@ std::vector<DecoderManager::Status> DecoderManager::status()
             for (auto& d : sb->decoders)
                 out.push_back({d->channelId(), d->freqMHz(), d->baud(),
                                d->locked(), d->ebno(), d->msgCount(),
-                               d->egcBer(), d->egcFrames(),
+                               d->egcBer(), d->egcFrames(), d->egcChannelType(),
                                d->monitored(), d->isVoice()});
     }
     std::sort(out.begin(), out.end(),
