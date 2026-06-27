@@ -17,6 +17,9 @@ JFFT::JFFT()
 
 }
 
+std::map<int, JFFT::TableSet> JFFT::s_pool;
+std::mutex JFFT::s_poolMtx;
+
 void JFFT::init(int &fft_size)
 {
 
@@ -31,18 +34,35 @@ void JFFT::init(int &fft_size)
     fft_size=nfft;
     //qDebug()<<nfft<<nfft_2power;
 
-    //alocate mem
-    TWIDDLE_mem.resize(nfft);//this is more memory than we need. what is the exact amount we need?
-    TWIDDLE_INV_mem.resize(nfft);
+    // Check the shared pool for this nfft size
+    {
+        std::lock_guard<std::mutex> lk(s_poolMtx);
+        auto it = s_pool.find(nfft);
+        if (it != s_pool.end())
+        {
+            TWIDDLE_mem     = it->second.tw;
+            TWIDDLE_INV_mem = it->second.twInv;
+            DIDDLE_A        = it->second.da;
+            DIDDLE_B        = it->second.db;
+            return;
+        }
+    }
+
+    // First instance at this nfft: compute tables and register in pool
+    auto tw      = std::make_shared<std::vector<cpx_type>>(nfft);
+    auto twInv   = std::make_shared<std::vector<cpx_type>>(nfft);
+    auto da      = std::make_shared<std::vector<cpx_type>>(nfft);
+    auto db      = std::make_shared<std::vector<cpx_type>>(nfft);
+
+    TWIDDLE_mem     = tw;
+    TWIDDLE_INV_mem = twInv;
+    DIDDLE_A        = da;
+    DIDDLE_B        = db;
 
     //load twiddles (these are just roots of unity, like cutting a cake)
-    //looking at http://www.alwayslearn.com/DFT%20and%20FFT%20Tutorial/DFTandFFT_FFT_Butterfly_8_Input.html
-    //they are inserted as W^0_2, W^0_4,W^1_4, W^0_8,W^1_8,W^2_8,W^3_8 ...
-    //the pattern is 2 4 8 16 32 .. for the bottom number (cake cut into this many piecies N) and the top number
-    //increases till not quite half way around the cake (ie less than N/2)
     cpx_type imag=cpx_type(0,1);
-    cpx_type *TWIDDLE=TWIDDLE_mem.data();
-    cpx_type *TWIDDLE_INV=TWIDDLE_INV_mem.data();
+    cpx_type *TWIDDLE=TWIDDLE_mem->data();
+    cpx_type *TWIDDLE_INV=TWIDDLE_INV_mem->data();
     int w=0;
     for(int N=2;N<=nfft;N<<=1)
     {
@@ -54,18 +74,20 @@ void JFFT::init(int &fft_size)
             TWIDDLE[w]=twiddle;
             TWIDDLE_INV[w]=twiddle_inv;
             w++;
-            //qDebug()<<i<<N<<twiddle.real()<<twiddle.imag();
         }
     }
 
     //load diddle factors
-    //these are the factors for real transforms
-    DIDDLE_A.resize(nfft);
-    DIDDLE_B.resize(nfft);
     for(int i=0;i<nfft;i++)
     {
-        DIDDLE_A[i]=0.5*(1.0-imag*std::exp(-2.0*imag*M_PI*((double)i)/((double)(2*nfft))));
-        DIDDLE_B[i]=0.5*(1.0+imag*std::exp(-2.0*imag*M_PI*((double)i)/((double)(2*nfft))));
+        (*da)[i]=0.5*(1.0-imag*std::exp(-2.0*imag*M_PI*((double)i)/((double)(2*nfft))));
+        (*db)[i]=0.5*(1.0+imag*std::exp(-2.0*imag*M_PI*((double)i)/((double)(2*nfft))));
+    }
+
+    // Register in shared pool
+    {
+        std::lock_guard<std::mutex> lk(s_poolMtx);
+        s_pool[nfft] = {tw, twInv, da, db};
     }
 
 }
@@ -87,11 +109,11 @@ void JFFT::fft_real(const double *real,cpx_type *complex,int size)
     fft(F.data(),nfft);
 
     //do the diddling
-    complex[0]=F[0]*DIDDLE_A[0]+DIDDLE_B[0]*std::conj(F[0]);
-    complex[nfft]=F[0]*DIDDLE_B[0]+DIDDLE_A[0]*std::conj(F[0]);
-    for(int i=1;i<nfft;++i)
+    complex[0]=F[0]*(*DIDDLE_A)[0]+(*DIDDLE_B)[0]*std::conj(F[0]);
+    complex[nfft]=F[0]*(*DIDDLE_B)[0]+(*DIDDLE_A)[0]*std::conj(F[0]);
+    for(int i=1;i<nfft;i++)
     {
-        complex[i]=F[i]*DIDDLE_A[i]+DIDDLE_B[i]*std::conj(F[(nfft-i)]);
+        complex[i]=F[i]*(*DIDDLE_A)[i]+(*DIDDLE_B)[i]*std::conj(F[(nfft-i)]);
         complex[NpN-i]=std::conj(complex[i]);
     }
 }
@@ -106,7 +128,7 @@ void JFFT::ifft_real(const cpx_type *complex,double *real,int size)
     //do the diddling
     for(int i=0;i<nfft;++i)
     {
-        F[i]=complex[i]*std::conj(DIDDLE_A[i])+std::conj(DIDDLE_B[i])*std::conj(complex[(nfft-i)]);
+        F[i]=complex[i]*std::conj((*DIDDLE_A)[i])+std::conj((*DIDDLE_B)[i])*std::conj(complex[(nfft-i)]);
     }
 
     //perform the complex inverse fft
@@ -124,8 +146,8 @@ void JFFT::fft(cpx_type *x,int size,fft_direction_t fft_direction)
 {
     assert(size==nfft);
     cpx_type *TWIDDLE;
-    if(fft_direction==FORWARD)TWIDDLE=TWIDDLE_mem.data();
-     else TWIDDLE=TWIDDLE_INV_mem.data();
+    if(fft_direction==FORWARD)TWIDDLE=TWIDDLE_mem->data();
+     else TWIDDLE=TWIDDLE_INV_mem->data();
 
     //for the ifft an alternitive tick is given at http://www.embedded.com/design/configurable-systems/4210789/DSP-Tricks--Computing-inverse-FFTs-using-the-forward-FFT
     //it would mean taking the conjugate of x before the forward fft is done then taking the conjugate after the fft is done
@@ -224,8 +246,8 @@ void JFFT::fft_easy_to_understand(cpx_type *x,int size,fft_direction_t fft_direc
 {
     assert(size==nfft);
     cpx_type *TWIDDLE;
-    if(fft_direction==FORWARD)TWIDDLE=TWIDDLE_mem.data();
-     else TWIDDLE=TWIDDLE_INV_mem.data();
+    if(fft_direction==FORWARD)TWIDDLE=TWIDDLE_mem->data();
+     else TWIDDLE=TWIDDLE_INV_mem->data();
 
     //for the ifft an alternitive tick is given at http://www.embedded.com/design/configurable-systems/4210789/DSP-Tricks--Computing-inverse-FFTs-using-the-forward-FFT
     //it would mean taking the conjugate of x before the forward fft is done then taking the conjugate after the fft is done

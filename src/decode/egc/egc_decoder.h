@@ -12,12 +12,14 @@
 class EgcLog;
 class MesLog;
 class LesLog;
+class LesFreqTable;
 
 class EgcDecoder
 {
 public:
     EgcDecoder(int channelId, double freqMHz, double sampleRate, EgcLog* log,
-               MesLog* mesLog = nullptr, LesLog* lesLog = nullptr);
+               MesLog* mesLog = nullptr, LesLog* lesLog = nullptr,
+               LesFreqTable* lesFreqTable = nullptr);
     ~EgcDecoder();
 
     // Feed a block of 48 kHz complex baseband (interleaved double I,Q).
@@ -29,6 +31,9 @@ public:
     uint64_t messageCount() const;  // EGC messages emitted
     // Copy up to maxPairs BPSK soft symbols (interleaved I,Q doubles). Returns pairs.
     int getConstellation(double* iqOut, int maxPairs) const;
+
+    // Channel type from Bulletin Board: 1=NCS, 2=LES TDM, 3=Joint, 4=Standby NCS, 0=unknown
+    int channelType() const;
 
 private:
     struct Impl;

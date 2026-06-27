@@ -69,6 +69,9 @@ void patchDcBins(std::vector<float>& a, int N, int w)
 
 void processFft(SpectrumView& v, App& app, double fc, double fs)
 {
+    if (v.fftSkip)
+        return;
+
     int N = kFftSizes[app.fftSizeIdx];
     if (N != v.curN)
         buildWindow(v, N, app.dbMin);
@@ -120,6 +123,7 @@ void processFft(SpectrumView& v, App& app, double fc, double fs)
 
     updateFreqAxis(v, fc, fs, N);
     v.waterfall.addRow(v.inst.data(), N, app.dbMin, app.dbMax);
+    v.fftSkip = true; // cleared by drawWaterfall / drawSpectrum when panel is visible
 }
 
 // C-channel assignment types that carry a voice call (0x31 distress .. 0x34
@@ -142,6 +146,7 @@ void updateRateChange(App& app)
     for (auto& k : keep)
         app.decoders.addDecoder(k.first * 1e6, k.second);
     app.lastConfiguredFs = fs;
+    app.iqRecorder.configurePrebuffer(fs, app.iqBufferSec);
     app.viewA.resetView = true;
     if (app.viewA.curN > 0)
         updateFreqAxis(app.viewA, center, fs, app.viewA.curN);

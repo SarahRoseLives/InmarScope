@@ -96,6 +96,7 @@ int    jaero_pmsk_get_spectrum(jaero_pmsk_demod_t *d, float *mags_db, int n_bins
  * as interleaved (I, Q) doubles — needs capacity >= 2*max_pairs.
  * Returns number of I/Q pairs actually written. */
 int    jaero_pmsk_get_constellation(jaero_pmsk_demod_t *d, double *iq_out, int max_pairs);
+void   jaero_pmsk_set_cpu_reduce(jaero_pmsk_demod_t *d, int on);
 
 /* Lightweight AeroL-only decoder (no MSK demod, just frame decode).
  * Feed soft bits from an external demod via jaero_msk_feed_soft_bits(). */
@@ -130,6 +131,7 @@ int    jaero_oqpsk_cont_is_afc(jaero_oqpsk_cont_demod_t *d);
 double jaero_oqpsk_cont_get_lockingbw(jaero_oqpsk_cont_demod_t *d);
 int    jaero_oqpsk_cont_get_spectrum(jaero_oqpsk_cont_demod_t *d, float *mags_db, int n_bins);
 int    jaero_oqpsk_cont_get_constellation(jaero_oqpsk_cont_demod_t *d, double *iq_out, int max_pairs);
+void   jaero_oqpsk_cont_set_cpu_reduce(jaero_oqpsk_cont_demod_t *d, int on);
 
 #ifdef __cplusplus
 }

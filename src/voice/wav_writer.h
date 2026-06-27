@@ -29,6 +29,7 @@ public:
     void close();
 
     bool isOpen() const { return isOpen_; }
+    const std::string& path() const { return path_; }
 
 private:
     void closeWav();

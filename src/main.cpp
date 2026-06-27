@@ -138,6 +138,18 @@ int main(int, char**)
     scanBandPlans(app.bandPlanDir, app.bandPlanNames, app.bandPlanPaths);
     if (app.bandPlanIdx >= 0 && app.bandPlanIdx < (int)app.bandPlanPaths.size())
         app.bandPlanLoaded = loadBandPlan(app.bandPlanPaths[app.bandPlanIdx]);
+    if (app.bandPlanIdxB >= 0 && app.bandPlanIdxB < (int)app.bandPlanPaths.size())
+        app.bandPlanLoadedB = loadBandPlan(app.bandPlanPaths[app.bandPlanIdxB]);
+    app.decoders.voiceCallLog().scanDir(app.recordDir);
+    // Start web server if previously enabled
+    if (app.webServerEnabled)
+    {
+        app.webServer.decodersA = &app.decoders;
+        app.webServer.decodersB = &app.decodersB;
+        app.webServer.dualMode = &app.dualMode;
+        app.webServer.active = &app.active;
+        app.webServer.start(app.webServerPort);
+    }
 #if defined(_WIN32)
     app.flightMapWv.init(glfwGetWin32Window(window));
 #endif
@@ -172,6 +184,19 @@ int main(int, char**)
         if (app.dualMode)
             app.decodersB.autoMonitor(app.blacklistCountries);
 
+        // Refresh saved decoder list for persistent restart (non-8400 only)
+        if (app.saveDecoders && app.active->running())
+        {
+            app.savedDecoders.clear();
+            for (auto& st : app.decoders.status())
+                if (st.baud != 8400)
+                    app.savedDecoders.push_back({st.freqMHz, st.baud});
+            app.savedDecodersB.clear();
+            for (auto& st : app.decodersB.status())
+                if (st.baud != 8400)
+                    app.savedDecodersB.push_back({st.freqMHz, st.baud});
+        }
+
         updateFeed(app);
 
         drawControls(app);
@@ -179,8 +204,8 @@ int main(int, char**)
         drawWaterfall(app, app.viewA, "Waterfall");
         if (app.dualMode)
         {
-            drawSpectrum(app, app.viewB, app.decodersB, "Spectrum (Voice)", false, true);
-            drawWaterfall(app, app.viewB, "Waterfall (Voice)");
+            drawSpectrum(app, app.viewB, app.decodersB, "Spectrum (B)", true, true);
+            drawWaterfall(app, app.viewB, "Waterfall (B)");
         }
         drawDecoders(app);
         drawSUs(app);
@@ -191,8 +216,26 @@ int main(int, char**)
         drawMes(app);
         drawLes(app);
         drawAircraft(app);
+        drawVoiceCalls(app);
+        drawLesFreq(app);
         drawFlightMap(app);
         drawConstellation(app);
+        drawAbout(app);
+
+        // Auto-mute live audio during playback, restore after
+        static bool wasPlaying = false;
+        bool isPlaying = app.audioPlayer.isPlaying();
+        if (isPlaying && !wasPlaying)
+        {
+            app.decoders.setVoiceMute(true);
+            app.decodersB.setVoiceMute(true);
+        }
+        else if (!isPlaying && wasPlaying)
+        {
+            app.decoders.setVoiceMute(app.voiceMuted);
+            app.decodersB.setVoiceMute(app.voiceMuted);
+        }
+        wasPlaying = isPlaying;
 
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -216,6 +259,7 @@ int main(int, char**)
     app.wav.stop();
     app.server.stop();
     app.hack.stop();
+    app.webServer.stop();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

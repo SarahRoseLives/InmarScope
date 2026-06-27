@@ -3,12 +3,25 @@
 #include "decode/icao_country.h"
 #include "voice/wav_writer.h"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
 
-// Shared front-end IF rate and passband. ~250 kHz IF -> ±100 kHz usable
-// coverage per sub-band; decoders within ±90 kHz of a sub-band centre share it.
+// Shared front-end IF rate and passband. ~250 kHz IF -> ±150 kHz usable
+// coverage per sub-band; decoders within ±135 kHz of a sub-band centre share it.
 static constexpr double kSubRateTarget = 250000.0;
-static constexpr double kSubBW = 200000.0;
+static constexpr double kSubBW = 300000.0;
+
+// Heavier decoders consume more CPU per block.  EGC is very light, OQPSK
+// moderate, MSK the heaviest (coarse frequency estimator + matched filters).
+static int decoderWeight(int baud)
+{
+    if (baud == kEgcBaud) return 1;
+    if (baud == 8400 || baud == 10500) return 2;
+    return 3; // 600 / 1200 MSK
+}
 
 void DecoderManager::configure(double Fs, double centerHz)
 {
@@ -92,11 +105,12 @@ int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
         std::lock_guard<std::mutex> lk(w->dMtx);
         for (auto& sb : w->subbands)
         {
-            if (std::fabs(freqHz - sb->centerHz) < 0.36 * sb->subRate)
+            if (std::fabs(freqHz - sb->centerHz) < 0.45 * sb->subRate)
             {
                 Decoder* dec = sb->decoders.emplace_back(std::make_unique<Decoder>(
-                    sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_)).get();
+                    sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_, &lesFreqTable_)).get();
                 w->count.fetch_add(1);
+                w->weight.fetch_add(decoderWeight(baud));
                 if (baud == 8400 && voiceMonitorId_ < 0)
                 {
                     dec->setMonitored(true);
@@ -106,22 +120,25 @@ int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
                 {
                     dec->setRecording(recordOn_, recordDir_, recordFmt_);
                     dec->setVoiceAesId(aesId);
+                    voiceCallLog_.add({(double)std::chrono::system_clock::to_time_t(
+                                          std::chrono::system_clock::now()),
+                                      0.0, freqHz / 1e6, id, aesId, "", "", true});
                 }
                 return id;
             }
         }
     }
 
-    // 2) No covering sub-band -> create a new one on the least-loaded worker.
+    // 2) No covering sub-band -> create a new one on the lightest worker.
     Worker* best = workers_[0].get();
     for (auto& w : workers_)
-        if (w->count.load() < best->count.load())
+        if (w->weight.load() < best->weight.load())
             best = w.get();
 
     std::lock_guard<std::mutex> lk(best->dMtx);
     auto sb = std::make_unique<SubBand>(Fs_, centerHz_, freqHz, kSubRateTarget, kSubBW);
     Decoder* dec = sb->decoders.emplace_back(std::make_unique<Decoder>(
-        sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_)).get();
+        sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_, &lesFreqTable_)).get();
     if (baud == 8400 && voiceMonitorId_ < 0)
     {
         dec->setMonitored(true);
@@ -131,9 +148,13 @@ int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
     {
         dec->setRecording(recordOn_, recordDir_, recordFmt_);
         dec->setVoiceAesId(aesId);
+        voiceCallLog_.add({(double)std::chrono::system_clock::to_time_t(
+                              std::chrono::system_clock::now()),
+                          0.0, freqHz / 1e6, id, aesId, "", "", true});
     }
     best->subbands.push_back(std::move(sb));
     best->count.fetch_add(1);
+    best->weight.fetch_add(decoderWeight(baud));
     return id;
 }
 
@@ -148,8 +169,16 @@ void DecoderManager::removeDecoder(int channelId)
             for (auto it = decs.begin(); it != decs.end(); ++it)
                 if ((*it)->channelId() == channelId)
                 {
+                    // Log end of voice call before destroying the decoder.
+                    if ((*it)->isVoice() && (*it)->recordingNow())
+                    {
+                        double dur = (double)(*it)->voiceFrames() * 0.02; // 20 ms per AMBE frame
+                        voiceCallLog_.updateEnd(channelId, dur, (*it)->recordingPath());
+                    }
+                    int baudOfRemoved = (*it)->baud();
                     decs.erase(it);
                     w->count.fetch_sub(1);
+                    w->weight.fetch_sub(decoderWeight(baudOfRemoved));
                     if (decs.empty())
                         w->subbands.erase(sbIt); // drop now-empty sub-band
                     if (channelId == voiceMonitorId_)
@@ -239,6 +268,17 @@ void DecoderManager::autoMonitor(const std::vector<std::string>& blacklistCountr
     }
 }
 
+void DecoderManager::setCpuReduce(bool on)
+{
+    for (auto& w : workers_)
+    {
+        std::lock_guard<std::mutex> lk(w->dMtx);
+        for (auto& sb : w->subbands)
+            for (auto& d : sb->decoders)
+                d->setCpuReduce(on);
+    }
+}
+
 void DecoderManager::setRecording(bool on, const std::string& dir)
 {
     recordOn_ = on;
@@ -293,7 +333,96 @@ void DecoderManager::setDecoderFreq(int channelId, double freqHz)
                 {
                     d->setFreq(freqHz); // stays within the sub-band's IF window
                     return;
+        }
+    }
+}
+
+// Scan a directory for WAV/OGG voice recordings and populate VoiceCallLog.
+void VoiceCallLog::scanDir(const std::string& dir)
+{
+    std::error_code ec;
+    if (!std::filesystem::is_directory(dir, ec))
+        return;
+
+    for (auto& entry : std::filesystem::directory_iterator(dir, ec))
+    {
+        if (!entry.is_regular_file())
+            continue;
+        std::string name = entry.path().filename().string();
+        // Extract extension
+        std::string ext;
+        auto dot = name.rfind('.');
+        if (dot != std::string::npos)
+            ext = name.substr(dot);
+        if (ext != ".wav" && ext != ".ogg")
+            continue;
+
+        // Parse filename: "20250627_143021_1546.0625MHz_ch7_ABCDEF.wav"
+        //                "20250627_143021_1546.0625MHz_ch7_AB12CD.wav"
+        VoiceCallRecord r;
+        r.recording = false;
+        r.filename = name;
+
+        // Timestamp: first 15 chars "YYYYMMDD_HHMMSS"
+        if (name.size() < 16) continue;
+        std::tm tm{};
+        char ts[16];
+        std::memcpy(ts, name.c_str(), 15);
+        ts[15] = 0;
+        // Parse YYYYMMDD_HHMMSS
+        int yr, mo, dy, hr, mn, sc;
+        if (std::sscanf(ts, "%4d%2d%2d_%2d%2d%2d", &yr, &mo, &dy, &hr, &mn, &sc) != 6)
+            continue;
+        tm.tm_year = yr - 1900;
+        tm.tm_mon = mo - 1;
+        tm.tm_mday = dy;
+        tm.tm_hour = hr;
+        tm.tm_min = mn;
+        tm.tm_sec = sc;
+        tm.tm_isdst = -1;
+        time_t t = std::mktime(&tm);
+        if (t != (time_t)-1)
+            r.timeSec = (double)t;
+
+        // Frequency: after first '_', before "MHz"
+        auto u1 = name.find('_', 15); // skip timestamp underscore
+        if (u1 == std::string::npos) continue;
+        auto mhz = name.find("MHz", u1);
+        if (mhz == std::string::npos) continue;
+        std::string freqStr = name.substr(u1 + 1, mhz - u1 - 1);
+        r.freqMHz = std::atof(freqStr.c_str());
+
+        // Channel: "ch" followed by number
+        auto ch = name.find("_ch", mhz);
+        if (ch != std::string::npos)
+        {
+            r.channelId = std::atoi(name.c_str() + ch + 3);
+            // ICAO/AES: after "_chN_" to extension
+            auto tag = name.rfind('_');
+            if (tag != std::string::npos && tag > ch + 3)
+            {
+                std::string icaoPart = name.substr(tag + 1, dot - tag - 1);
+                // 6 hex chars = ICAO or AES
+                if (icaoPart.size() == 6)
+                {
+                    r.aesId = (uint32_t)std::strtoul(icaoPart.c_str(), nullptr, 16);
+                    r.icao = icaoPart;
                 }
+            }
+        }
+
+        {
+            std::lock_guard<std::mutex> lk(mtx_);
+            // Avoid duplicates
+            bool dup = false;
+            for (auto& ex : items_)
+                if (ex.filename == name) { dup = true; break; }
+            if (dup) continue;
+            items_.push_back(r);
+            if (items_.size() > kMax)
+                items_.erase(items_.begin());
+            ++count_;
+        }
     }
 }
 
@@ -366,7 +495,7 @@ std::vector<DecoderManager::Status> DecoderManager::status()
             for (auto& d : sb->decoders)
                 out.push_back({d->channelId(), d->freqMHz(), d->baud(),
                                d->locked(), d->ebno(), d->msgCount(),
-                               d->egcBer(), d->egcFrames(),
+                               d->egcBer(), d->egcFrames(), d->egcChannelType(),
                                d->monitored(), d->isVoice()});
     }
     std::sort(out.begin(), out.end(),

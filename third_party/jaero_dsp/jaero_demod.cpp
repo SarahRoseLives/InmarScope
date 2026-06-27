@@ -452,7 +452,7 @@ jaero_pmsk_demod_t *jaero_pmsk_create(double sample_rate, double symbol_rate,
      * Demod's mixer_center brings audio back to baseband. */
     s.freq_center = 8000.0;
     s.lockingbw = (symbol_rate <= 600) ? 900.0 : 4800.0;  /* PocketAERO: 900/4800 */
-    s.coarsefreqest_fft_power = 15;
+    s.coarsefreqest_fft_power = 14;
     s.symbolspercycle = (symbol_rate <= 600) ? 8 : 16;
     s.signalthreshold = 0.45;
 
@@ -598,6 +598,11 @@ int jaero_pmsk_get_constellation(jaero_pmsk_demod_t *d, double *iq_out, int max_
 {
     if (!d || !d->demod) return 0;
     return d->demod->get_constellation_snapshot(iq_out, max_pairs);
+}
+
+void jaero_pmsk_set_cpu_reduce(jaero_pmsk_demod_t *d, int on)
+{
+    if (d && d->demod) d->demod->setCPUReduce(on != 0);
 }
 
 /* ============================================================
@@ -887,6 +892,11 @@ int jaero_oqpsk_cont_get_constellation(jaero_oqpsk_cont_demod_t *d, double *iq_o
 {
     if (!d || !d->demod) return 0;
     return d->demod->get_constellation_snapshot(iq_out, max_pairs);
+}
+
+void jaero_oqpsk_cont_set_cpu_reduce(jaero_oqpsk_cont_demod_t *d, int on)
+{
+    if (d && d->demod) d->demod->setCPUReduce(on != 0);
 }
 
 } /* extern "C" */

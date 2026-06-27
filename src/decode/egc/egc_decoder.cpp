@@ -525,11 +525,26 @@ static std::string servicesText(uint16_t svc)
 // 7 bytes → 28 slots of 2 bits each. Returns a compact hex string.
 static std::string tdmSlots(const uint8_t* d)
 {
-    char buf[64]; int p = 0;
-    for (int i = 0; i < 7 && p < 60; ++i) {
-        p += std::snprintf(buf + p, sizeof(buf) - p, "%02X", d[i]);
+    const char* names[] = {"--", "SIG", "CH", "??"};
+    std::string s;
+    int slotChar = 'A';
+    for (int i = 0; i < 7; ++i)
+    {
+        for (int sh = 0; sh <= 6; sh += 2) // 4 slots per byte (2 bits each, only 4 per byte)
+        {
+            int v = (d[i] >> sh) & 3;
+            if (v != 0)
+            {
+                if (!s.empty()) s += ' ';
+                s += (char)slotChar;
+                s += ':';
+                s += names[v];
+            }
+            ++slotChar;
+        }
     }
-    return buf;
+    s.resize(std::min(s.size(), (size_t)100));
+    return s;
 }
 
 struct EgcDecoder::Impl
@@ -541,6 +556,8 @@ struct EgcDecoder::Impl
     EgcLog* log;
     MesLog* mesLog = nullptr;
     LesLog* lesLog = nullptr;
+    LesFreqTable* lesFreqTable = nullptr;
+    int channelType_ = 0; // 0=unknown, 1=NCS, 2=LES TDM, 3=Joint, 4=Standby
     double mixPhase = 0.0;
     RDemodulator demod;
     UWFinder uw{25};
@@ -813,6 +830,13 @@ struct EgcDecoder::Impl
                 char buf[16];
                 std::snprintf(buf, sizeof(buf), "%02d:%02d:%02d", h, mn, sc);
                 curTime = buf;
+                // Bulletin Board fields per scytaleC PacketDecoder7D:
+                //   pos+4: network_version
+                //   pos+5: channel_type (1=NCS, 2=LES TDM, 3=Joint, 4=Standby NCS)
+                //   pos+6-7: LES ID
+                //   pos+8-9: services bitmask
+                if (plen > 9)
+                    channelType_ = f[pos + 5];
             }
             else if ((d == 0xB1 || d == 0xB2) && ok)
             {
@@ -845,10 +869,22 @@ struct EgcDecoder::Impl
                 {
                     uint8_t ed = mfaData[0];
                     int ep = packetLength(mfaData.data(), 0, mfaExpected);
-                    if ((ed == 0xB1 || ed == 0xB2) && crcOk(mfaData.data(), 0, ep))
-                        emitEgc(mfaData.data(), 0, ep);
-                    else if (ed == 0xAA && crcOk(mfaData.data(), 0, ep))
-                        handleAaPacket(mfaData.data(), 0, ep);
+                    if (ed == 0xB1 || ed == 0xB2)
+                    {
+                        if (crcOk(mfaData.data(), 0, ep))
+                            emitEgc(mfaData.data(), 0, ep);
+                    }
+                    else if (ed == 0xAA)
+                    {
+                        if (crcOk(mfaData.data(), 0, ep))
+                            handleAaPacket(mfaData.data(), 0, ep);
+                    }
+                    else
+                    {
+                        // Recurse: any other packet type (0x83, 0x92, etc.)
+                        // that arrived in a multiframe gets decoded normally.
+                        decodeFrame(mfaData.data(), (int)mfaExpected);
+                    }
                 }
                 mfaActive = false;
             }
@@ -882,6 +918,10 @@ struct EgcDecoder::Impl
                         int sles = f[off] & 0x3F;
                         uint16_t svcBits = ((uint16_t)f[off + 2] << 8) | f[off + 3];
                         double sdl = downlinkMHz(f, off + 4);
+                        if (lesFreqTable && sdl > 1500.0 && sdl < 1600.0)
+                            lesFreqTable->add(sdl, ssat, sles, satName(ssat),
+                                              lesLabel(ssat, sles), svcBits,
+                                              (double)std::time(nullptr));
                         bp += std::snprintf(buf + bp, sizeof(buf) - bp,
                                             "\n  %s LES %02d svc=[%s] down %.3f MHz",
                                             satName(ssat), sles,
@@ -897,6 +937,10 @@ struct EgcDecoder::Impl
                 uint32_t mes = readMesId(f, pos + 2);
                 int sat = readSat(f, pos + 5), les = readLes(f, pos + 5);
                 int lch = f[pos + 9];
+                double dl = downlinkMHz(f, pos + 6);
+                if (lesFreqTable && dl > 1500.0 && dl < 1600.0)
+                    lesFreqTable->add(dl, sat, les, satName(sat), lesLabel(sat, les), 0,
+                                      (double)std::time(nullptr));
                 char buf[128];
                 std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d ch %d",
                               mes, satName(sat), les, lch);
@@ -910,6 +954,9 @@ struct EgcDecoder::Impl
                 int lch = f[pos + 7];
                 double dl = downlinkMHz(f, pos + 10);
                 double ul = uplinkMHz(f, pos + 12);
+                if (lesFreqTable && dl > 1500.0 && dl < 1600.0)
+                    lesFreqTable->add(dl, sat, les, satName(sat), lesLabel(sat, les), 0,
+                                      (double)std::time(nullptr));
                 char buf[128];
                 std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d ch %d down %.3f up %.3f MHz",
                               mes, satName(sat), les, lch, dl, ul);
@@ -928,22 +975,41 @@ struct EgcDecoder::Impl
             }
             else if (d == 0xA3 && ok)
             {
-                // Individual Poll
+                // Individual Poll — if pkt_len >= 38, carries IA5 text
                 uint32_t mes = readMesId(f, pos + 2);
                 int sat = readSat(f, pos + 5), les = readLes(f, pos + 5);
-                char buf[128];
-                std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d",
-                              mes, satName(sat), les);
+                char buf[256];
+                if (plen >= 38)
+                {
+                    std::string txt = ia5Text(&f[pos + 8], plen - 8);
+                    std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d: %s",
+                                  mes, satName(sat), les, txt.c_str());
+                }
+                else
+                {
+                    std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d",
+                                  mes, satName(sat), les);
+                }
                 emitTerminal("Poll", buf, mes, satName(sat), les, -1);
             }
             else if (d == 0xA8 && ok)
             {
-                // Confirmation
+                // Confirmation — if sm_len > 2, carries short IA5 message
                 uint32_t mes = readMesId(f, pos + 2);
                 int sat = readSat(f, pos + 5), les = readLes(f, pos + 5);
-                char buf[128];
-                std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d",
-                              mes, satName(sat), les);
+                int smLen = f[pos + 6];
+                char buf[256];
+                if (smLen > 2 && plen >= 9 + smLen)
+                {
+                    std::string txt = ia5Text(&f[pos + 9], smLen);
+                    std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d: %s",
+                                  mes, satName(sat), les, txt.c_str());
+                }
+                else
+                {
+                    std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d",
+                                  mes, satName(sat), les);
+                }
                 emitTerminal("Confirm", buf, mes, satName(sat), les, -1);
             }
             else if (d == 0xAA && ok)
@@ -970,7 +1036,7 @@ struct EgcDecoder::Impl
                 char buf[128];
                 std::snprintf(buf, sizeof(buf), "MES %u on %s LES %02d ch %d",
                               mes, satName(sat), les, lch);
-                emitTerminal("Msg ACK", buf);
+                emitTerminal("Msg ACK", buf, mes, satName(sat), les, lch);
             }
             else if (d == 0x6C && ok)
             {
@@ -1002,6 +1068,10 @@ struct EgcDecoder::Impl
                                         "\n  %s LES %02d svc=[%s] down %.3f MHz",
                                         satName(ssat), sles,
                                         servicesText(svcBits).c_str(), dl);
+                    if (lesFreqTable && dl > 1500.0 && dl < 1600.0)
+                        lesFreqTable->add(dl, ssat, sles, satName(ssat),
+                                          lesLabel(ssat, sles), svcBits,
+                                          (double)std::time(nullptr));
                     off += 6;
                 }
                 emitTerminal("LES List", buf);
@@ -1012,7 +1082,7 @@ struct EgcDecoder::Impl
 };
 
 EgcDecoder::EgcDecoder(int channelId, double freqMHz, double sampleRate, EgcLog* log,
-                       MesLog* mesLog, LesLog* lesLog)
+                       MesLog* mesLog, LesLog* lesLog, LesFreqTable* lesFreqTable)
     : p_(new Impl(sampleRate))
 {
     p_->channelId = channelId;
@@ -1020,6 +1090,7 @@ EgcDecoder::EgcDecoder(int channelId, double freqMHz, double sampleRate, EgcLog*
     p_->log = log;
     p_->mesLog = mesLog;
     p_->lesLog = lesLog;
+    p_->lesFreqTable = lesFreqTable;
     p_->mixPhase = 0.0;
 }
 
@@ -1069,3 +1140,5 @@ int EgcDecoder::getConstellation(double* iqOut, int maxPairs) const
 {
     return p_->demod.scatter(iqOut, maxPairs);
 }
+
+int EgcDecoder::channelType() const { return p_->channelType_; }

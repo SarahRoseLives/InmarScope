@@ -3,6 +3,9 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <map>
 #include <mutex>
 #include <string>
@@ -22,6 +25,7 @@ struct DecodedMessage
     char blockId = 0;  // ACARS block id char
     std::string text;  // printable rendering of the payload
     std::string hex;   // hex rendering
+    uint8_t suType = 0;  // SU type byte (0x30=Call progress, 0x21=Call announce, etc.)
     std::string decoded; // libacars-decoded application text (CPDLC/ADS-C/...), empty if none
     bool   hasPos = false; // a position was extracted (ADS-C)
     double lat = 0.0;
@@ -439,4 +443,146 @@ public:
 private:
     mutable std::mutex mtx_;
     std::map<uint32_t, AircraftEntry> byId_;
+};
+
+// A discovered LES TDM downlink frequency, extracted from 0xAB LES List
+// or 0x81/0x83/0x92 channel assignment packets on the NCS common channel.
+struct LesFreqEntry
+{
+    double freqMHz = 0.0;
+    int satId = -1;
+    int lesId = -1;
+    std::string satName;
+    std::string lesLabel;
+    uint16_t services = 0;
+    double lastSeen = 0.0;
+    int hits = 0;
+    bool hasDecoder = false;
+};
+
+class LesFreqTable
+{
+public:
+    void add(double freqMHz, int satId, int lesId, const std::string& satName,
+             const std::string& lesLabel, uint16_t services, double nowSec)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        for (auto& e : entries_)
+        {
+            if (std::fabs(e.freqMHz - freqMHz) < 0.001)
+            {
+                e.satId = satId;
+                e.lesId = lesId;
+                e.satName = satName;
+                e.lesLabel = lesLabel;
+                e.services = services;
+                e.lastSeen = nowSec;
+                ++e.hits;
+                return;
+            }
+        }
+        entries_.push_back({freqMHz, satId, lesId, satName, lesLabel, services, nowSec, 1, false});
+    }
+
+    void setHasDecoder(double freqMHz, bool on)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        for (auto& e : entries_)
+            if (std::fabs(e.freqMHz - freqMHz) < 0.001)
+                { e.hasDecoder = on; return; }
+    }
+
+    std::vector<LesFreqEntry> snapshot()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        return entries_;
+    }
+
+    void clear()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        entries_.clear();
+    }
+
+private:
+    std::mutex mtx_;
+    std::vector<LesFreqEntry> entries_;
+};
+struct VoiceCallRecord
+{
+    double timeSec = 0.0;        // epoch of call start
+    double durationSec = 0.0;    // 0 if still live
+    double freqMHz = 0.0;
+    int channelId = -1;
+    uint32_t aesId = 0;
+    std::string icao;
+    std::string filename;        // just the filename, no directory
+    bool recording = false;      // true = live call in progress
+};
+
+class VoiceCallLog
+{
+public:
+    void add(const VoiceCallRecord& r)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        items_.push_back(r);
+        if (items_.size() > kMax)
+            items_.erase(items_.begin(), items_.begin() + (items_.size() - kMax));
+        ++count_;
+    }
+
+    // Called when a live recording ends: finds the entry by channelId and fills
+    // in the duration + filename. If not found, adds a new completed record.
+    void updateEnd(int channelId, double durationSec, const std::string& filename)
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        for (auto it = items_.rbegin(); it != items_.rend(); ++it)
+        {
+            if (it->channelId == channelId && it->recording)
+            {
+                it->recording = false;
+                it->durationSec = durationSec;
+                if (!filename.empty())
+                {
+                    // Extract just the filename from the full path.
+                    const char* s = filename.c_str();
+                    const char* slash = std::strrchr(s, '/');
+#ifdef _WIN32
+                    const char* bslash = std::strrchr(s, '\\');
+                    if (bslash && bslash > slash) slash = bslash;
+#endif
+                    it->filename = slash ? (slash + 1) : s;
+                }
+                return;
+            }
+        }
+    }
+
+    // Scan a directory for existing WAV/OGG files and populate.
+    void scanDir(const std::string& dir);
+
+    std::vector<VoiceCallRecord> snapshot()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        return items_;
+    }
+
+    uint64_t count()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        return count_;
+    }
+
+    void clear()
+    {
+        std::lock_guard<std::mutex> lk(mtx_);
+        items_.clear();
+    }
+
+private:
+    static constexpr size_t kMax = 500;
+    std::mutex mtx_;
+    std::vector<VoiceCallRecord> items_;
+    uint64_t count_ = 0;
 };

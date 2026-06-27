@@ -6,9 +6,14 @@
 #include "gui/waterfall.h"
 #include "sdr/rtl_sdr_source.h"
 #include "sdr/hackrf_source.h"
+#ifdef HAS_AIRSPY
+#include "sdr/airspy_source.h"
+#endif
 #include "sdr/wav_file_source.h"
 #include "sdr/sdrpp_server_source.h"
 #include "sdr/iq_recorder.h"
+#include "audio/audio_player.h"
+#include "web/web_server.h"
 #include "decode/band_plan.h"
 #include "decode/decoder_manager.h"
 #include "output/message_feed.h"
@@ -39,6 +44,7 @@ struct SpectrumView
     double viewXminMHz = 0.0, viewXmaxMHz = 0.0;
     bool   resetView = true;
     float  specLeftInset = 0.0f, specRightInset = 0.0f;
+    bool   fftSkip = false; // set by draw functions when panel is visible, read by processFft next frame
 };
 
 struct CallHunterCand
@@ -57,8 +63,11 @@ struct App
     WavFileSource   wav;
     SdrppServerSource server;
     HackRfSource    hack;
+#ifdef HAS_AIRSPY
+    AirspySource    airspy;
+#endif
     SdrSource*      active = &sdr;
-    int  sourceMode = 0; // 0 = RTL-SDR, 1 = WAV, 2 = SDR++ Server, 3 = HackRF
+    int  sourceMode = 0; // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL, 5=Airspy
     char wavPath[512] = "";
     bool wavLoop = true;
     char serverHost[128] = "localhost";
@@ -74,6 +83,20 @@ struct App
     bool   hackAmp = false;
     bool   hackBias = false;
 
+    // Airspy
+#ifdef HAS_AIRSPY
+    int    airspySampleRateIdx = 3;  // index into kAirspyRates (3 = 10 MHz)
+    int    airspyGainMode = 0;      // 0=Sensitivity, 1=Linear, 2=Free
+    int    airspySenseGain = 10;    // 0-21
+    int    airspyLinearGain = 10;   // 0-21
+    int    airspyLnaGain = 8;       // 0-15
+    int    airspyMixerGain = 8;     // 0-15
+    int    airspyVgaGain = 4;       // 0-15
+    bool   airspyLnaAgc = false;
+    bool   airspyMixerAgc = false;
+    bool   airspyBias = false;
+#endif
+
     SpectrumView     viewA;
     SpectrumView     viewB;
     DecoderManager   decoders;
@@ -81,11 +104,10 @@ struct App
     RtlSdrSource     sdrB;
 
     // Dual-SDR
-    bool   voiceSdrEnabled = false;
     bool   dualMode = false;
     int    deviceIndexB = 1;
-    double voiceCenterMHz = 1545.0;
-    int    sampleRateIdxB = 0;
+    double centerFreqMHzB = 1545.0;
+    int    sampleRateIdxB = 2;  // 1.024 MHz (lower CPU in dual mode)
     bool   autoGainB = false;
     float  gainDbB = 40.0f;
     bool   biasTeeB = false;
@@ -105,7 +127,8 @@ struct App
     int  recordFormat = 0; // 0=WAV, 1=OGG
     char recordDir[256] = "recordings";
     bool saveDecoders = false; // save non-8400 decoders in INI for restart
-    std::vector<std::pair<double,int>> savedDecoders; // freqMHz, baud
+    std::vector<std::pair<double,int>> savedDecoders;  // freqMHz, baud  (spectrum A)
+    std::vector<std::pair<double,int>> savedDecodersB; // freqMHz, baud  (spectrum B)
 
     // Country blacklist — voice calls from these 2-letter country codes
     // will not be monitored (they still record if recording is on).
@@ -114,9 +137,18 @@ struct App
     // IQ recorder
     IqRecorder iqRecorder;
     char iqRecPath[512] = "iq_record.wav";
+    float iqBufferSec = 10.0f;  // IQ pre-buffer seconds (0 = disabled)
 
     int  audioDevice = 0;
     bool voiceMuted = false;
+    bool cpuReduce = false;
+    bool showAbout = false;
+    bool autoAddLes = true;       // auto-create decoders for discovered LES frequencies
+    int  maxLesAutoDecoders = 4;  // cap on auto-created LES decoders
+    bool webServerEnabled = false;
+    int  webServerPort = 8080;
+    WebServer webServer;
+    AudioPlayer audioPlayer;
     std::vector<std::string> audioDevs;
 
     // Output
@@ -178,10 +210,13 @@ struct App
     bool   acPosOnly = false;
     bool   showEmptyMsgs = false;
     bool   showBandPlan = false;
-    std::vector<std::string> bandPlanNames;  // display names
-    std::vector<std::string> bandPlanPaths;  // full file paths
+    bool   showBandPlanB = false;
+    std::vector<std::string> bandPlanNames;  // display names (shared)
+    std::vector<std::string> bandPlanPaths;  // full file paths (shared)
     int    bandPlanIdx = 0;
+    int    bandPlanIdxB = 0;
     BandPlan bandPlanLoaded;
+    BandPlan bandPlanLoadedB;
     char   bandPlanDir[256] = "bandplans";
 
     // CallHunter
@@ -209,9 +244,14 @@ constexpr const char* kRateLabels[] = {
     "1.8", "1.92", "2.048", "2.4", "2.56", "2.88", "3.2"};
 constexpr int kNumRates = (int)(sizeof(kRates) / sizeof(kRates[0]));
 
+// Airspy sample rates (MHz values as doubles, and index-to-label).
+constexpr double kAirspyRates[] = {2.5e6, 3.0e6, 6.0e6, 10.0e6};
+constexpr const char* kAirspyRateLabels[] = {"2.5", "3.0", "6.0", "10.0"};
+constexpr int kAirspyNumRates = (int)(sizeof(kAirspyRates) / sizeof(kAirspyRates[0]));
+
 constexpr int    kFftSizes[] = {1024, 2048, 4096, 8192, 16384, 32768, 65536};
 constexpr const char* kFftLabels[] = {"1024", "2048", "4096", "8192", "16384", "32768", "65536"};
 constexpr int kNumFftSizes = (int)(sizeof(kFftSizes) / sizeof(kFftSizes[0]));
 
 // Dock layout version: bump when the built-in default layout changes.
-constexpr int kLayoutVersion = 7;
+constexpr int kLayoutVersion = 12;

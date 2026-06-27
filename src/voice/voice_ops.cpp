@@ -64,6 +64,10 @@ void retuneActive(App& app, double centerMHz)
         app.server.setCenterFreq(hz);
     else if (app.sourceMode == 3)
         app.hack.setCenterFreq(hz);
+#ifdef HAS_AIRSPY
+    else if (app.sourceMode == 5)
+        app.airspy.setCenterFreq(hz);
+#endif
     app.decoders.removeAll();
     app.decoders.configure(app.active->sampleRate(), hz);
     // Rebuild the frequency axis now (processFft already ran this frame with the
@@ -84,12 +88,16 @@ void retunePreserving(App& app, double centerMHz)
 
     double hz = centerMHz * 1e6;
     app.centerFreqMHz = centerMHz;
-    if (app.sourceMode == 0)
+    if (app.sourceMode == 0 || app.sourceMode == 4)
         app.sdr.setCenterFreq(hz);
     else if (app.sourceMode == 2)
         app.server.setCenterFreq(hz);
     else if (app.sourceMode == 3)
         app.hack.setCenterFreq(hz);
+#ifdef HAS_AIRSPY
+    else if (app.sourceMode == 5)
+        app.airspy.setCenterFreq(hz);
+#endif
     app.decoders.removeAll();
     app.decoders.configure(app.active->sampleRate(), hz);
     for (auto& k : keep)
@@ -132,7 +140,7 @@ void updateVoiceFollow(App& app)
             app.followChannelId = app.decodersB.addDecoder(rx * 1e6, 8400, pick->aesId);
             if (app.followChannelId < 0) return;
             app.decodersB.setVoiceMonitor(app.followChannelId);
-            app.voiceCenterMHz = bctr; // park B here when the call ends
+            app.centerFreqMHzB = bctr; // park B here when the call ends
             app.following = true;
             app.followRetuned = true;
             app.followEverLocked = false;
@@ -164,7 +172,7 @@ void updateVoiceFollow(App& app)
             app.followChannelId = -1;
             app.following = false;
             app.status = "Running (dual SDR)";
-            // SDR B stays parked + streaming at voiceCenterMHz for its waterfall.
+            // SDR B stays parked + streaming at centerFreqMHzB for its waterfall.
         }
         return;
     }

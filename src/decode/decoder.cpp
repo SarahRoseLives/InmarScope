@@ -79,7 +79,8 @@ static const char* suTypeName(uint8_t t)
 Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud,
                  int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink,
                  CassignLog* cassignLog, ChannelTable* netTable, EgcLog* egcLog,
-                 AircraftTable* acTable, MesLog* mesLog, LesLog* lesLog)
+                 AircraftTable* acTable, MesLog* mesLog, LesLog* lesLog,
+                 LesFreqTable* lesFreqTable)
     : ddc_(subRate, chanFreqHz - subCenterHz, ddcRate(baud), ddcBw(baud)),
       log_(log),
       suLog_(suLog),
@@ -95,7 +96,7 @@ Decoder::Decoder(double subRate, double subCenterHz, double chanFreqHz, int baud
 {
     if (baud == kEgcBaud)
     {
-            egc_ = std::make_unique<EgcDecoder>(channelId, chanFreqHz / 1e6, ddc_.outputRate(), egcLog_, mesLog, lesLog);
+            egc_ = std::make_unique<EgcDecoder>(channelId, chanFreqHz / 1e6, ddc_.outputRate(), egcLog_, mesLog, lesLog, lesFreqTable);
     }
     else if (baud == 10500 || baud == 8400)
     {
@@ -163,6 +164,14 @@ void Decoder::setFreq(double chanFreqHz)
     ddc_.setOffset(chanFreqHz - subCenterHz_);
 }
 
+void Decoder::setCpuReduce(bool on)
+{
+    if (pmsk_)
+        jaero_pmsk_set_cpu_reduce(pmsk_, on ? 1 : 0);
+    if (oqpsk_)
+        jaero_oqpsk_cont_set_cpu_reduce(oqpsk_, on ? 1 : 0);
+}
+
 bool Decoder::locked() const
 {
     if (egc_)
@@ -199,6 +208,7 @@ int Decoder::getConstellation(double* iqOut, int maxPairs) const
 
 int Decoder::egcBer() const { return egc_ ? egc_->lastBer() : -1; }
 int Decoder::egcFrames() const { return egc_ ? egc_->framesSynced() : 0; }
+int Decoder::egcChannelType() const { return egc_ ? egc_->channelType() : 0; }
 
 void Decoder::acarsTrampoline(const uint8_t* data, int len, int, uint32_t aes_id,
                               uint8_t ges_id, uint8_t, uint8_t, int downlink,
@@ -315,6 +325,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
     DecodedMessage m;
     m.channelId = channelId_;
     m.freqMHz = chanFreqHz_ / 1e6;
+    m.suType = data[0];
 
     // First decoded byte is the P-channel SU type descriptor.
     m.text = suTypeName(data[0]);
@@ -337,6 +348,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
         else if (data[0] == 0x30 && len >= 8) // Call progress
         {
             uint32_t aes = ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | data[3];
+            m.aesId = aes;
             // For C-channel (8400) decoders the Call_progress SU carries the
             // aircraft's 24‑bit identity (ICAO / AES) — store it so voice
             // recordings get tagged with the correct hex.
@@ -363,6 +375,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
         else if (data[0] == 0x21 && len >= 10) // Call announcement — same layout as C-assign
         {
             uint32_t aes = ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | data[3];
+            m.aesId = aes;
             uint8_t ges = data[4];
             int b7 = data[6], b8 = data[7], b9 = data[8], b10 = data[9];
             int chRx = ((b7 & 0x7F) << 8) | b8;
@@ -383,6 +396,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
         else if (data[0] >= 0x10 && data[0] <= 0x17 && len >= 6) // Log-on SUs
         {
             uint32_t aes = ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | data[3];
+            m.aesId = aes;
             uint8_t ges = (len > 4) ? data[4] : 0;
             std::string icao = acTable_ ? acTable_->icao(aes) : "";
             char annot[128];
@@ -475,6 +489,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
             // C-channel assignment SU — decode RX/TX frequencies and spot-beam
             // flags so the Call Progress tab shows useful info inline.
             uint32_t aes = ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | data[3];
+            m.aesId = aes;
             if (baud_ == 8400)
             {
                 voiceAesId_ = aes;
@@ -672,6 +687,7 @@ void Decoder::recordPcm(const int16_t* pcm, int n)
             return;
         }
         recActive_.store(true);
+        recordingPath_ = name;
         // Flush buffered PCM (if any) then clear the buffer.
         if (!pcmBuf_.empty())
         {

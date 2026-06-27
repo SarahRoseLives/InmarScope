@@ -10,7 +10,7 @@
 class VersionCheck
 {
 public:
-    enum State { Idle, Checking, UpToDate, UpdateAvailable, Error };
+    enum State { Idle, Checking, UpToDate, UpdateAvailable, Unreleased, Error };
 
     ~VersionCheck();
 

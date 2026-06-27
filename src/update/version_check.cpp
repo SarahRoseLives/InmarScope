@@ -130,13 +130,20 @@ void VersionCheck::run(std::string slug, std::string localVersion)
 
     // The server can't know the running client's version (it isn't sent), so its
     // "update_available" flag is unreliable. Decide solely on the published version.
-    bool update = !latest.empty() && cmpVersion(latest, localVersion) > 0;
+    State st;
+    if (latest.empty())
+        st = UpToDate;
+    else
+    {
+        int c = cmpVersion(localVersion, latest);
+        st = (c > 0) ? Unreleased : (c == 0) ? UpToDate : UpdateAvailable;
+    }
     {
         std::lock_guard<std::mutex> lk(mtx_);
         latest_ = latest;
         url_ = url;
     }
-    state_.store(update ? UpdateAvailable : UpToDate);
+    state_.store(st);
 }
 #else
 void VersionCheck::run(std::string, std::string)

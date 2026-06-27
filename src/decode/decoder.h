@@ -20,6 +20,7 @@ class AmbeDecoder;
 class AudioOutput;
 class WavWriter;
 class EgcDecoder;
+class LesFreqTable;
 
 // Special "baud" code selecting the Inmarsat-C / EGC decoder.
 static constexpr int kEgcBaud = 1;
@@ -33,7 +34,8 @@ public:
             int channelId, MessageLog* log, MessageLog* suLog, AudioOutput* audioSink,
             CassignLog* cassignLog, ChannelTable* netTable, EgcLog* egcLog = nullptr,
             AircraftTable* acTable = nullptr,
-            MesLog* mesLog = nullptr, LesLog* lesLog = nullptr);
+            MesLog* mesLog = nullptr, LesLog* lesLog = nullptr,
+            LesFreqTable* lesFreqTable = nullptr);
     ~Decoder();
 
     // Process a block of sub-band interleaved double IQ (decode thread).
@@ -59,8 +61,12 @@ public:
     bool   isEgc() const { return baud_ == kEgcBaud; }
     int    egcBer() const;    // -1 if not EGC
     int    egcFrames() const; // 0 if not EGC
+    int    egcChannelType() const; // 0=unknown, 1=NCS, 2=LES TDM, 3=Joint, 4=Standby
     void   setMonitored(bool on) { monitored_.store(on); }
     bool   monitored() const { return monitored_.load(); }
+
+    // CPU reduction: slow down coarse frequency estimator (cuts demod CPU ~30%).
+    void   setCpuReduce(bool on);
 
     // Voice call recording (8400 only). When enabled, each contiguous voice
     // call is written to its own WAV file in dir, regardless of monitoring.
@@ -68,6 +74,7 @@ public:
                         RecordFormat fmt = RecordFormat::WAV);
     bool   recordEnabled() const { return record_.load(); }
     bool   recordingNow() const { return recActive_.load(); }
+    const std::string& recordingPath() const { return recordingPath_; }
 
 private:
     static void acarsTrampoline(const uint8_t* data, int len, int channel_id,
@@ -126,4 +133,5 @@ private:
     std::chrono::steady_clock::time_point lastVoiceTime_;
     std::chrono::steady_clock::time_point firstPcmTime_;
     std::vector<int16_t> pcmBuf_;       // buffer early PCM before ICAO known
+    std::string recordingPath_;         // full path of the current recording file
 };

@@ -31,8 +31,10 @@ public:
         uint64_t msgs;
         int egcBer;     // -1 unless EGC
         int egcFrames;  // 0 unless EGC
+        int egcCType;   // 0=unknown, 1=NCS, 2=LES TDM, 3=Joint, 4=Standby
         bool monitored = false; // audio routed to speakers
         bool isVoice   = false; // 8400 voice decoder
+        bool isB       = false; // from decodersB (dual RTL)
     };
 
     ~DecoderManager() { stop(); }
@@ -70,6 +72,8 @@ public:
     LesLog& lesLog() { return lesLog_; }
     AircraftTable& aircraftTable() { return acTable_; }
     const AircraftTable& aircraftTable() const { return acTable_; }
+    VoiceCallLog& voiceCallLog() { return voiceCallLog_; }
+    LesFreqTable& lesFreqTable() { return lesFreqTable_; }
 
     // Voice: route one 8400 decoder's audio to the speakers.
     void setVoiceMonitor(int channelId);
@@ -84,6 +88,9 @@ public:
     int  audioDevice() { return audio_.currentDevice(); }
     void setVoiceMute(bool m) { audio_.setMuted(m); }
     bool voiceMuted() const { return audio_.muted(); }
+
+    // Forward cpuReduce to all decoders.
+    void setCpuReduce(bool on);
 
     // Voice call recording: every 8400 decoder writes its calls to WAV files
     // (one per call) in dir, independent of which channel is being monitored.
@@ -119,7 +126,8 @@ private:
 
         std::mutex dMtx; // guards subbands
         std::vector<std::unique_ptr<SubBand>> subbands;
-        std::atomic<int> count{0}; // total decoders on this worker
+        std::atomic<int> count{0};   // total decoders on this worker
+        std::atomic<int> weight{0};  // weighted load (MSK=3, OQPSK=2, EGC=1)
     };
 
     void workerLoop(Worker* w);
@@ -143,6 +151,8 @@ private:
     MesLog mesLog_;
     LesLog lesLog_;
     AircraftTable acTable_;
+    VoiceCallLog voiceCallLog_;
+    LesFreqTable lesFreqTable_;
     AudioOutput audio_;
     int voiceMonitorId_ = -1;
     bool recordOn_ = false;
