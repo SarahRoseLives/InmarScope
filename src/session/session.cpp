@@ -218,6 +218,8 @@ void startActive(App& app)
         app.decoders.removeAll();
         app.decoders.configure(app.active->sampleRate(), app.active->centerFreq());
         app.decoders.setAudioEnabled(true); // A keeps audio in dual mode (both SDRs have voice capability)
+        if (app.dualMode)
+            app.decoders.setMaxWorkers(4); // cap primary workers in dual mode (B gets 2)
         app.decoders.start();
         app.lastConfiguredFs = app.active->sampleRate();
         // Don't auto-follow assignments left over from a previous session.

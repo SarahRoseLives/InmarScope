@@ -40,6 +40,7 @@ struct SpectrumView
     double viewXminMHz = 0.0, viewXmaxMHz = 0.0;
     bool   resetView = true;
     float  specLeftInset = 0.0f, specRightInset = 0.0f;
+    bool   fftSkip = false; // set by draw functions when panel is visible, read by processFft next frame
 };
 
 struct CallHunterCand
@@ -102,7 +103,7 @@ struct App
     bool   dualMode = false;
     int    deviceIndexB = 1;
     double centerFreqMHzB = 1545.0;
-    int    sampleRateIdxB = 9;  // 2.4 MHz
+    int    sampleRateIdxB = 2;  // 1.024 MHz (lower CPU in dual mode)
     bool   autoGainB = false;
     float  gainDbB = 40.0f;
     bool   biasTeeB = false;

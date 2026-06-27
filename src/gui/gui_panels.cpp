@@ -882,6 +882,7 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
         }
 
         ImPlot::EndPlot();
+        v.fftSkip = false;
     }
     ImGui::End();
 }
@@ -930,6 +931,7 @@ void drawWaterfall(App& app, SpectrumView& v, const char* title)
 
     ImVec2 wfP0 = ImGui::GetCursorScreenPos();
     v.waterfall.draw(ImVec2(w, avail.y), uMin, uMax, xLo, xHi);
+    v.fftSkip = false;
 
     // Drag-to-place preview line: white vertical line through the waterfall
     // at the frequency the user is hovering, so they can centre on a signal.
@@ -1934,7 +1936,7 @@ void drawAbout(App& app)
         ImGui::TextDisabled("  scytaleC (Thierry Leconte)");
         ImGui::TextDisabled("  DeDECTive (Sarah Rose)");
         ImGui::Spacing();
-        ImGui::TextWrapped("Thanks to Arclamp for providing a server for accessing the satellite during development.");
+        ImGui::TextWrapped("Thanks to Arclamp VK4SUS for providing a server for accessing the satellite during development.");
     }
     ImGui::End();
 }
