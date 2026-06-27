@@ -575,7 +575,11 @@ void drawControls(App& app)
 
     ImGui::Separator();
     const char* bauds[] = {"600", "1200", "8400", "10500", "Inmarsat-C/EGC"};
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.10f, 0.18f, 0.42f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.15f, 0.28f, 0.60f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.12f, 0.22f, 0.50f, 1.0f));
     ImGui::Combo("Decode baud", &app.newBaud, bauds, 5);
+    ImGui::PopStyleColor(3);
     ImGui::TextDisabled("Ctrl+click the spectrum to add a decoder there");
 
     ImGui::Separator();
@@ -1235,8 +1239,12 @@ void drawSUs(App& app)
 
             // Colorize by SU type
             ImVec4 col = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); // default gray
-            if (it->suType == 0x30)                         // Call progress
-                col = ImVec4(1.0f, 0.65f, 0.0f, 1.0f);     // orange
+            if (it->suType == 0x30 && it->aesId != 0)      // Call progress — per-aircraft color
+            {
+                float hue = (it->aesId * 0.618033988749895f); // golden ratio conjugate
+                hue = hue - (int)hue;
+                ImGui::ColorConvertHSVtoRGB(hue, 0.8f, 0.9f, col.x, col.y, col.z);
+            }
             else if (it->suType == 0x21)                    // Call announcement
                 col = ImVec4(1.0f, 0.85f, 0.2f, 1.0f);     // gold
             else if (it->suType >= 0x31 && it->suType <= 0x34) // C-channel assignment

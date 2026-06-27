@@ -346,6 +346,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
         else if (data[0] == 0x30 && len >= 8) // Call progress
         {
             uint32_t aes = ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | data[3];
+            m.aesId = aes;
             // For C-channel (8400) decoders the Call_progress SU carries the
             // aircraft's 24‑bit identity (ICAO / AES) — store it so voice
             // recordings get tagged with the correct hex.
@@ -372,6 +373,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
         else if (data[0] == 0x21 && len >= 10) // Call announcement — same layout as C-assign
         {
             uint32_t aes = ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | data[3];
+            m.aesId = aes;
             uint8_t ges = data[4];
             int b7 = data[6], b8 = data[7], b9 = data[8], b10 = data[9];
             int chRx = ((b7 & 0x7F) << 8) | b8;
@@ -392,6 +394,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
         else if (data[0] >= 0x10 && data[0] <= 0x17 && len >= 6) // Log-on SUs
         {
             uint32_t aes = ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | data[3];
+            m.aesId = aes;
             uint8_t ges = (len > 4) ? data[4] : 0;
             std::string icao = acTable_ ? acTable_->icao(aes) : "";
             char annot[128];
@@ -484,6 +487,7 @@ void Decoder::onDecoded(const uint8_t* data, int len)
             // C-channel assignment SU — decode RX/TX frequencies and spot-beam
             // flags so the Call Progress tab shows useful info inline.
             uint32_t aes = ((uint32_t)data[1] << 16) | ((uint32_t)data[2] << 8) | data[3];
+            m.aesId = aes;
             if (baud_ == 8400)
             {
                 voiceAesId_ = aes;
