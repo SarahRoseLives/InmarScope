@@ -142,7 +142,7 @@ private:
     int nextId_ = 1;
 
     std::atomic<uint64_t> drops_{0};
-    static constexpr size_t kMaxQueue = 96;
+    static constexpr size_t kMaxQueue = 192;
     MessageLog log_;
     MessageLog suLog_;
     CassignLog cassign_;

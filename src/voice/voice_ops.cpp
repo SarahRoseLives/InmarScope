@@ -385,11 +385,12 @@ void updateCallHunter(App& app)
 
     // Find peaks in the *difference* between current PSD and baseline.
     float thresh = app.callHunterThreshDB;
+    float valleyThresh = thresh + 1.0f; // peaks must dip near baseline to split
     // Minimum peak width: real 8400 voice is ~10 kHz wide, noise spikes are
     // only a few bins.  Require at least ~3 kHz to reject narrow false positives.
     double binResHz = (bandMax - bandMin) * 1e6 / v.curN; // Hz per FFT bin
     int minWidthBins = std::max(1, (int)(3000.0 / binResHz));
-    struct Peak { double f; float vv; };
+    struct Peak { double f; float vv; float vdiff; };//}}
     std::vector<Peak> peaks;
     {
         int start = -1;
@@ -398,54 +399,137 @@ void updateCallHunter(App& app)
             float diff = v.avg[i] - app.callHunterBaseline[i];
             bool above = (diff >= thresh);
             if (above && start < 0) start = i;
-            if (!above && start >= 0)
+            if ((!above || i == iHi - 1) && start >= 0)
             {
-                int wBins = i - start;
+                int end = (!above) ? i : iHi;
+                int wBins = end - start;
                 if (wBins < minWidthBins)
                     start = -1; // too narrow — noise spike
+                else if (wBins > minWidthBins * 2)
+                {
+                    // Wide block — scan for a valley to split adjacent calls.
+                    int bestSplit = -1;
+                    float bestValley = 1e9f;
+                    int margin = minWidthBins / 2;
+                    for (int k = start + margin; k < end - margin; ++k)
+                    {
+                        float dk = v.avg[k] - app.callHunterBaseline[k];
+                        if (dk < bestValley) { bestValley = dk; bestSplit = k; }
+                    }
+                    if (bestSplit >= 0 && bestValley < valleyThresh)
+                    {
+                        // Split into two peaks at the valley.
+                        double sumF1 = 0, sumW1 = 0; float bestV1 = -999;
+                        for (int k = start; k < bestSplit; ++k)
+                        {
+                            float dk = v.avg[k] - app.callHunterBaseline[k];
+                            if (dk < 0) dk = 0;
+                            double w = std::pow(10.0, dk / 10.0);
+                            sumF1 += v.freqMHz[k] * w;
+                            sumW1 += w;
+                            if (dk > bestV1) bestV1 = dk;
+                        }
+                        if (sumW1 > 0.0)
+                            peaks.push_back({sumF1 / sumW1, bestV1, bestV1});
+                        double sumF2 = 0, sumW2 = 0; float bestV2 = -999;
+                        for (int k = bestSplit; k < end; ++k)
+                        {
+                            float dk = v.avg[k] - app.callHunterBaseline[k];
+                            if (dk < 0) dk = 0;
+                            double w = std::pow(10.0, dk / 10.0);
+                            sumF2 += v.freqMHz[k] * w;
+                            sumW2 += w;
+                            if (dk > bestV2) bestV2 = dk;
+                        }
+                        if (sumW2 > 0.0)
+                            peaks.push_back({sumF2 / sumW2, bestV2, bestV2});
+                    }
+                    else
+                    {
+                        double sumF = 0, sumW = 0; float bestV = -999;
+                        for (int k = start; k < end; ++k)
+                        {
+                            float dk = v.avg[k] - app.callHunterBaseline[k];
+                            if (dk < 0) dk = 0;
+                            double w = std::pow(10.0, dk / 10.0);
+                            sumF += v.freqMHz[k] * w;
+                            sumW += w;
+                            if (dk > bestV) bestV = dk;
+                        }
+                        if (sumW > 0.0)
+                            peaks.push_back({sumF / sumW, bestV, bestV});
+                    }
+                    start = -1;
+                }
                 else
                 {
                     double sumF = 0, sumW = 0; float bestV = -999;
-                    for (int k = start; k < i; ++k)
+                    for (int k = start; k < end; ++k)
                     {
-                        float diffK = v.avg[k] - app.callHunterBaseline[k];
-                        if (diffK < 0) diffK = 0;
-                        double w = std::pow(10.0, diffK / 10.0);
+                        float dk = v.avg[k] - app.callHunterBaseline[k];
+                        if (dk < 0) dk = 0;
+                        double w = std::pow(10.0, dk / 10.0);
                         sumF += v.freqMHz[k] * w;
                         sumW += w;
-                        if (diffK > bestV) bestV = diffK;
+                        if (dk > bestV) bestV = dk;
                     }
                     if (sumW > 0.0)
-                        peaks.push_back({sumF / sumW, bestV});
+                        peaks.push_back({sumF / sumW, bestV, bestV});
                     start = -1;
                 }
             }
         }
     }
 
-    // Match peaks to existing candidates (±3 kHz).
-    const double kSearchKHz = 0.003;
+    // Match peaks to existing candidates.
+    // Unspawned candidates: ±3 kHz.  Spawned decoders: ±750 Hz only —
+    // a peak further from a spawned decoder is a *different* call and must
+    // NOT be merged into the spawned candidate (or it steals the confirm).
+    const double kSearchWide = 0.003;
+    const double kSearchSpawn = 0.00075;
     for (auto& c : app.callHunterCands)
         c.matched = false;
     for (auto& p : peaks)
     {
         bool found = false;
+        // Pass 1: match to unspawned candidates (±3 kHz).
         for (auto& c : app.callHunterCands)
         {
-            if (std::abs(p.f - c.freqMHz) < kSearchKHz)
+            if (c.channelId >= 0) continue;
+            if (std::abs(p.f - c.freqMHz) < kSearchWide)
             {
                 c.freqMHz = 0.7 * c.freqMHz + 0.3 * p.f;
                 c.confirmCount++;
                 c.lostCount = 0;
                 c.matched = true;
+                c.peakDB = p.vv;
                 found = true;
                 break;
+            }
+        }
+        // Pass 2: if not matched, try spawned candidates (±750 Hz only).
+        if (!found)
+        {
+            for (auto& c : app.callHunterCands)
+            {
+                if (c.channelId < 0) continue;
+                if (std::abs(p.f - c.freqMHz) < kSearchSpawn)
+                {
+                    c.freqMHz = 0.7 * c.freqMHz + 0.3 * p.f;
+                    c.confirmCount++;
+                    c.lostCount = 0;
+                    c.matched = true;
+                    c.peakDB = p.vv;
+                    found = true;
+                    break;
+                }
             }
         }
         if (!found)
         {
             CallHunterCand c;
             c.freqMHz = p.f;
+            c.peakDB = p.vv;
             c.confirmCount = 1;
             c.matched = true;
             app.callHunterCands.push_back(c);
@@ -476,7 +560,7 @@ void updateCallHunter(App& app)
         }
     }
 
-    const double kDecoderCover = 0.0025;
+    const double kDecoderCover = 0.0010;
     auto hasExistingDecoder = [&](double f) {
         for (auto& s : app.decoders.status())
             if (std::abs(s.freqMHz - f) < kDecoderCover) return true;

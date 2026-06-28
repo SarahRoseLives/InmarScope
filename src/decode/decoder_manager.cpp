@@ -35,7 +35,7 @@ void DecoderManager::start()
         return;
 
     unsigned hw = std::thread::hardware_concurrency();
-    int nWorkers = (hw > 2) ? (int)hw - 1 : 1;
+    int nWorkers = (hw > 2) ? (int)hw : 1;
     if (nWorkers > maxWorkers_)
         nWorkers = maxWorkers_;
     if (nWorkers < 1)
@@ -100,7 +100,12 @@ int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
         id = nextId_++;
     }
 
-    // 1) Try to join an existing sub-band that covers this frequency.
+    // 1) Find the best existing sub-band that covers this frequency.
+    //    If a sub-band is overloaded (>4 decoders), prefer a shadow
+    //    sub-band on a lighter worker to spread the load.
+    Worker* bestW = nullptr;
+    std::shared_ptr<SubBand> bestSb;
+    int bestLoad = 0x7FFFFFFF; // total decoders on that worker
     for (auto& w : workers_)
     {
         std::lock_guard<std::mutex> lk(w->dMtx);
@@ -108,29 +113,63 @@ int DecoderManager::addDecoder(double freqHz, int baud, uint32_t aesId)
         {
             if (std::fabs(freqHz - sb->centerHz) < 0.40 * sb->subRate)
             {
-                Decoder* dec = sb->decoders.emplace_back(std::make_shared<Decoder>(
-                    sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_, &lesFreqTable_)).get();
-                w->count.fetch_add(1);
-                w->weight.fetch_add(decoderWeight(baud));
-                if (baud == 8400 && voiceMonitorId_ < 0)
+                int cnt = (int)sb->decoders.size();
+                if (cnt >= 4)
                 {
-                    dec->setMonitored(true);
-                    voiceMonitorId_ = id;
+                    // Overloaded sub-band — prefer a shadow on a lighter worker.
+                    // The effective load is the worker's total (decoder weight + sub-band weight).
+                    int eff = w->weight.load() + (int)w->subbands.size() * 10 + cnt * 8;
+                    if (eff < bestLoad)
+                    {
+                        bestW = w.get();
+                        bestSb = sb;
+                        bestLoad = eff;
+                    }
                 }
-                if (baud == 8400)
+                else
                 {
-                    dec->setRecording(recordOn_, recordDir_, recordFmt_);
-                    dec->setVoiceAesId(aesId);
-                    voiceCallLog_.add({(double)std::chrono::system_clock::to_time_t(
-                                          std::chrono::system_clock::now()),
-                                      0.0, freqHz / 1e6, id, aesId, "", "", true});
+                    // Not overloaded — prefer the lowest raw decoder count.
+                    if (cnt < bestLoad)
+                    {
+                        bestW = w.get();
+                        bestSb = sb;
+                        bestLoad = cnt;
+                    }
                 }
-                return id;
             }
         }
     }
 
-    // 2) No covering sub-band -> create a new one on the lightest worker.
+    if (bestW)
+    {
+        std::lock_guard<std::mutex> lk(bestW->dMtx);
+        // Re-lookup the sub-band (it might have been removed between the two locks).
+        for (auto& sb : bestW->subbands)
+        {
+            if (sb != bestSb) continue;
+            Decoder* dec = sb->decoders.emplace_back(std::make_shared<Decoder>(
+                sb->subRate, sb->centerHz, freqHz, baud, id, &log_, &suLog_, &audio_, &cassign_, &netTable_, &egcLog_, &acTable_, &mesLog_, &lesLog_, &lesFreqTable_)).get();
+            bestW->count.fetch_add(1);
+            bestW->weight.fetch_add(decoderWeight(baud));
+            if (baud == 8400 && voiceMonitorId_ < 0)
+            {
+                dec->setMonitored(true);
+                voiceMonitorId_ = id;
+            }
+            if (baud == 8400)
+            {
+                dec->setRecording(recordOn_, recordDir_, recordFmt_);
+                dec->setVoiceAesId(aesId);
+                voiceCallLog_.add({(double)std::chrono::system_clock::to_time_t(
+                                      std::chrono::system_clock::now()),
+                                  0.0, freqHz / 1e6, id, aesId, "", "", true});
+            }
+            return id;
+        }
+        // Sub-band was removed between locks — fall through to creation.
+    }
+
+    // 2) No covering or non-overloaded sub-band -> create a new one.
     // Effective weight includes sub-band count (front-end DDC ~= 5 MSK decoders).
     Worker* best = workers_[0].get();
     int bestEff = best->weight.load() + (int)best->subbands.size() * 5;

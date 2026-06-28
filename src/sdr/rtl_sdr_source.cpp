@@ -122,7 +122,7 @@ bool RtlSdrSource::start(int deviceIndex, SdrSampleCb cb, std::string& err)
     running_.store(true);
 
     readThread_ = std::thread([this]() {
-        rtlsdr_read_async(dev_, &RtlSdrSource::asyncTrampoline, this, 15, 16384);
+        rtlsdr_read_async(dev_, &RtlSdrSource::asyncTrampoline, this, 15, 32768);
         running_.store(false);
     });
 
