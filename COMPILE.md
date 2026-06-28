@@ -31,14 +31,28 @@ pacman -S --needed \
   mingw-w64-x86_64-pkgconf \
   mingw-w64-x86_64-glfw \
   mingw-w64-x86_64-rtl-sdr \
+  mingw-w64-x86_64-hackrf \
   mingw-w64-x86_64-libusb \
-  mingw-w64-x86_64-zstd
+  mingw-w64-x86_64-zstd \
+  mingw-w64-x86_64-ogg \
+  mingw-w64-x86_64-vorbis
 ```
 
 These provide: GCC/G++, CMake, Ninja, pkg-config, GLFW (windowing), librtlsdr +
-libusb (RTL-SDR), and zstd (SDR++ server compression). OpenGL ships with the
-toolchain. Dear ImGui, ImPlot, the JAERO DSP, mbelib and miniaudio are vendored
-in `third_party/` and need no separate install.
+libusb (RTL-SDR), HackRF, and zstd (SDR++ server compression). OpenGL and zlib
+ship with the toolchain. libogg + libvorbis provide OGG Vorbis voice recording.
+
+Dear ImGui, ImPlot, the JAERO DSP, mbelib, libacars, miniaudio, and WebView2 SDK
+are vendored in `third_party/` and need no separate install.
+
+### Optional: Airspy support
+
+```bash
+pacman -S --needed mingw-w64-x86_64-libairspy
+```
+
+Airspy headers are vendored in `third_party/airspy/`. The build automatically
+enables Airspy (`HAS_AIRSPY=1`) when libairspy is found by CMake.
 
 ## 3. Configure and build
 
@@ -54,8 +68,11 @@ The executable and the runtime DLLs it needs are placed in `build/`:
 ```
 build/InmarScope.exe
 build/libgcc_s_seh-1.dll, libwinpthread-1.dll, libstdc++-6.dll,
-      glfw3.dll, librtlsdr.dll, libusb-1.0.dll, libzstd.dll
+      glfw3.dll, librtlsdr.dll, libhackrf.dll, libusb-1.0.dll,
+      libzstd.dll, zlib1.dll, libogg-0.dll, libvorbis-0.dll,
+      libvorbisenc-2.dll, WebView2Loader.dll
 ```
+(plus `build/libairspy.dll` when Airspy support is enabled)
 
 The DLLs are copied next to the `.exe` automatically (POST_BUILD step), so it
 runs standalone from a double-click or from PyCharm without MSYS2 on `PATH`.
