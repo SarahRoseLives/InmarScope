@@ -405,19 +405,33 @@ void VoiceCallLog::scanDir(const std::string& dir)
         if (ext != ".wav" && ext != ".ogg")
             continue;
 
-        // Parse filename: "20250627_143021_1546.0625MHz_ch7_ABCDEF.wav"
-        //                "20250627_143021_1546.0625MHz_ch7_AB12CD.wav"
+        // Parse filename.
+        // New format (ICAO first):  "ABCDEF_20250627_143021_1546.0625MHz_ch7.wav"
+        // New format (no ICAO):     "20250627_143021_1546.0625MHz_ch7.wav"
+        // Old format (ICAO at end): "20250627_143021_1546.0625MHz_ch7_ABCDEF.wav"
         VoiceCallRecord r;
         r.recording = false;
         r.filename = name;
+        bool haveIcao = false;
+        std::string icaoHex;
+        size_t tsStart = 0;
 
-        // Timestamp: first 15 chars "YYYYMMDD_HHMMSS"
-        if (name.size() < 16) continue;
+        auto isHex = [](char c) { return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F'); };
+        if (name.size() > 7 && isHex(name[0]) && isHex(name[1]) && isHex(name[2]) &&
+            isHex(name[3]) && isHex(name[4]) && isHex(name[5]) && name[6] == '_')
+        {
+            // New format with ICAO prefix
+            icaoHex = name.substr(0, 6);
+            haveIcao = true;
+            tsStart = 7; // skip "ABCDEF_"
+        }
+
+        // Timestamp: "YYYYMMDD_HHMMSS" starting at tsStart
+        if (name.size() < tsStart + 16) continue;
         std::tm tm{};
         char ts[16];
-        std::memcpy(ts, name.c_str(), 15);
+        std::memcpy(ts, name.c_str() + tsStart, 15);
         ts[15] = 0;
-        // Parse YYYYMMDD_HHMMSS
         int yr, mo, dy, hr, mn, sc;
         if (std::sscanf(ts, "%4d%2d%2d_%2d%2d%2d", &yr, &mo, &dy, &hr, &mn, &sc) != 6)
             continue;
@@ -432,8 +446,8 @@ void VoiceCallLog::scanDir(const std::string& dir)
         if (t != (time_t)-1)
             r.timeSec = (double)t;
 
-        // Frequency: after first '_', before "MHz"
-        auto u1 = name.find('_', 15); // skip timestamp underscore
+        // Frequency: after the first '_' after timestamp, before "MHz"
+        auto u1 = name.find('_', tsStart + 15);
         if (u1 == std::string::npos) continue;
         auto mhz = name.find("MHz", u1);
         if (mhz == std::string::npos) continue;
@@ -443,14 +457,20 @@ void VoiceCallLog::scanDir(const std::string& dir)
         // Channel: "ch" followed by number
         auto ch = name.find("_ch", mhz);
         if (ch != std::string::npos)
-        {
             r.channelId = std::atoi(name.c_str() + ch + 3);
-            // ICAO/AES: after "_chN_" to extension
+
+        // ICAO: from prefix (new format) or from end (old format)
+        if (haveIcao)
+        {
+            r.aesId = (uint32_t)std::strtoul(icaoHex.c_str(), nullptr, 16);
+            r.icao = icaoHex;
+        }
+        else if (ch != std::string::npos)
+        {
             auto tag = name.rfind('_');
             if (tag != std::string::npos && tag > ch + 3)
             {
                 std::string icaoPart = name.substr(tag + 1, dot - tag - 1);
-                // 6 hex chars = ICAO or AES
                 if (icaoPart.size() == 6)
                 {
                     r.aesId = (uint32_t)std::strtoul(icaoPart.c_str(), nullptr, 16);

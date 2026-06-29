@@ -107,3 +107,33 @@ const char* icaoCountry(uint32_t icao)
     }
     return nullptr;
 }
+
+std::string ccToFlag(const char* cc)
+{
+    if (!cc || cc[0] < 'A' || cc[0] > 'Z' || cc[1] < 'A' || cc[1] > 'Z' || cc[2] != '\0')
+        return {};
+    // Regional Indicator A = U+1F1E6
+    // UTF-8 encoding: F0 9F 87 A6 + (letter - 'A')
+    // For second letter: F0 9F 87 A6 + (letter - 'A')
+    char buf[9];
+    unsigned char ri0 = 0xA6 + (unsigned char)(cc[0] - 'A');
+    unsigned char ri1 = 0xA6 + (unsigned char)(cc[1] - 'A');
+    buf[0] = 0xF0; buf[1] = 0x9F; buf[2] = 0x87; buf[3] = ri0;
+    buf[4] = 0xF0; buf[5] = 0x9F; buf[6] = 0x87; buf[7] = ri1;
+    buf[8] = 0;
+    return std::string(buf, 8);
+}
+
+bool isMilitaryIcao(uint32_t icao)
+{
+    // Known military sub-ranges within country allocations.
+    // US DoD: AFC000-AFFFFF (within US block A00000-AFFFFF)
+    if (icao >= 0xAFC000 && icao <= 0xAFFFFF)
+        return true;
+    // UK military: 43C000-43CFFF (within UK block 400000-407FFF, 600000-6FFFFF)
+    if (icao >= 0x43C000 && icao <= 0x43CFFF)
+        return true;
+    // Russian military: various sub-ranges — use a broad heuristic.
+    // Most Russian hex in Inmarsat is military, but we only flag known blocks.
+    return false;
+}

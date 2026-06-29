@@ -629,7 +629,7 @@ void drawControls(App& app)
             if (app.maxDbAgeDays < 1) app.maxDbAgeDays = 1;
             if (app.maxDbAgeDays > 90) app.maxDbAgeDays = 90;
         }
-        ImGui::TextDisabled("  Archives in: .\\messages_*.db");
+        ImGui::TextDisabled("  Archives in: .\\databases\\messages_*.db");
     }
 
     ImGui::Separator();
@@ -1429,7 +1429,7 @@ void drawMessages(App& app)
         {
             app.archiveDbPaths.clear();
             app.archiveDbLabels.clear();
-            auto files = app.writeDb.scanArchives(".");
+            auto files = app.writeDb.scanArchives("databases");
             for (auto& f : files)
             {
                 app.archiveDbPaths.push_back(f.filename);

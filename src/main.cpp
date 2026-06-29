@@ -101,11 +101,10 @@ int main(int, char**)
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     ImGui::StyleColorsDark();
+    App app;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
-
-    App app;
 
     // Persistent settings + dock layout live in inmarscope.ini. Register our
     // custom handler and load the file before init so the saved values take
@@ -133,7 +132,7 @@ int main(int, char**)
     app.decoders.setMessageStore(&app.writeDb);
     app.decodersB.setMessageStore(&app.writeDb);
     // Cleanup old archive databases.
-    app.writeDb.cleanup(".", app.maxDbAgeDays);
+    app.writeDb.cleanup("databases", app.maxDbAgeDays);
     {
         RecordFormat rf = (app.recordFormat == 1) ? RecordFormat::OGG : RecordFormat::WAV;
         app.decoders.setRecordFormat(rf);
@@ -189,7 +188,7 @@ int main(int, char**)
         if (app.logToDb != app.writeDb.enabled())
         {
             if (app.logToDb)
-                app.writeDb.openSession(".");
+                app.writeDb.openSession("databases");
             else
                 app.writeDb.setEnabled(false);
         }

@@ -7,6 +7,7 @@
 #include "core/app.h"
 #include "decode/decoder_manager.h"
 #include "decode/message_log.h"
+#include "decode/icao_country.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -53,7 +54,12 @@ static std::string messageJson(const DecodedMessage& m)
     if (!m.label.empty()) { o << ",\"lb\":"; jsonStr(o, m.label); }
     if (!m.reg.empty())   { o << ",\"rg\":"; jsonStr(o, m.reg); }
     if (!m.text.empty())  { o << ",\"tx\":"; jsonStr(o, m.text); }
-    if (!m.icao.empty())  { o << ",\"ic\":"; jsonStr(o, m.icao); }
+    if (!m.icao.empty())  { o << ",\"ic\":"; jsonStr(o, m.icao);
+        uint32_t ih = (uint32_t)std::strtoul(m.icao.c_str(), nullptr, 16);
+        const char* ccode = icaoCountry(ih);
+        if (ccode) { o << ",\"cc\":"; jsonStr(o, ccode); }
+        if (isMilitaryIcao(ih)) o << ",\"mi\":1";
+    }
     if (m.hasPos)         { o << ",\"la\":" << m.lat << ",\"lo\":" << m.lon << ",\"al\":" << m.alt; }
     if (!m.decoded.empty()){ o << ",\"dc\":"; jsonStr(o, m.decoded); }
     o << '}';
@@ -103,7 +109,12 @@ static std::string voiceCallJson(const VoiceCallRecord& c)
 {
     std::ostringstream o;
     o << "{\"t\":" << (int64_t)c.timeSec << ",\"d\":" << c.durationSec << ",\"f\":" << c.freqMHz << ",\"a\":" << c.aesId;
-    if (!c.icao.empty())     { o << ",\"ic\":"; jsonStr(o, c.icao); }
+    if (!c.icao.empty())     { o << ",\"ic\":"; jsonStr(o, c.icao);
+        uint32_t ih = (uint32_t)std::strtoul(c.icao.c_str(), nullptr, 16);
+        const char* ccode = icaoCountry(ih);
+        if (ccode) { o << ",\"cc\":"; jsonStr(o, ccode); }
+        if (isMilitaryIcao(ih)) o << ",\"mi\":1";
+    }
     if (!c.filename.empty()) { o << ",\"fn\":"; jsonStr(o, c.filename); }
     o << ",\"rc\":" << (c.recording ? 1 : 0) << '}';
     return o.str();
@@ -113,7 +124,12 @@ static std::string aircraftJson(const AircraftEntry& a)
 {
     std::ostringstream o;
     o << "{\"a\":" << a.aesId;
-    if (!a.icao.empty())   { o << ",\"ic\":"; jsonStr(o, a.icao); }
+    if (!a.icao.empty())   { o << ",\"ic\":"; jsonStr(o, a.icao);
+        uint32_t ih = (uint32_t)std::strtoul(a.icao.c_str(), nullptr, 16);
+        const char* ccode = icaoCountry(ih);
+        if (ccode) { o << ",\"cc\":"; jsonStr(o, ccode); }
+        if (isMilitaryIcao(ih)) o << ",\"mi\":1";
+    }
     if (!a.reg.empty())    { o << ",\"rg\":"; jsonStr(o, a.reg); }
     if (!a.flight.empty()) { o << ",\"fl\":"; jsonStr(o, a.flight); }
     o << ",\"ms\":" << a.msgs;
@@ -308,6 +324,10 @@ function getCols(){
     default:return[];
   }
 }
+function ccToFlag(cc){
+  if(!cc||cc.length!==2)return'';
+  return String.fromCodePoint(0x1F1E6+cc.charCodeAt(0)-65)+String.fromCodePoint(0x1F1E6+cc.charCodeAt(1)-65);
+}
 function cellHtml(col,it){
   var v='';
   switch(col){
@@ -317,7 +337,14 @@ function cellHtml(col,it){
     case 'Reg':v=esc(it.rg);break;
     case 'Label':v=esc(it.lb);break;
     case 'Text':v=esc(it.tx);if(it.st===48)v='<span class="org">'+v+'</span>';break;
-    case 'ICAO':v=esc(it.ic)||(it.a?'0x'+it.a.toString(16).toUpperCase():'--');break;
+    case 'ICAO':v=esc(it.ic)||(it.a?'0x'+it.a.toString(16).toUpperCase():'--');
+      if(it.ic){
+        var pf='';
+        if(it.mi)pf='<span style="color:#ff4040">M</span> ';
+        else if(it.cc)pf=ccToFlag(it.cc)+' ';
+        v=pf+v;
+      }
+      break;
     case 'AES':v=it.a?'0x'+it.a.toString(16).toUpperCase():'--';break;
     case 'SU':v=it.st?'0x'+it.st.toString(16):'';break;
     case 'Service':v=esc(it.sv);break;

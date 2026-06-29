@@ -668,17 +668,20 @@ void Decoder::recordPcm(const int16_t* pcm, int n)
         {
             std::string i = acTable_->icao(voiceAesId_);
             if (!i.empty())
-                icaoTag = "_" + i;
+                icaoTag = i;
             else
             {
                 char buf[8];
-                std::snprintf(buf, sizeof(buf), "_%06X", voiceAesId_);
+                std::snprintf(buf, sizeof(buf), "%06X", voiceAesId_);
                 icaoTag = buf;
             }
         }
-        std::snprintf(name, sizeof(name), "%s/%s_%.4fMHz_ch%d%s%s",
-                      recordDir_.c_str(), ts, chanFreqHz_ / 1e6, channelId_,
-                      icaoTag.c_str(), ext);
+        if (icaoTag.empty())
+            std::snprintf(name, sizeof(name), "%s/%s_%.4fMHz_ch%d%s",
+                          recordDir_.c_str(), ts, chanFreqHz_ / 1e6, channelId_, ext);
+        else
+            std::snprintf(name, sizeof(name), "%s/%s_%s_%.4fMHz_ch%d%s",
+                          recordDir_.c_str(), icaoTag.c_str(), ts, chanFreqHz_ / 1e6, channelId_, ext);
         if (!rec_)
             rec_ = std::make_unique<WavWriter>();
         rec_->setFormat(recordFmt_);
