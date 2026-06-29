@@ -103,15 +103,34 @@ int main(int, char**)
     ImGui::StyleColorsDark();
     App app;
 
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
-    // Persistent settings + dock layout live in inmarscope.ini. Register our
-    // custom handler and load the file before init so the saved values take
-    // effect (FFT size, dB scale, source, etc.).
+    // Load persisted settings BEFORE building the font atlas so fontSize
+    // from inmarscope.ini is available for the font loader.
     cfgRegisterHandler(app);
     io.IniFilename = "inmarscope.ini";
     ImGui::LoadIniSettingsFromDisk(io.IniFilename);
+
+    // Font: use Roboto-Medium (vendored TTF, scales cleanly at any size).
+    // Clamp to sensible range and scale the style sizes proportionally.
+    if (app.fontSize < 8)  app.fontSize = 8;
+    if (app.fontSize > 24) app.fontSize = 24;
+    {
+        const char* fontPaths[] = {
+            "third_party/imgui/misc/fonts/Roboto-Medium.ttf",
+            "../third_party/imgui/misc/fonts/Roboto-Medium.ttf",
+        };
+        bool loaded = false;
+        for (auto& fp : fontPaths)
+        {
+            FILE* f = std::fopen(fp, "rb");
+            if (f) { std::fclose(f); loaded = (io.Fonts->AddFontFromFileTTF(fp, (float)app.fontSize) != nullptr); break; }
+        }
+        if (!loaded)
+            io.Fonts->AddFontDefault(); // fallback to built-in ProggyClean
+    }
+    ImGui::GetStyle().ScaleAllSizes((float)app.fontSize / 13.0f);
+
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
     // If the saved layout predates the current default (or none was saved),
     // rebuild the canonical default layout so users get the intended arrangement.

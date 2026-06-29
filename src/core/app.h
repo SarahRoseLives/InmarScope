@@ -246,6 +246,9 @@ struct App
     int  layoutVersion = 0;
     bool forceDefaultLayout = false;
 
+    // Font size (pt), persisted — requires restart to take effect.
+    int  fontSize = 17;
+
     double lastConfiguredFs = 0.0;
 };
 

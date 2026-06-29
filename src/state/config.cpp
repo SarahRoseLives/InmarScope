@@ -68,6 +68,7 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(outFile); WS(outFilePath); WI(outUdp); WS(outUdpHost); WI(outUdpPort);
     WI(outFormat); WS(outStation); WI(outSbs); WI(outSbsPort);
     WI(layoutVersion);
+    WI(fontSize);
     for (auto& cc : app.blacklistCountries)
         buf->appendf("blacklistCC=%s\n", cc.c_str());
     if (app.saveDecoders)
@@ -146,6 +147,7 @@ void cfgReadLine(App& app, const char* line)
     RB(outFile); RS(outFilePath); RB(outUdp); RS(outUdpHost); RI(outUdpPort);
     RI(outFormat); RS(outStation); RB(outSbs); RI(outSbsPort);
     RI(layoutVersion);
+    RI(fontSize);
     if (!std::strcmp(key, "blacklistCC") && val[0] && val[1] && !val[2])
     {
         std::string cc(val, 2);

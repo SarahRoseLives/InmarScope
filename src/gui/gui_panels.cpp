@@ -633,6 +633,17 @@ void drawControls(App& app)
     }
 
     ImGui::Separator();
+    if (ImGui::CollapsingHeader("Display"))
+    {
+        if (ImGui::SliderInt("Font size", &app.fontSize, 8, 24, "%d", ImGuiSliderFlags_AlwaysClamp))
+        {
+            if (app.fontSize < 8)  app.fontSize = 8;
+            if (app.fontSize > 24) app.fontSize = 24;
+        }
+        ImGui::TextDisabled("  Restart to apply");
+    }
+
+    ImGui::Separator();
     if (ImGui::CollapsingHeader("Output (message feed)"))
     {
         const char* fmts[] = {"JSON (JAERO/Acarshub)", "JAERO text"};
