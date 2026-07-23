@@ -1,12 +1,14 @@
 # InmarScope
 
-Multi-protocol L-band satellite communications decoder for Windows (and linux if you compile it).
+Multi-protocol L-band satellite communications decoder for Windows (and Linux if you compile it).
 
 Decodes Inmarsat Aero (Classic Aero, Aero-H/H+) and Inmarsat-C/EGC signals in real time using RTL-SDR, HackRF, or SDR++ server sources. Voice call recording, aircraft tracking, and message output in one application.
 
-![screenshot.gif](screenshot.gif)
+[![Animation showing InmarScope decoding messages and displaying waterfall graphics](screenshot.gif)](https://sarahsforge.dev/products/inmarscope)
 
-Windows Download: https://sarahsforge.dev/products/inmarscope
+## Download
+
+Windows builds can be found on official project page: **https://sarahsforge.dev/products/inmarscope**
 
 ## Features
 
@@ -22,25 +24,10 @@ Windows Download: https://sarahsforge.dev/products/inmarscope
 
 ## Building
 
-Requires MSYS2/MinGW-w64 with the following:
+InmarScope supports building for Windows (MSYS2 MINGW64) and Linux (Debian/Ubuntu, Arch, Fedora).
 
-```
-pacman -S mingw-w64-x86_64-{cmake,ninja,gcc,glfw,rtl-sdr,hackrf,zstd,ogg,vorbis}
-```
-
-Additional dependencies vendored in `third_party/`:
-- Dear ImGui (docking branch)
-- ImPlot
-- jaero_dsp, mbelib, libacars, WebView2 SDK
-
-Build:
-
-```
-mkdir build && cd build
-cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
-ninja
-```
+View build instructions at **[COMPILE.md](COMPILE.md)**.
 
 ## License
 
-See [LICENSE](LICENSE).
+This software is licensed under the **GNU General Public License v3.0**, available to view at **[LICENSE](LICENSE)**.
