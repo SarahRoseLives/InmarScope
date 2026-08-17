@@ -162,6 +162,20 @@
 #ifndef GLFW_EXPOSE_NATIVE_X11      // for glfwGetX11Display(), glfwGetX11Window() on Freedesktop (Linux, BSD, etc.)
 #define GLFW_EXPOSE_NATIVE_X11
 #include <X11/Xatom.h>
+
+#ifndef IMGUI_IMPL_GLFW_HAS_XINPUT2
+#if defined(__has_include)
+#if __has_include(<X11/extensions/XInput2.h>)
+#include <X11/extensions/XInput2.h>
+#define IMGUI_IMPL_GLFW_HAS_XINPUT2 1
+#endif
+#endif
+#endif
+
+#ifndef IMGUI_IMPL_GLFW_HAS_XINPUT2
+#define IMGUI_IMPL_GLFW_HAS_XINPUT2 0
+#endif
+
 #include <dlfcn.h>              // for dlopen()
 #endif
 #include <GLFW/glfw3native.h>
@@ -236,6 +250,19 @@ typedef Atom (*PFN_XInternAtom)(Display*, const char* ,Bool);
 typedef int  (*PFN_XChangeProperty)(Display*, Window, Atom, Atom, int, int, const unsigned char*, int);
 typedef int  (*PFN_XChangeWindowAttributes)(Display*, Window, unsigned long, XSetWindowAttributes*);
 typedef int  (*PFN_XFlush)(Display*);
+
+#if IMGUI_IMPL_GLFW_HAS_XINPUT2
+typedef int (*PFN_XIQueryVersion)(Display*, int*, int*);
+typedef int (*PFN_XISelectEvents)(Display*, Window, XIEventMask*, int);
+typedef Display* (*PFN_XOpenDisplay)(const char*);
+typedef int      (*PFN_XCloseDisplay)(Display*);
+typedef int      (*PFN_XPending)(Display*);
+typedef int      (*PFN_XNextEvent)(Display*, XEvent*);
+typedef Bool     (*PFN_XGetEventData)(Display*, XGenericEventCookie*);
+typedef void     (*PFN_XFreeEventData)(Display*, XGenericEventCookie*);
+typedef Bool     (*PFN_XQueryExtension)(Display*, const char*, int*, int*, int*);
+#endif
+
 #endif
 
 // GLFW data
@@ -282,6 +309,26 @@ struct ImGui_ImplGlfw_Data
     PFN_XChangeProperty         XChangeProperty;
     PFN_XChangeWindowAttributes XChangeWindowAttributes;
     PFN_XFlush                  XFlush;
+
+#if IMGUI_IMPL_GLFW_HAS_XINPUT2
+    PFN_XOpenDisplay            XOpenDisplay;
+    PFN_XCloseDisplay           XCloseDisplay;
+    PFN_XPending                XPending;
+    PFN_XNextEvent              XNextEvent;
+    PFN_XGetEventData           XGetEventData;
+    PFN_XFreeEventData          XFreeEventData;
+    PFN_XQueryExtension         XQueryExtension;
+
+    void*                       XiModule;
+    PFN_XIQueryVersion          XIQueryVersion;
+    PFN_XISelectEvents          XISelectEvents;
+
+    Display*                    PinchDisplay;
+    ::Window                    PinchWindow;
+    int                         PinchXiOpcode;
+    double                      PinchLastScale;
+    bool                        PinchActive;
+#endif
 #endif
 
     ImGui_ImplGlfw_Data()   { memset((void*)this, 0, sizeof(*this)); }
@@ -842,9 +889,102 @@ static bool ImGui_ImplGlfw_Init(GLFWwindow* window, bool install_callbacks, Glfw
         bd->XChangeProperty = (PFN_XChangeProperty)dlsym(bd->X11Module, "XChangeProperty");
         bd->XChangeWindowAttributes = (PFN_XChangeWindowAttributes)dlsym(bd->X11Module, "XChangeWindowAttributes");
         bd->XFlush = (PFN_XFlush)dlsym(bd->X11Module, "XFlush");
+
         IM_ASSERT(bd->XInternAtom != nullptr && bd->XChangeProperty != nullptr && bd->XChangeWindowAttributes != nullptr && bd->XFlush != nullptr);
-    }
+
+#if IMGUI_IMPL_GLFW_HAS_XINPUT2
+            bd->XOpenDisplay =
+                (PFN_XOpenDisplay)dlsym(bd->X11Module, "XOpenDisplay");
+            bd->XCloseDisplay =
+                (PFN_XCloseDisplay)dlsym(bd->X11Module, "XCloseDisplay");
+            bd->XPending =
+                (PFN_XPending)dlsym(bd->X11Module, "XPending");
+            bd->XNextEvent =
+                (PFN_XNextEvent)dlsym(bd->X11Module, "XNextEvent");
+            bd->XGetEventData =
+                (PFN_XGetEventData)dlsym(bd->X11Module, "XGetEventData");
+            bd->XFreeEventData =
+                (PFN_XFreeEventData)dlsym(bd->X11Module, "XFreeEventData");
+            bd->XQueryExtension =
+                (PFN_XQueryExtension)dlsym(bd->X11Module, "XQueryExtension");
+
+            IM_ASSERT(bd->XOpenDisplay != nullptr &&
+                bd->XCloseDisplay != nullptr &&
+                bd->XPending != nullptr &&
+                bd->XNextEvent != nullptr &&
+                bd->XGetEventData != nullptr &&
+                bd->XFreeEventData != nullptr &&
+                bd->XQueryExtension != nullptr);
+
+#if defined(__CYGWIN__)
+        const char* xi_module_path = "libXi-6.so";
+#elif defined(__OpenBSD__) || defined(__NetBSD__)
+        const char* xi_module_path = "libXi.so";
+#else
+        const char* xi_module_path = "libXi.so.6";
 #endif
+
+        bd->XiModule = dlopen(xi_module_path, RTLD_LAZY | RTLD_LOCAL);
+        if (bd->XiModule != nullptr)
+        {
+            bd->XIQueryVersion =
+                (PFN_XIQueryVersion)dlsym(bd->XiModule, "XIQueryVersion");
+
+            bd->XISelectEvents =
+                (PFN_XISelectEvents)dlsym(bd->XiModule, "XISelectEvents");
+        }
+
+        if (bd->XiModule != nullptr &&
+            bd->XIQueryVersion != nullptr &&
+            bd->XISelectEvents != nullptr)
+        {
+            bd->PinchDisplay = bd->XOpenDisplay(nullptr);
+
+            if (bd->PinchDisplay != nullptr)
+            {
+                int event_base = 0;
+                int error_base = 0;
+
+                if (bd->XQueryExtension(bd->PinchDisplay,
+                    "XInputExtension",
+                    &bd->PinchXiOpcode,
+                    &event_base,
+                    &error_base))
+                {
+                    int major = 2;
+                    int minor = 4;
+
+                    int rc = bd->XIQueryVersion(bd->PinchDisplay,
+                        &major,
+                        &minor);
+                    if (rc == Success &&
+                        (major > 2 || (major == 2 && minor >= 4)))
+                    {
+                        bd->PinchWindow = glfwGetX11Window(bd->Window);
+
+                        unsigned char mask[XIMaskLen(XI_LASTEVENT)] = {};
+                        XISetMask(mask, XI_GesturePinchBegin);
+                        XISetMask(mask, XI_GesturePinchUpdate);
+                        XISetMask(mask, XI_GesturePinchEnd);
+
+                        XIEventMask event_mask = {};
+                        event_mask.deviceid = XIAllMasterDevices;
+                        event_mask.mask_len = sizeof(mask);
+                        event_mask.mask = mask;
+
+                        bd->XISelectEvents(bd->PinchDisplay,
+                                        bd->PinchWindow,
+                                        &event_mask,
+                                        1);
+
+                        bd->XFlush(bd->PinchDisplay);
+                    }
+                }
+            }
+        }
+#endif      // IMGUI_IMPL_GLFW_HAS_XINPUT2
+    }
+#endif      // GLFW_HAS_X11
 
     // Emscripten: the same application can run on various platforms, so we detect the Apple platform at runtime
     // to override io.ConfigMacOSXBehaviors from its default (which is always false in Emscripten).
@@ -907,6 +1047,20 @@ void ImGui_ImplGlfw_Shutdown()
     ::SetPropA((HWND)main_viewport->PlatformHandleRaw, "IMGUI_BACKEND_DATA", nullptr);
     ::SetWindowLongPtrW((HWND)main_viewport->PlatformHandleRaw, GWLP_WNDPROC, (LONG_PTR)bd->PrevWndProc);
     bd->PrevWndProc = nullptr;
+#endif
+
+#if GLFW_HAS_X11 && IMGUI_IMPL_GLFW_HAS_XINPUT2
+    if (bd->PinchDisplay != nullptr && bd->XCloseDisplay != nullptr)
+    {
+        bd->XCloseDisplay(bd->PinchDisplay);
+        bd->PinchDisplay = nullptr;
+    }
+
+    if (bd->XiModule != nullptr)
+    {
+        dlclose(bd->XiModule);
+        bd->XiModule = nullptr;
+    }
 #endif
 
 #if GLFW_HAS_X11
@@ -1216,6 +1370,55 @@ void ImGui_ImplGlfw_NewFrame()
     bd->MouseIgnoreButtonUp = false;
     ImGui_ImplGlfw_UpdateMouseData();
     ImGui_ImplGlfw_UpdateMouseCursor();
+
+#if GLFW_HAS_X11 && IMGUI_IMPL_GLFW_HAS_XINPUT2
+    if (bd->PinchDisplay != nullptr)
+    {
+        while (bd->XPending(bd->PinchDisplay) > 0)
+        {
+            XEvent event;
+            bd->XNextEvent(bd->PinchDisplay, &event);
+
+            if (event.type == GenericEvent &&
+                event.xcookie.extension == bd->PinchXiOpcode &&
+                bd->XGetEventData(bd->PinchDisplay, &event.xcookie))
+            {
+                if (event.xcookie.evtype == XI_GesturePinchBegin)
+                {
+                    bd->PinchActive = true;
+                    bd->PinchLastScale = 1.0;
+                }
+                else if (event.xcookie.evtype == XI_GesturePinchUpdate)
+                {
+                    XIGesturePinchEvent* pinch =
+                        static_cast<XIGesturePinchEvent*>(event.xcookie.data);
+
+                    if (bd->PinchActive)
+                    {
+                        double ratio = pinch->scale / bd->PinchLastScale;
+
+                        if (!io.KeyCtrl)
+                        {
+                            if (ratio > 1.001)
+                                io.AddMouseWheelEvent(0.0f, 0.1f);
+                            else if (ratio < 0.999)
+                                io.AddMouseWheelEvent(0.0f, -0.1f);
+                        }
+
+                        bd->PinchLastScale = pinch->scale;
+                    }
+                }
+                else if (event.xcookie.evtype == XI_GesturePinchEnd)
+                {
+                    bd->PinchActive = false;
+                    bd->PinchLastScale = 1.0;
+                }
+
+                bd->XFreeEventData(bd->PinchDisplay, &event.xcookie);
+            }
+        }
+    }
+#endif
 
     // Update game controllers (if enabled and available)
     ImGui_ImplGlfw_UpdateGamepads();
