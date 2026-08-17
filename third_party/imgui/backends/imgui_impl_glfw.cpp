@@ -145,6 +145,7 @@
 #else
 #define GLFW_HAS_WAYLAND    0
 #endif
+
 #include <GLFW/glfw3.h>
 #ifdef _WIN32
 #undef APIENTRY
@@ -651,6 +652,8 @@ static EM_BOOL ImGui_ImplEmscripten_WheelCallback(int, const EmscriptenWheelEven
 #endif
 
 #ifdef _WIN32
+static bool g_PhysicalCtrlDown = false;
+
 static LRESULT CALLBACK ImGui_ImplGlfw_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #endif
 
@@ -1685,6 +1688,69 @@ static LRESULT CALLBACK ImGui_ImplGlfw_WndProc(HWND hWnd, UINT msg, WPARAM wPara
     if (viewport != NULL)
         if (ImGui_ImplGlfw_ViewportData* vd = (ImGui_ImplGlfw_ViewportData*)viewport->PlatformUserData)
             prev_wndproc = vd->PrevWndProc;
+
+    switch (msg)
+    {
+	case WM_INPUT:
+	{
+		UINT size = 0;
+
+		if (GetRawInputData((HRAWINPUT)lParam,
+                        RID_INPUT,
+                        nullptr,
+                        &size,
+                        sizeof(RAWINPUTHEADER)) == 0 &&
+			size > 0)
+		{
+			BYTE buffer[256];
+
+			if (size <= sizeof(buffer) &&
+				GetRawInputData((HRAWINPUT)lParam,
+					RID_INPUT,
+					buffer,
+					&size,
+					sizeof(RAWINPUTHEADER)) == size)
+			{
+				RAWINPUT* raw =
+					reinterpret_cast<RAWINPUT*>(buffer);
+
+				if (raw->header.dwType == RIM_TYPEKEYBOARD)
+				{
+					const RAWKEYBOARD& kb = raw->data.keyboard;
+
+					// Physical Ctrl has a hardware scan code.
+					// Ctrl synthesized by Windows for touchpad pinch has MakeCode == 0.
+
+					if (kb.VKey == VK_CONTROL && kb.MakeCode != 0)
+					{
+						if (kb.Message == WM_KEYDOWN ||
+							kb.Message == WM_SYSKEYDOWN)
+						{
+							g_PhysicalCtrlDown = true;
+						}
+						else if (kb.Message == WM_KEYUP ||
+							kb.Message == WM_SYSKEYUP)
+						{
+							g_PhysicalCtrlDown = false;
+						}
+					}
+				}
+			}
+		}
+
+	break;
+      }
+
+	case WM_MOUSEWHEEL:
+	{
+		// Keep ImGui's Ctrl state synchronized with the physical keyboard.
+		// Windows may synthesize Ctrl for touchpad pinch gestures.
+		io.AddKeyEvent(ImGuiMod_Ctrl, g_PhysicalCtrlDown);
+
+		break;
+	}
+
+    }
 
     switch (msg)
     {
