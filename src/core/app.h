@@ -2,7 +2,7 @@
 #pragma once
 
 #include "dsp/iq_ring.h"
-#include "dsp/jfft.h"
+#include "jfft.h"
 #include "gui/waterfall.h"
 #include "sdr/rtl_sdr_source.h"
 #include "sdr/hackrf_source.h"
