@@ -131,6 +131,49 @@ int main(int, char**)
         glfwTerminate();
         return 1;
     }
+
+#if defined(_WIN32)
+	using RegisterTouchpadCapableThreadFn = BOOL (WINAPI *)(BOOL);
+
+	HMODULE user32 = GetModuleHandleW(L"user32.dll");
+	auto pRegisterTouchpadCapableThread =
+		reinterpret_cast<RegisterTouchpadCapableThreadFn>(
+			GetProcAddress(user32, "RegisterTouchpadCapableThread"));
+
+	if (pRegisterTouchpadCapableThread)
+	{
+		if (!pRegisterTouchpadCapableThread(TRUE))
+		{
+			fprintf(stderr,
+				"[WIN32] RegisterTouchpadCapableThread failed: %lu\n",
+				GetLastError());
+		}
+
+	}
+	else
+	{
+		fprintf(stderr,
+			"[WIN32] RegisterTouchpadCapableThread not available\n");
+	}
+
+	// Register keyboard Raw Input to distinguish physical Ctrl
+	// from the Ctrl synthesized by Windows for touchpad pinch gestures.
+	HWND hWnd = glfwGetWin32Window(window);
+
+	RAWINPUTDEVICE keyboardRid = {};
+	keyboardRid.usUsagePage = 0x01;   // Generic Desktop Controls
+	keyboardRid.usUsage     = 0x06;   // Keyboard
+	keyboardRid.dwFlags     = RIDEV_INPUTSINK;
+	keyboardRid.hwndTarget  = hWnd;
+
+	if (!RegisterRawInputDevices(&keyboardRid, 1, sizeof(keyboardRid)))
+	{
+		fprintf(stderr,
+			"[WIN32] Raw keyboard registration failed: %lu\n",
+			GetLastError());
+	}
+#endif
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
