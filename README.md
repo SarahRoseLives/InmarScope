@@ -12,6 +12,9 @@ Windows builds can be found on official project page: **https://sarahsforge.dev/
 
 ## Features
 
+- **Copyable tables** — Copy button, right-click, or Ctrl+C copies decoded text from any pane
+- **Pop-out panes** — drag a tab out of the dock to float it anywhere on the desktop
+- **PPM adjustment** — crystal offset control for RTL-SDR, RTL-TCP, dual RTL, HackRF, and Airspy
 - **Inmarsat Aero** — 600/1200/8400 bps OQPSK signal decoding, voice AMBE decoding, ACARS/ADS-C/CPDLC message parsing
 - **Inmarsat-C / EGC** — 1200 bps BPSK decoding with EGC SafetyNet/FleetNet message output
 - **Dual-SDR voice follow** — dedicate a second RTL-SDR to automatically follow and record voice calls

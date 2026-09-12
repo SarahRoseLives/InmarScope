@@ -80,7 +80,7 @@ bool HackRfSource::start(int deviceIndex, SdrSampleCb cb, std::string& err)
     hackrf_set_sample_rate(dev_, sampleRate_);
     hackrf_set_baseband_filter_bandwidth(
         dev_, hackrf_compute_baseband_filter_bw((uint32_t)sampleRate_));
-    hackrf_set_freq(dev_, (uint64_t)centerFreq_);
+    hackrf_set_freq(dev_, tunedHz());
     hackrf_set_lna_gain(dev_, (uint32_t)lnaGain_);
     hackrf_set_vga_gain(dev_, (uint32_t)vgaGain_);
     hackrf_set_amp_enable(dev_, amp_ ? 1 : 0);
@@ -157,11 +157,27 @@ int HackRfSource::handleRx(const int8_t* buf, int len)
     return 0; // keep streaming
 }
 
+uint64_t HackRfSource::tunedHz() const
+{
+    return (uint64_t)std::llround(centerFreq_ * (1.0 + ppm_ / 1e6));
+}
+
+void HackRfSource::applyTune()
+{
+    if (dev_)
+        hackrf_set_freq(dev_, tunedHz());
+}
+
 void HackRfSource::setCenterFreq(double hz)
 {
     centerFreq_ = hz;
-    if (dev_)
-        hackrf_set_freq(dev_, (uint64_t)hz);
+    applyTune();
+}
+
+void HackRfSource::setPpm(double ppm)
+{
+    ppm_ = ppm;
+    applyTune();
 }
 
 void HackRfSource::setSampleRate(double hz)

@@ -21,7 +21,7 @@ public:
     void setSampleRate(double hz) override;
     void setGain(double db) override; // maps to VGA (baseband) gain
     void setBiasTee(bool on) override; // HackRF antenna/port power
-    void setPpm(double ppm) override { ppm_ = ppm; }
+    void setPpm(double ppm) override;
 
     void setDcBlock(bool on) { dcBlock_.store(on); }
     bool dcBlock() const { return dcBlock_.load(); }
@@ -60,4 +60,7 @@ private:
     float dcRate_ = 2.0e-5f;
 
     std::vector<float> scratch_;
+
+    uint64_t tunedHz() const;
+    void applyTune();
 };
