@@ -12,6 +12,7 @@
 #include "util/log.h"
 #include "version.h"
 #include "gui/waterfall.h"
+#include "gui/copyable.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -30,6 +31,24 @@
 inline ImVec4 Lc(const App& app, const ImVec4& c) {
     if (!app.lightMode) return c;
     return ImVec4(c.x * 0.44f, c.y * 0.56f, c.z * 0.44f, c.w);
+}
+
+// PPM crystal-offset control: typed value plus a slider for fine adjustment.
+static bool drawPpmAdjust(const char* label, float* ppm)
+{
+    ImGui::PushID(label);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(label);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(110.0f);
+    bool changed = ImGui::InputFloat("##ppm", ppm, 0.1f, 1.0f, "%.2f");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(-1.0f);
+    changed |= ImGui::SliderFloat("##ppmsl", ppm, -50.0f, 50.0f, "");
+    if (*ppm < -200.0f) *ppm = -200.0f;
+    if (*ppm > 200.0f) *ppm = 200.0f;
+    ImGui::PopID();
+    return changed;
 }
 
 #if defined(_WIN32)
@@ -188,7 +207,7 @@ void drawControls(App& app)
             if (running)
                 app.sdr.setBiasTee(app.biasTee);
         }
-        if (ImGui::InputFloat("PPM", &app.ppm, 0.1f, 1.0f, "%.2f"))
+        if (drawPpmAdjust("PPM", &app.ppm))
         {
             if (running)
                 app.sdr.setPpm((double)app.ppm);
@@ -336,6 +355,10 @@ void drawControls(App& app)
         {
             if (running) app.hack.setBiasTee(app.hackBias);
         }
+        if (drawPpmAdjust("PPM", &app.ppm))
+        {
+            if (running) app.hack.setPpm((double)app.ppm);
+        }
         if (ImGui::Checkbox(_L("DC block"), &app.dcBlock))
         {
             if (running) app.hack.setDcBlock(app.dcBlock);
@@ -433,6 +456,10 @@ void drawControls(App& app)
         {
             if (running) app.airspy.setBiasTee(app.airspyBias);
         }
+        if (drawPpmAdjust("PPM", &app.ppm))
+        {
+            if (running) app.airspy.setPpm((double)app.ppm);
+        }
         if (ImGui::Checkbox(_L("DC block"), &app.dcBlock))
         {
             if (running) app.airspy.setDcBlock(app.dcBlock);
@@ -472,7 +499,7 @@ void drawControls(App& app)
         {
             if (running) app.rtltcp.setBiasTee(app.biasTee);
         }
-        if (ImGui::InputFloat("PPM", &app.ppm, 0.1f, 1.0f, "%.2f"))
+        if (drawPpmAdjust("PPM", &app.ppm))
         {
             if (running) app.rtltcp.setPpm((double)app.ppm);
         }
@@ -508,7 +535,8 @@ void drawControls(App& app)
         if (!app.autoGain)
             ImGui::SliderFloat("Gain A (dB)", &app.gainDb, 0.0f, 50.0f, "%.1f");
         ImGui::Checkbox("Bias-T A", &app.biasTee);
-        ImGui::InputFloat("PPM A", &app.ppm, 0.1f, 1.0f, "%.2f");
+        if (drawPpmAdjust("PPM A", &app.ppm) && running)
+            app.sdr.setPpm((double)app.ppm);
         ImGui::Checkbox("DC block A", &app.dcBlock);
 
         ImGui::Spacing();
@@ -537,7 +565,8 @@ void drawControls(App& app)
         if (!app.autoGainB)
             ImGui::SliderFloat("Gain B (dB)", &app.gainDbB, 0.0f, 50.0f, "%.1f");
         ImGui::Checkbox("Bias-T B", &app.biasTeeB);
-        ImGui::InputFloat("PPM B", &app.ppmB, 0.1f, 1.0f, "%.2f");
+        if (drawPpmAdjust("PPM B", &app.ppmB) && running)
+            app.sdrB.setPpm((double)app.ppmB);
         ImGui::Checkbox("DC block B", &app.dcBlock); // same dcblock toggle
     }
 
@@ -1151,6 +1180,9 @@ void drawDecoders(App& app)
         app.decoders.removeAll();
         if (app.dualMode) app.decodersB.removeAll();
     }
+    static std::string decsCopy;
+    ImGui::SameLine();
+    copyAllButton(decsCopy);
 
     int vm = app.decoders.voiceMonitor();
     int vmB = app.dualMode ? app.decodersB.voiceMonitor() : -1;
@@ -1294,6 +1326,7 @@ void drawDecoders(App& app)
 
         int toRemove = -1;
     bool toRemoveB = false;
+        std::vector<std::string> copyRows;
         for (auto& d : decs)
         {
             int uid = d.channelId + (d.isB ? 100000 : 0);
@@ -1364,7 +1397,16 @@ void drawDecoders(App& app)
                 toRemove = d.channelId;
                 toRemoveB = d.isB;
             }
+            if (d.baud == kEgcBaud)
+                copyRows.push_back(copyFmt("%.4f\tEGC\t%s\t%llu", d.freqMHz,
+                    d.egcFrames > 0 ? copyFmt("BER %d", d.egcBer).c_str() : "--",
+                    (unsigned long long)d.msgs));
+            else
+                copyRows.push_back(copyFmt("%.4f\t%d\t%.1f\t%llu", d.freqMHz, d.baud, d.ebno,
+                    (unsigned long long)d.msgs));
         }
+        handleTableCopy(copyRows);
+        decsCopy = copyJoin(copyRows);
         ImGui::EndTable();
         if (toRemove >= 0)
         {
@@ -1389,6 +1431,9 @@ void drawSUs(App& app)
         app.decoders.suLog().clear();
         if (app.dualMode) app.decodersB.suLog().clear();
     }
+    static std::string suCopy;
+    ImGui::SameLine();
+    copyAllButton(suCopy);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(-1.0f);
     ImGui::InputTextWithHint("##searchsu", "Search...", app.searchBuf, sizeof(app.searchBuf));
@@ -1446,6 +1491,7 @@ void drawSUs(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
+        std::vector<std::string> copyRows;
         for (auto it = msgs.begin(); it != msgs.end(); ++it)
         {
             if (hasSearch)
@@ -1476,7 +1522,10 @@ void drawSUs(App& app)
             ImGui::TextColored(col, "%s", it->text.c_str());
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(it->hex.c_str());
+            copyRows.push_back(copyFmt("%.3f\t%s\t%s", it->freqMHz, it->text.c_str(), it->hex.c_str()));
         }
+        handleTableCopy(copyRows);
+        suCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -1496,6 +1545,9 @@ void drawMessages(App& app)
         app.decoders.log().clear();
         if (app.dualMode) app.decodersB.log().clear();
     }
+    static std::string msgCopy;
+    ImGui::SameLine();
+    copyAllButton(msgCopy);
     ImGui::SameLine();
     ImGui::Checkbox(_L("Show empty"), &app.showEmptyMsgs);
     ImGui::SameLine();
@@ -1575,6 +1627,7 @@ void drawMessages(App& app)
         ImGui::TableHeadersRow();
 
         int rowIdx = 0;
+        std::vector<std::string> copyRows;
         for (auto it = msgs.rbegin(); it != msgs.rend(); ++it)
         {
             // Hide empty ACARS messages (no text and no decoded body) unless shown.
@@ -1624,8 +1677,31 @@ void drawMessages(App& app)
                 ImGui::TextWrapped("%s", it->decoded.c_str());
                 ImGui::PopStyleColor();
             }
+            char utc[16];
+            {
+                time_t t = (time_t)it->timeSec;
+                std::tm tm{};
+#if defined(_WIN32)
+                gmtime_s(&tm, &t);
+#else
+                gmtime_r(&t, &tm);
+#endif
+                std::snprintf(utc, sizeof(utc), "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
+            }
+            std::string row = copyFmt("%s\t%.3f\t%s\t%s\t%06X\t%s\t%s",
+                                      utc, it->freqMHz, it->downlink ? "DL" : "UL",
+                                      it->reg.c_str(), it->aesId, it->label.c_str(),
+                                      it->text.c_str());
+            if (!it->decoded.empty())
+            {
+                row += '\n';
+                row += it->decoded;
+            }
+            copyRows.push_back(std::move(row));
             ImGui::PopID();
         }
+        handleTableCopy(copyRows);
+        msgCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -1641,6 +1717,9 @@ void drawAircraft(App& app)
     ImGui::SameLine();
     if (ImGui::SmallButton(_L("Clear")))
         app.decoders.aircraftTable().clear();
+    static std::string acCopy;
+    ImGui::SameLine();
+    copyAllButton(acCopy);
     ImGui::SameLine();
     ImGui::Checkbox(_L("With position only"), &app.acPosOnly);
     ImGui::Separator();
@@ -1667,6 +1746,7 @@ void drawAircraft(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
+        std::vector<std::string> copyRows;
         for (const auto& a : acs)
         {
             if (app.acPosOnly && !a.hasPos)
@@ -1677,10 +1757,11 @@ void drawAircraft(App& app)
             ImGui::TableNextColumn();
             ImGui::TextUnformatted(a.icao.c_str());
             ImGui::TableNextColumn();
+            const char* cc = nullptr;
             if (!a.icao.empty())
             {
                 uint32_t ihex = (uint32_t)std::strtoul(a.icao.c_str(), nullptr, 16);
-                const char* cc = icaoCountry(ihex);
+                cc = icaoCountry(ihex);
                 if (cc) ImGui::TextUnformatted(cc);
             }
             ImGui::TableNextColumn();
@@ -1697,7 +1778,16 @@ void drawAircraft(App& app)
             ImGui::Text("%ds", (int)(now - a.lastSeen));
             ImGui::TableNextColumn();
             ImGui::Text("%llu", (unsigned long long)a.msgs);
+            copyRows.push_back(copyFmt("%06X\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%ds\t%llu",
+                a.aesId, a.icao.c_str(), cc ? cc : "",
+                a.reg.c_str(), a.flight.c_str(),
+                a.hasPos ? copyFmt("%.4f", a.lat).c_str() : "",
+                a.hasPos ? copyFmt("%.4f", a.lon).c_str() : "",
+                a.hasPos ? copyFmt("%d", a.alt).c_str() : "",
+                (int)(now - a.lastSeen), (unsigned long long)a.msgs));
         }
+        handleTableCopy(copyRows);
+        acCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -1733,6 +1823,9 @@ void drawCChannel(App& app)
         app.decoders.cassignLog().clear();
         if (app.dualMode) app.decodersB.cassignLog().clear();
     }
+    static std::string cchanCopy;
+    ImGui::SameLine();
+    copyAllButton(cchanCopy);
     ImGui::Separator();
 
     auto items = app.decoders.cassignLog().snapshot();
@@ -1754,6 +1847,7 @@ void drawCChannel(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
+        std::vector<std::string> copyRows;
         // Oldest-first (newest appended at the bottom) so the list grows
         // downward and doesn't shift content out from under a scrolled-up user.
         for (size_t i = 0; i < items.size(); ++i)
@@ -1780,6 +1874,8 @@ void drawCChannel(App& app)
                     tuneToVoice(app, it.rxMHz, it.aesId);
                 ImGui::EndDisabled();
             }
+            copyRows.push_back(copyFmt("%s\t%06X\t%02X\t%.4f\t%.4f",
+                cassignTypeName(it.type), it.aesId, it.gesId, it.rxMHz, it.txMHz));
             ImGui::PopID();
         }
 
@@ -1788,6 +1884,8 @@ void drawCChannel(App& app)
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
             ImGui::SetScrollHereY(1.0f);
 
+        handleTableCopy(copyRows);
+        cchanCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
     ImGui::End();
@@ -1805,6 +1903,9 @@ void drawNetwork(App& app)
     ImGui::SameLine();
     if (ImGui::SmallButton(_L("Clear")))
         app.decoders.channelTable().clear();
+    static std::string netCopy;
+    ImGui::SameLine();
+    copyAllButton(netCopy);
     ImGui::TextDisabled("Discovered from system-table broadcasts. RX = forward (decodable).");
     ImGui::Separator();
 
@@ -1821,6 +1922,7 @@ void drawNetwork(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
+        std::vector<std::string> copyRows;
         for (size_t i = 0; i < chans.size(); ++i)
         {
             const auto& c = chans[i];
@@ -1845,7 +1947,11 @@ void drawNetwork(App& app)
             {
                 ImGui::TextDisabled("return");
             }
+            copyRows.push_back(copyFmt("%.4f\t%s\t%02X\t%llu",
+                c.freqMHz, c.kind.c_str(), c.ges, (unsigned long long)c.hits));
         }
+        handleTableCopy(copyRows);
+        netCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -1905,7 +2011,15 @@ void drawFlightMap(App& app)
     if (ImGuiDockNode* node = ImGui::GetCurrentWindow()->DockNode)
         tabActive = (node->VisibleWindow == ImGui::GetCurrentWindow());
     ImGui::InvisibleButton("##map", ImVec2((float)w, (float)h));
-    app.flightMapWv.setBounds((int)pos.x, (int)pos.y, w, h, tabActive);
+    bool inMainViewport = (ImGui::GetWindowViewport() == ImGui::GetMainViewport());
+    if (!inMainViewport)
+    {
+        app.flightMapWv.setBounds(0, 0, 0, 0, false);
+        ImGui::SetCursorScreenPos(pos);
+        ImGui::TextWrapped("%s", _L("Dock the Flight Map back in the main window to show the embedded map."));
+    }
+    else
+        app.flightMapWv.setBounds((int)pos.x, (int)pos.y, w, h, tabActive);
 
     static std::string lastIcao;
     if (pick && pick->icao != lastIcao)
@@ -1935,6 +2049,9 @@ void drawEgc(App& app)
         app.decoders.egcLog().clear();
         if (app.dualMode) app.decodersB.egcLog().clear();
     }
+    static std::string egcCopy;
+    ImGui::SameLine();
+    copyAllButton(egcCopy);
     ImGui::SameLine();
     static bool showEgc = true, showTerminal = true;
     ImGui::Checkbox("EGC", &showEgc); ImGui::SameLine();
@@ -1994,6 +2111,7 @@ void drawEgc(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
+        std::vector<std::string> copyRows;
         for (auto it = msgs.rbegin(); it != msgs.rend(); ++it)
         {
             bool isTerminal = (it->priority == "Terminal");
@@ -2017,7 +2135,12 @@ void drawEgc(App& app)
             ImGui::TextWrapped("%s", it->service.c_str());
             ImGui::TableNextColumn();
             ImGui::TextWrapped("%s", it->text.c_str());
+            copyRows.push_back(copyFmt("%s\t%s\t%d\t%s\t%s",
+                it->timeUtc.c_str(), it->priority.c_str(), it->messageId,
+                it->service.c_str(), it->text.c_str()));
         }
+        handleTableCopy(copyRows);
+        egcCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -2041,6 +2164,9 @@ void drawMes(App& app)
         app.decoders.mesLog().clear();
         if (app.dualMode) app.decodersB.mesLog().clear();
     }
+    static std::string mesCopy;
+    ImGui::SameLine();
+    copyAllButton(mesCopy);
     ImGui::Separator();
 
     std::sort(entries.begin(), entries.end(),
@@ -2061,6 +2187,7 @@ void drawMes(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
+        std::vector<std::string> copyRows;
         for (auto& e : entries)
         {
             ImGui::TableNextRow();
@@ -2078,7 +2205,12 @@ void drawMes(App& app)
             ImGui::Text("%ds", (int)(now - e.lastSeen));
             ImGui::TableNextColumn();
             ImGui::Text("%llu", (unsigned long long)e.msgs);
+            copyRows.push_back(copyFmt("%u\t%s\t%s\t%d\t%d\t%ds\t%llu",
+                e.mesId, e.action.c_str(), e.sat.c_str(), e.les, e.channel,
+                (int)(now - e.lastSeen), (unsigned long long)e.msgs));
         }
+        handleTableCopy(copyRows);
+        mesCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -2098,6 +2230,9 @@ void drawLes(App& app)
         app.decoders.lesLog().clear();
         if (app.dualMode) app.decodersB.lesLog().clear();
     }
+    static std::string lesCopy;
+    ImGui::SameLine();
+    copyAllButton(lesCopy);
     ImGui::SameLine();
     static bool hideEncrypted = false;
     ImGui::Checkbox(_L("Hide encrypted"), &hideEncrypted);
@@ -2157,6 +2292,7 @@ void drawLes(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
+        std::vector<std::string> copyRows;
         for (auto it = msgs.rbegin(); it != msgs.rend(); ++it)
         {
             if (hideEncrypted && it->isEncrypted) continue;
@@ -2185,7 +2321,12 @@ void drawLes(App& app)
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(60, 255, 60, 255));
             ImGui::TextWrapped("%s", it->text.c_str());
             ImGui::PopStyleColor();
+            copyRows.push_back(copyFmt("%s\t%s LES %02d\t%s\t%d\t%d\t%s",
+                it->timeUtc.c_str(), it->satName.c_str(), it->lesId,
+                it->satName.c_str(), it->channel, it->pktNo, it->text.c_str()));
         }
+        handleTableCopy(copyRows);
+        lesCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -2337,6 +2478,9 @@ void drawVoiceCalls(App& app)
         app.decoders.voiceCallLog().clear();
         if (app.dualMode) app.decodersB.voiceCallLog().clear();
     }
+    static std::string vcCopy;
+    ImGui::SameLine();
+    copyAllButton(vcCopy);
     ImGui::SameLine();
     if (ImGui::SmallButton("Rescan"))
     {
@@ -2364,6 +2508,7 @@ void drawVoiceCalls(App& app)
         ImGui::TableHeadersRow();
 
         int rowIdx = 0;
+        std::vector<std::string> copyRows;
         for (auto& c : calls)
         {
             ImGui::TableNextRow();
@@ -2422,8 +2567,14 @@ void drawVoiceCalls(App& app)
                     app.audioPlayer.play(fullPath);
                 }
             }
+            copyRows.push_back(copyFmt("%02d:%02d:%02d\t%.4f\t%s\t%s",
+                tm.tm_hour, tm.tm_min, tm.tm_sec, c.freqMHz,
+                c.icao.empty() ? (c.aesId ? copyFmt("%06X", c.aesId).c_str() : "--") : c.icao.c_str(),
+                c.filename.c_str()));
             rowIdx++;
         }
+        handleTableCopy(copyRows);
+        vcCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -2503,6 +2654,9 @@ void drawLesFreq(App& app)
               [](const LesFreqEntry& a, const LesFreqEntry& b) { return a.freqMHz < b.freqMHz; });
 
     ImGui::Text("%d discovered", (int)ents.size());
+    static std::string lesfCopy;
+    ImGui::SameLine();
+    copyAllButton(lesfCopy);
     ImGui::SameLine();
     ImGui::Checkbox("Auto-add", &app.autoAddLes);
     ImGui::SameLine();
@@ -2522,6 +2676,7 @@ void drawLesFreq(App& app)
         ImGui::TableSetupScrollFreeze(0, 1);
         ImGui::TableHeadersRow();
 
+        std::vector<std::string> copyRows;
         for (auto& e : ents)
         {
             ImGui::TableNextRow();
@@ -2567,7 +2722,13 @@ void drawLesFreq(App& app)
                     }
                 }
             }
+            copyRows.push_back(copyFmt("%.3f\t%s\t%s\t%04X",
+                e.freqMHz, e.satName.c_str(),
+                e.lesLabel.empty() ? copyFmt("LES %02d", e.lesId).c_str() : e.lesLabel.c_str(),
+                e.services));
         }
+        handleTableCopy(copyRows);
+        lesfCopy = copyJoin(copyRows);
         ImGui::EndTable();
     }
 
@@ -2642,7 +2803,7 @@ void drawDockHost(App& app)
     ImGui::PopStyleVar(3);
 
     ImGuiID dockId = ImGui::GetID("InmarScopeDockSpace");
-    ImGui::DockSpace(dockId, ImVec2(0, 0), ImGuiDockNodeFlags_NoUndocking);
+    ImGui::DockSpace(dockId, ImVec2(0, 0), ImGuiDockNodeFlags_None);
 
     if (forceLayout || ImGui::DockBuilderGetNode(dockId) == nullptr)
     {
@@ -2697,6 +2858,9 @@ void drawDockHost(App& app)
         {
             if (ImGui::MenuItem(_L("Reset Layout")))
                 forceLayout = true;
+            ImGui::Separator();
+            ImGui::MenuItem(_L("Drag a tab out to float a pane on the desktop"), nullptr, false, false);
+            ImGui::MenuItem(_L("Right-click a table row (or Ctrl+C) to copy"), nullptr, false, false);
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(_L("Help")))

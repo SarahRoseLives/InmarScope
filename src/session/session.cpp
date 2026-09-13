@@ -154,6 +154,7 @@ void startActive(App& app)
         app.hack.setVgaGain(app.hackVga);
         app.hack.setAmpEnable(app.hackAmp);
         app.hack.setBiasTee(app.hackBias);
+        app.hack.setPpm((double)app.ppm);
         app.hack.setDcBlock(app.dcBlock);
         ok = app.hack.start(app.deviceIndex, cb, err);
     }
@@ -172,6 +173,7 @@ void startActive(App& app)
         app.airspy.setLnaAgc(app.airspyLnaAgc);
         app.airspy.setMixerAgc(app.airspyMixerAgc);
         app.airspy.setBiasTee(app.airspyBias);
+        app.airspy.setPpm((double)app.ppm);
         app.airspy.setDcBlock(app.dcBlock);
         ok = app.airspy.start(app.deviceIndex, cb, err);
     }

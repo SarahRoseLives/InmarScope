@@ -79,7 +79,7 @@ bool AirspySource::start(int deviceIndex, SdrSampleCb cb, std::string& err)
 
     airspy_set_sample_type(dev_, AIRSPY_SAMPLE_FLOAT32_IQ);
     airspy_set_samplerate(dev_, (uint32_t)sampleRate_);
-    airspy_set_freq(dev_, (uint32_t)centerFreq_);
+    airspy_set_freq(dev_, tunedHz());
     applyGain();
     airspy_set_rf_bias(dev_, biasTee_ ? 1 : 0);
 
@@ -150,11 +150,27 @@ int AirspySource::handleRx(float* buf, int nComplex)
     return 0;
 }
 
+uint32_t AirspySource::tunedHz() const
+{
+    return (uint32_t)std::llround(centerFreq_ * (1.0 + ppm_ / 1e6));
+}
+
+void AirspySource::applyTune()
+{
+    if (dev_)
+        airspy_set_freq(dev_, tunedHz());
+}
+
 void AirspySource::setCenterFreq(double hz)
 {
     centerFreq_ = hz;
-    if (dev_)
-        airspy_set_freq(dev_, (uint32_t)hz);
+    applyTune();
+}
+
+void AirspySource::setPpm(double ppm)
+{
+    ppm_ = ppm;
+    applyTune();
 }
 
 void AirspySource::setSampleRate(double hz)
