@@ -466,9 +466,13 @@ void drawControls(App& app)
         }
     }
 #endif
-    if (app.sourceMode == 6)
-    {
-        // ---- RTL-TCP (network) ----
+#ifdef HAS_AIRSPY
+	if (app.sourceMode == 6)
+#else
+	if (app.sourceMode == 5)
+#endif
+{
+// ---- RTL-TCP (network) ----
         ImGui::SetNextItemWidth(-60.0f);
         ImGui::InputText("Host", app.rtlTcpHost, sizeof(app.rtlTcpHost));
         ImGui::InputInt("Port", &app.rtlTcpPort);
@@ -2887,4 +2891,3 @@ void drawDockHost(App& app)
 
     ImGui::End();
 }
-
