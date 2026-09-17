@@ -1,0 +1,132 @@
+name: Build, test and release
+on:
+  push:
+    branches: [master, 'codex/**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: windows-x64
+          - os: ubuntu-22.04
+            platform: linux-x64
+          - os: macos-15-intel
+            platform: macos-x64
+          - os: macos-15
+            platform: macos-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Windows toolchain
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-glfw mingw-w64-x86_64-rtl-sdr
+            mingw-w64-x86_64-hackrf mingw-w64-x86_64-libairspy
+            mingw-w64-x86_64-zstd mingw-w64-x86_64-libogg
+            mingw-w64-x86_64-libvorbis mingw-w64-x86_64-sqlite3
+            mingw-w64-x86_64-libxml2 mingw-w64-x86_64-jansson
+      - name: Windows Soapy SDK (verified download)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/ci/windows-sdk.ps1
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config libglfw3-dev libgl1-mesa-dev librtlsdr-dev libhackrf-dev libairspy-dev libusb-1.0-0-dev libzstd-dev zlib1g-dev libogg-dev libvorbis-dev libsqlite3-dev libxml2-dev libjansson-dev libsoapysdr-dev xvfb
+      - name: macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install cmake ninja pkg-config glfw librtlsdr hackrf airspy zstd libogg libvorbis sqlite libxml2 jansson soapysdr
+      - name: Configure and build Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SDRPLAY_TESTS=ON -DREQUIRE_SDRPLAY=ON -DSOAPY_INCLUDE_DIR="$PWD/vendor/pothos/include" -DSOAPY_LIBRARY="$PWD/vendor/pothos/lib/SoapySDR.lib"
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Configure and build Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == macOS ]]; then
+            export CMAKE_PREFIX_PATH="$(brew --prefix):$(brew --prefix libxml2):$(brew --prefix sqlite)"
+            export PKG_CONFIG_PATH="$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix sqlite)/lib/pkgconfig"
+          fi
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SDRPLAY_TESTS=ON -DREQUIRE_SDRPLAY=ON
+          cmake --build build --parallel 3
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Package and check Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python tools/ci/package.py --platform '${{ matrix.platform }}' --sdk vendor/pothos
+          $package = Get-ChildItem out -Directory | Select-Object -First 1
+          $p = Start-Process -FilePath "$($package.FullName)/InmarScope.exe" -ArgumentList '--smoke-test' -WorkingDirectory $package.FullName -WindowStyle Hidden -PassThru
+          if (!$p.WaitForExit(60000)) { Stop-Process -Id $p.Id; throw 'Startup timed out' }
+          if ($p.ExitCode -ne 0) { throw "Startup failed: $($p.ExitCode)" }
+      - name: Package and check Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          python3 tools/ci/package.py --platform '${{ matrix.platform }}'
+          package=$(find out -mindepth 1 -maxdepth 1 -type d | head -1)
+          cd "$package"
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            ldd ./InmarScope | tee dependencies.txt
+            ! grep -q 'not found' dependencies.txt
+            timeout 60 xvfb-run -a ./InmarScope --smoke-test
+          else
+            ./InmarScope --smoke-test
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.platform }}
+          path: |
+            out/*.zip
+            out/*.tar.gz
+          if-no-files-found: error
+      - name: Preserve build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{ matrix.platform }}
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/CMakeCache.txt
+            out/*/BUILD-INFO.json
+          if-no-files-found: ignore
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          merge-multiple: true
+          path: release
+      - name: Validate and publish complete release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 tools/ci/release.py

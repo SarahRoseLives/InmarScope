@@ -51,7 +51,23 @@ if(AIRSPY_LIBRARIES)
 endif()
 
 set(IMGUI_DIR   ${CMAKE_SOURCE_DIR}/third_party/imgui)
+option(ENABLE_SDRPLAY "Enable SDRplay via the SoapySDR C API" ON)
+option(REQUIRE_SDRPLAY "Fail configuration if the SDRplay backend cannot be built" OFF)
+if(ENABLE_SDRPLAY)
+    find_path(SOAPY_INCLUDE_DIR SoapySDR/Device.h
+        HINTS "C:/Program Files/PothosSDR/include")
+    find_library(SOAPY_LIBRARY NAMES SoapySDR
+        HINTS "C:/Program Files/PothosSDR/lib")
+    if(SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
+        message(STATUS "SDRplay enabled via SoapySDR: ${SOAPY_LIBRARY}")
+    else()
+        message(STATUS "SoapySDR not found; SDRplay will show installation instructions")
+    endif()
+endif()
 set(IMPLOT_DIR  ${CMAKE_SOURCE_DIR}/third_party/implot)
+if(REQUIRE_SDRPLAY AND (NOT ENABLE_SDRPLAY OR NOT SOAPY_INCLUDE_DIR OR NOT SOAPY_LIBRARY))
+    message(FATAL_ERROR "Release builds require the SoapySDR headers and library")
+endif()
 
 # ---------------------------------------------------------------------------
 # Dear ImGui + ImPlot (vendored) compiled as a static lib
@@ -142,6 +158,8 @@ add_executable(InmarScope
     src/session/session.cpp
     src/state/config.cpp
     src/sdr/rtl_sdr_source.cpp
+    src/sdr/sdrplay_source.cpp
+    src/gui/sdrplay_controls.cpp
     src/sdr/hackrf_source.cpp
     src/sdr/rtl_tcp_source.cpp
     
@@ -186,6 +204,25 @@ if(WIN32)
     target_include_directories(InmarScope PRIVATE ${WEBVIEW2_ROOT}/include)
 endif()
 target_compile_definitions(InmarScope PRIVATE _USE_MATH_DEFINES)
+if(ENABLE_SDRPLAY AND SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
+    target_compile_definitions(InmarScope PRIVATE HAS_SOAPYSDR=1)
+    # PothosSDR also ships MSVC pthread headers. Exposing its entire include
+    # tree shadows MinGW's pthread.h and breaks std::thread.
+    file(COPY "${SOAPY_INCLUDE_DIR}/SoapySDR" DESTINATION "${CMAKE_BINARY_DIR}/soapy-include")
+    target_include_directories(InmarScope PRIVATE "${CMAKE_BINARY_DIR}/soapy-include")
+    target_link_libraries(InmarScope PRIVATE ${SOAPY_LIBRARY})
+    if(WIN32)
+        get_filename_component(SOAPY_LIB_DIR "${SOAPY_LIBRARY}" DIRECTORY)
+        get_filename_component(SOAPY_ROOT_HINT "${SOAPY_LIB_DIR}/.." ABSOLUTE)
+        target_compile_definitions(InmarScope PRIVATE SOAPY_ROOT_HINT="${SOAPY_ROOT_HINT}")
+        find_file(SOAPY_RUNTIME NAMES SoapySDR.dll libSoapySDR.dll
+            HINTS "${SOAPY_LIB_DIR}/../bin")
+        if(SOAPY_RUNTIME)
+            add_custom_command(TARGET InmarScope POST_BUILD COMMAND ${CMAKE_COMMAND}
+                -E copy_if_different "${SOAPY_RUNTIME}" "$<TARGET_FILE_DIR:InmarScope>")
+        endif()
+    endif()
+endif()
 if(AIRSPY_FOUND)
     target_sources(InmarScope PRIVATE src/sdr/airspy_source.cpp)
     target_compile_definitions(InmarScope PRIVATE HAS_AIRSPY=1)
@@ -277,4 +314,22 @@ if(WIN32)
                 "${WEBVIEW2_ROOT}/x64/WebView2Loader.dll"
                 "$<TARGET_FILE_DIR:InmarScope>"
         COMMENT "Copying WebView2Loader.dll")
+endif()
+
+# Opt-in hardware-independent SDRplay regression tests and real-driver probe.
+option(BUILD_SDRPLAY_TESTS "Build SDRplay fault-injection tests and probe" OFF)
+if(BUILD_SDRPLAY_TESTS AND ENABLE_SDRPLAY AND SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
+    enable_testing()
+    add_executable(sdrplay_selftest tools/sdrplay_selftest.cpp src/sdr/sdrplay_source.cpp)
+    target_include_directories(sdrplay_selftest PRIVATE src "${CMAKE_BINARY_DIR}/soapy-include")
+    target_compile_definitions(sdrplay_selftest PRIVATE HAS_SOAPYSDR=1 SOAPY_SDR_DLL_EXPORTS=1)
+    target_link_libraries(sdrplay_selftest PRIVATE Threads::Threads)
+    add_test(NAME sdrplay_selftest COMMAND sdrplay_selftest)
+    add_executable(sdrplay_probe tools/sdrplay_probe.cpp src/sdr/sdrplay_source.cpp)
+    target_include_directories(sdrplay_probe PRIVATE src "${CMAKE_BINARY_DIR}/soapy-include")
+    target_compile_definitions(sdrplay_probe PRIVATE HAS_SOAPYSDR=1)
+    if(WIN32)
+        target_compile_definitions(sdrplay_probe PRIVATE SOAPY_ROOT_HINT="${SOAPY_ROOT_HINT}")
+    endif()
+    target_link_libraries(sdrplay_probe PRIVATE ${SOAPY_LIBRARY} Threads::Threads)
 endif()

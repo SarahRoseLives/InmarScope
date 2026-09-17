@@ -38,6 +38,9 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
 #define WD(f) buf->appendf(#f "=%.10g\n", (double)app.f)
 #define WS(f) buf->appendf(#f "=%s\n", app.f)
     WI(sourceMode); WI(deviceIndex); WI(sampleRateIdx); WI(newBaud); WI(fftSizeIdx);
+    WI(rspSecond);
+    buf->appendf("rspA=%s\n", serializeRspConfig(app.rspConfig).c_str());
+    buf->appendf("rspB=%s\n", serializeRspConfig(app.rspConfigB).c_str());
     WI(audioDevice); WI(voiceMuted); WI(cpuReduce);
     WI(autoAddLes); WI(maxLesAutoDecoders);
     WI(logToDb); WI(maxDbAgeDays);
@@ -100,6 +103,9 @@ void cfgReadLine(App& app, const char* line)
     std::memcpy(key, line, klen);
     key[klen] = 0;
     const char* val = eq + 1;
+    if (!std::strcmp(key, "rspA")) { parseRspConfig(val, app.rspConfig); return; }
+    if (!std::strcmp(key, "rspB")) { parseRspConfig(val, app.rspConfigB); return; }
+    if (!std::strcmp(key, "rspSecond")) { app.rspSecond = std::clamp(std::atoi(val), 0, 2); return; }
 #define RI(f) if (!std::strcmp(key, #f)) { app.f = std::atoi(val); return; }
 #define RB(f) if (!std::strcmp(key, #f)) { app.f = (std::atoi(val) != 0); return; }
 #define RF(f) if (!std::strcmp(key, #f)) { app.f = (float)std::atof(val); return; }

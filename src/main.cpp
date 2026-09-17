@@ -111,8 +111,9 @@ static void glfw_error_callback(int error, const char* description)
 #include "core/app.h"
 #include "core/main_funcs.h"
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    const bool smokeTest = argc == 2 && std::strcmp(argv[1], "--smoke-test") == 0;
 #if defined(_WIN32)
     // WebView2 requires STA — init before GLFW so the UI thread IS the STA thread.
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
@@ -270,7 +271,7 @@ int main(int, char**)
         app.decoders.setRecordFormat(rf);
         app.decodersB.setRecordFormat(rf);
     }
-    app.verCheck.start("inmarscope", INMARSCOPE_VERSION);
+    if (!smokeTest) app.verCheck.start("inmarscope", INMARSCOPE_VERSION);
     scanBandPlans(app.bandPlanDir, app.bandPlanNames, app.bandPlanPaths);
     if (app.bandPlanIdx >= 0 && app.bandPlanIdx < (int)app.bandPlanPaths.size())
         app.bandPlanLoaded = loadBandPlan(app.bandPlanPaths[app.bandPlanIdx]);
@@ -292,6 +293,7 @@ int main(int, char**)
 
     const ImVec4 clear_color = ImVec4(0.06f, 0.07f, 0.09f, 1.0f);
 
+    int smokeFrames = 0;
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -304,8 +306,8 @@ int main(int, char**)
 
         if (app.active->running())
             processFft(app.viewA, app, app.active->centerFreq(), app.active->sampleRate());
-        if (app.dualMode && app.sdrB.running())
-            processFft(app.viewB, app, app.sdrB.centerFreq(), app.sdrB.sampleRate());
+        if (app.dualMode && app.activeB->running())
+            processFft(app.viewB, app, app.activeB->centerFreq(), app.activeB->sampleRate());
 
         if (app.active->running())
             updateVoiceFollow(app);
@@ -412,6 +414,7 @@ int main(int, char**)
         }
 
         glfwSwapBuffers(window);
+        if (smokeTest && ++smokeFrames == 3) glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
 
     // Persist settings + dock layout to inmarscope.ini before shutting down.
@@ -419,6 +422,8 @@ int main(int, char**)
 
     app.decoders.stop();
     app.decodersB.stop();
+    app.rspB.close();
+    app.rsp.close();
     app.sdr.stop();
     app.sdrB.stop();
     app.wav.stop();

@@ -60,20 +60,36 @@ static bool drawPpmAdjust(const char* label, float* ppm)
 #include <shellapi.h>
 #endif
 
+void drawSdrplayControls(App& app);
+
 void drawControls(App& app)
 {
+    if (app.sourceMode == 7 && (app.rsp.streamFailed() || app.rspB.streamFailed())) {
+        std::string err = app.rsp.streamFailed() ? app.rsp.error() : app.rspB.error();
+        app.rspB.stop(); app.rsp.stop();
+        app.decodersB.stop(); app.decoders.stop(); app.dualMode = false;
+        app.iqRecorder.stop();
+        app.status = "SDRplay: " + err;
+    }
     ImGui::Begin((std::string(_L("Control")) + "###Control").c_str());
 
     bool running = app.active->running();
 
     ImGui::BeginDisabled(running);
-#ifdef HAS_AIRSPY
-    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF", "Dual RTL", "Airspy", "RTL-TCP"};
-    ImGui::Combo(_L("Source"), &app.sourceMode, modes, 7);
-#else
-    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF", "Dual RTL", "RTL-TCP"};
-    ImGui::Combo(_L("Source"), &app.sourceMode, modes, 6);
+    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF", "Dual RTL", "Airspy", "RTL-TCP", "SDRplay"};
+    if (app.sourceMode < 0 || app.sourceMode > 7) app.sourceMode = 0;
+    if (ImGui::BeginCombo(_L("Source"), modes[app.sourceMode])) {
+        for (int mode = 0; mode < 8; ++mode) {
+#ifndef HAS_AIRSPY
+            if (mode == 5) continue;
 #endif
+            if (ImGui::Selectable(modes[mode], app.sourceMode == mode)) {
+                app.rspB.close(); app.rsp.close();
+                app.sourceMode = mode; app.devices.clear(); app.deviceIndex = 0;
+            }
+        }
+        ImGui::EndCombo();
+    }
     ImGui::EndDisabled();
 
     ImGui::Separator();
@@ -90,6 +106,7 @@ void drawControls(App& app)
     {
         if (ImGui::Button(_L("Stop"), ImVec2(120, 0)))
         {
+            app.activeB->stop();
             app.active->stop();
             app.decoders.stop();
             app.decoders.removeAll();
@@ -466,11 +483,7 @@ void drawControls(App& app)
         }
     }
 #endif
-#ifdef HAS_AIRSPY
-	if (app.sourceMode == 6)
-#else
-	if (app.sourceMode == 5)
-#endif
+    if (app.sourceMode == 6)
 {
 // ---- RTL-TCP (network) ----
         ImGui::SetNextItemWidth(-60.0f);
@@ -509,6 +522,7 @@ void drawControls(App& app)
         }
         ImGui::TextDisabled("Remote rtl_tcp server. Connect and stream.");
     }
+    if (app.sourceMode == 7) drawSdrplayControls(app);
     if (app.sourceMode == 4)
     {
         // ---- Dual RTL: two independent RTL-SDRs ----
@@ -946,8 +960,8 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
         // otherwise use app.active (which covers RTL/WAV/SDR++/HackRF).
         SdrSource* browseSdr;
         if (app.dualMode)
-            browseSdr = voiceView ? static_cast<SdrSource*>(&app.sdrB)
-                                  : static_cast<SdrSource*>(&app.sdr);
+            browseSdr = voiceView ? app.activeB
+                                  : app.active;
         else
             browseSdr = app.active;
         if (allowBandBrowse && app.bandBrowse && app.sourceMode != 1 &&
@@ -975,9 +989,9 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
                     for (auto& s : app.decodersB.status())
                         keep.push_back({s.freqMHz, s.baud});
                     app.centerFreqMHzB = viewCtr;
-                    app.sdrB.setCenterFreq(viewCtr * 1e6);
+                    app.activeB->setCenterFreq(viewCtr * 1e6);
                     app.decodersB.removeAll();
-                    app.decodersB.configure(app.sdrB.sampleRate(), app.sdrB.centerFreq());
+                    app.decodersB.configure(app.activeB->sampleRate(), app.activeB->centerFreq());
                     for (auto& k : keep)
                         app.decodersB.addDecoder(k.first * 1e6, k.second);
                 }
@@ -2617,10 +2631,10 @@ void drawLesFreq(App& app)
                 ++added;
             }
         }
-        if (app.dualMode && app.sdrB.running())
+        if (app.dualMode && app.activeB->running())
         {
-            double centerB = app.sdrB.centerFreq();
-            double halfSpanB = app.sdrB.sampleRate() / 2.0;
+            double centerB = app.activeB->centerFreq();
+            double halfSpanB = app.activeB->sampleRate() / 2.0;
             for (auto& e : ents)
             {
                 if (e.hasDecoder) continue;
@@ -2713,13 +2727,13 @@ void drawLesFreq(App& app)
                 if (ImGui::SmallButton(lbl))
                 {
                     double offsetA = app.active->running() ? std::fabs(e.freqMHz * 1e6 - app.active->centerFreq()) : 1e12;
-                    double offsetB = (app.dualMode && app.sdrB.running()) ? std::fabs(e.freqMHz * 1e6 - app.sdrB.centerFreq()) : 1e12;
+                    double offsetB = (app.dualMode && app.activeB->running()) ? std::fabs(e.freqMHz * 1e6 - app.activeB->centerFreq()) : 1e12;
                     if (offsetA < app.active->sampleRate() / 2.0)
                     {
                         app.decoders.addDecoder(e.freqMHz * 1e6, kEgcBaud);
                         app.decoders.lesFreqTable().setHasDecoder(e.freqMHz, true);
                     }
-                    else if (offsetB < app.sdrB.sampleRate() / 2.0)
+                    else if (offsetB < app.activeB->sampleRate() / 2.0)
                     {
                         app.decodersB.addDecoder(e.freqMHz * 1e6, kEgcBaud);
                         app.decodersB.lesFreqTable().setHasDecoder(e.freqMHz, true);

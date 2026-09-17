@@ -12,6 +12,7 @@
 #include "sdr/wav_file_source.h"
 #include "sdr/sdrpp_server_source.h"
 #include "sdr/rtl_tcp_source.h"
+#include "sdr/sdrplay_source.h"
 #include "sdr/iq_recorder.h"
 #include "audio/audio_player.h"
 #include "web/web_server.h"
@@ -64,11 +65,15 @@ struct App
     SdrppServerSource server;
     HackRfSource    hack;
     RtlTcpSource    rtltcp;
+    SdrplaySource   rsp, rspB;
+    RspConfig      rspConfig, rspConfigB;
+    int            rspSecond = 0; // 0=single, 1=second device, 2=RSPduo master/slave
+    std::vector<SdrDeviceInfo> rspDevices;
 #ifdef HAS_AIRSPY
     AirspySource    airspy;
 #endif
     SdrSource*      active = &sdr;
-    int  sourceMode = 0; // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL, 5=Airspy, 6=RTL-TCP
+    int  sourceMode = 0; // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL, 5=Airspy, 6=RTL-TCP, 7=SDRplay
     char wavPath[512] = "";
     bool wavLoop = true;
     char serverHost[128] = "localhost";
@@ -105,6 +110,7 @@ struct App
     DecoderManager   decoders;
     DecoderManager   decodersB;
     RtlSdrSource     sdrB;
+    SdrSource*      activeB = &sdrB;
 
     // Dual-SDR
     bool   dualMode = false;

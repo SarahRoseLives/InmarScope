@@ -1,4 +1,7 @@
 /build/
+/out/
+/vendor/
+__pycache__/
 /reference/
 *.o
 *.obj

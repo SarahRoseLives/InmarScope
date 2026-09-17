@@ -1,0 +1,73 @@
+"""Publish only a complete, verified set; draft remains private on failure."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import tarfile
+import tempfile
+import zipfile
+
+def gh(*args):
+    return subprocess.check_output(["gh", *args], text=True)
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+tag = os.environ["RELEASE_TAG"]
+version = re.search(r'INMARSCOPE_VERSION "([^"]+)"', Path("src/version.h").read_text())[1]
+if tag != "v" + version:
+    raise RuntimeError("Tag must match src/version.h")
+commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+directory = Path("release")
+for platform in ["windows-x64", "linux-x64", "macos-x64", "macos-arm64"]:
+    name = f"InmarScope-{version}-{platform}"
+    archive = directory / (name + (".zip" if platform.startswith("windows") else ".tar.gz"))
+    if archive.suffix == ".zip":
+        with zipfile.ZipFile(archive) as z:
+            files = {n[len(name)+1:]: z.read(n) for n in z.namelist() if not n.endswith("/")}
+    else:
+        with tarfile.open(archive) as t:
+            files = {m.name[len(name)+1:]: t.extractfile(m).read() for m in t if m.isfile()}
+    info = json.loads(files["BUILD-INFO.json"])
+    if info["commit"] != commit or info["platform"] != platform or info["version"] != version:
+        raise RuntimeError(f"Wrong build provenance: {archive}")
+    for path, digest in info["files"].items():
+        if sha(files[path]) != digest:
+            raise RuntimeError(f"Package checksum mismatch: {archive}: {path}")
+    for path in ["CI-SETUP.md", "SDRPLAY.md", "TESTING.md", "TEST-RESULTS.txt"]:
+        if not files.get(path):
+            raise RuntimeError(f"Missing release documentation: {path}")
+    if any(p.endswith((".ini", ".pem", ".key")) for p in files):
+        raise RuntimeError("Unexpected local configuration in release")
+for doc in ["CI-SETUP.md", "SDRPLAY.md", "TESTING.md"]:
+    shutil.copy2(doc, directory)
+assets = sorted(directory.iterdir())
+(directory / "SHA256SUMS.txt").write_text("".join(f"{sha(p.read_bytes())}  {p.name}\n" for p in assets))
+assets.append(directory / "SHA256SUMS.txt")
+notes = Path("release-notes.md")
+notes.write_text(f"SDRplay testing release {tag}\n\n"
+    "Includes upstream updates, antenna/model controls, two-device reception and RSPduo independent tuners.\n\n"
+    "All four platform builds, mock SDRplay tests and packaged GUI startup checks passed in GitHub Actions. "
+    "RF hardware testing is still required. See TESTING.md for the tester checklist.\n\n"
+    "Windows: extract the ZIP and install the SDRplay API/service. The bundled compatibility driver is older; "
+    "see SDRPLAY.md for newer models. Linux: Ubuntu 22.04+ x64, run install-dependencies.sh. "
+    "macOS: choose Intel or Apple Silicon; binaries are ad-hoc signed, not Apple notarized. "
+    "Linux/macOS SDRplay reception additionally needs SoapySDRPlay3 and the vendor API.\n\n"
+    "CI-SETUP.md explains reproducing this pipeline in another fork. SHA256SUMS.txt covers all assets.\n")
+existing = subprocess.run(["gh", "release", "view", tag, "--json", "isDraft"], text=True, capture_output=True)
+if existing.returncode == 0:
+    if not json.loads(existing.stdout)["isDraft"]:
+        raise RuntimeError("Refusing to replace an already published release; use a new version")
+else:
+    gh("release", "create", tag, "--verify-tag", "--draft", "--title", f"InmarScope {version}", "--notes-file", str(notes))
+gh("release", "upload", tag, *(str(p) for p in assets), "--clobber")
+with tempfile.TemporaryDirectory() as temporary:
+    gh("release", "download", tag, "--dir", temporary)
+    for p in assets:
+        if sha((Path(temporary) / p.name).read_bytes()) != sha(p.read_bytes()):
+            raise RuntimeError(f"Uploaded asset differs: {p.name}")
+gh("release", "edit", tag, "--draft=false", "--prerelease=" + str("-" in version).lower())
+print(gh("release", "view", tag, "--json", "url,assets"))
