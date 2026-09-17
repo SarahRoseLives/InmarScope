@@ -65,6 +65,7 @@ def main():
             # displayed at a minimum pixel width. Not an occupied bandwidth claim.
             label=kind.removeprefix('CHAN_').replace('_',' ')
             channels.append({'lo':round(mhz-0.000001,6),'hi':round(mhz+0.000001,6),
+                             'frequency':mhz,'service':'STD-C' if 'STDC' in kind else 'Aero voice' if '8400' in kind else 'Aero data',
                              'label':f'{label} {mhz:g} MHz (channel center)','color':'FF9800' if 'STDC' in kind else '4287F5'})
         if not channels: raise ValueError(f'Empty satellite table: {designator}')
         canonical,display,regions=SATELLITE_NAMES[designator]
@@ -86,6 +87,7 @@ def main():
         if not match or not baud: continue
         center=float(match[1].replace(',','.'))
         channels.append({'lo':round(center-0.000001,6),'hi':round(center+0.000001,6),
+                         'frequency':center,'service':'Aero voice' if baud[1]=='8400' else 'Aero data',
                          'label':f'Aero {baud[1]} baud {center:g} MHz (channel center)','color':'4287F5'})
     if len(channels)!=32: raise ValueError('APAC survey changed; review conversion')
     apac={'name':'I-4 F1 / 4F1 - historical 143.5E APAC survey (not current 4F2)','designator':'4F1','position':143.5,
@@ -94,15 +96,17 @@ def main():
           'source_credit':'Frequency facts: David L. Wilson and Sergi.vdl2, February 2024; published by thebaldgeek.',
           'notes':'Historical survey labelled 4F1 by its author. APAC is now served by 4F2 at 143.5E; these channel centers have NOT been verified for 4F2. This position is historical, not a current 4F1 pointing instruction. +/-1 Hz is a display marker, not channel bandwidth.', 'bands':channels}
     write(ROOT/'bandplans'/'satellite'/'inmarsat-4f1.json',apac);plans.append(apac)
-    # No verified contemporary per-channel APAC survey was available. Provide
-    # the sourced receive-band reference rather than relabel historical channels.
-    apac_current={'name':'I-4 F2 / 4F2 - 143.5E (receive band only; channels unverified)',
+    # KrakenRF explicitly identifies the successor as 4F2, gives the same Aero
+    # range and directs readers to this APAC channel survey. Preserve both sources
+    # and the survey date: these are published presets, not live verification.
+    apac_current={'name':'I-4 F2 / 4F2 - 143.5E (published APAC channels)',
           'designator':'4F2','position':143.5,'regions':['Inmarsat','APAC','Asia Pacific','POR'],
           'countries':[], 'fleet_source':FLEET_SOURCE,'region_source':REGION_SOURCE,
-          'source':'https://www.itu.int/net/Itu-R/space/res647/index.asp?nmod=asc&norder=freq_assgn',
+          'source':apac_url,'source_sha256':hashlib.sha256(apac_raw).hexdigest(),
+          'identity_and_stdc_source':'https://github.com/krakenrf/discoverydish_docs/wiki/09.-Inmarsat-STD%E2%80%90C,-AERO-and-Pirates-Setup',
           'reviewed':'2026-09-17',
-          'notes':'4F2 serves APAC at 143.5E (JSAT service bulletin, 10 September 2025). This is the general 1525-1559 MHz space-to-Earth receive band, not a verified active-channel list. Historical 4F1 channels are available separately and must be verified locally.',
-          'bands':[{'lo':1525.0,'hi':1559.0,'label':'4F2 APAC L-band receive reference (not individual channels)','color':'D76B37'}]}
+          'notes':'Published APAC channel presets: February 2024 Wilson/Sergi.vdl2 survey. KrakenRF identifies 4F2 as the successor at 143.5E, gives the matching Aero range and refers to this survey. STD-C 1541.450 MHz is listed explicitly for 4F2. Active channels/spot beams require local confirmation; this is not a live 2026 survey.',
+          'bands':[{'lo':1541.449999,'hi':1541.450001,'frequency':1541.45,'service':'STD-C','label':'STD-C EGC 1541.450 MHz (channel center)','color':'FF9800'}]+channels}
     write(ROOT/'bandplans'/'satellite'/'inmarsat-4f2.json',apac_current);plans.append(apac_current)
     licenses=ROOT/'bandplans'/'licenses';licenses.mkdir(exist_ok=True)
     for name,url in [('SDRPlusPlus.txt',f'https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/{SDRPP}/license'),('inmarsat-sniffer.txt',f'https://raw.githubusercontent.com/alphafox02/inmarsat-sniffer/{SATELLITES}/LICENSE')]:

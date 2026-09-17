@@ -7,7 +7,7 @@ the list. Each receiver has an independent selection.
 | Satellite / searchable names | Orbital position | Coverage reference | Included frequency data |
 | --- | --- | --- | --- |
 | I4A / Alphasat / I-4A F4 / AF1 | 25 E | EMEA: Europe, Middle East, Africa | Partial channel survey |
-| 4F2 / I-4 F2 | 143.5 E | APAC / Asia-Pacific / POR | General 1525–1559 MHz receive-band reference; individual active channels **not verified** |
+| 4F2 / I-4 F2 | 143.5 E | APAC / Asia-Pacific / POR | 32 published APAC Aero channel presets plus STD-C 1541.450 MHz; confirm active channels locally |
 | 3F5 / I-3 F5 | 54 W | AORE: Atlantic Ocean East | Partial channel survey |
 | 4F3 / I-4 F3 | 98 W | AMER / Americas / AORW | Partial channel survey |
 | 6F1 / I-6 F1 | 83.5 E | IOE: Indian Ocean East | Partial channel survey |
@@ -26,11 +26,14 @@ explains the planned transfer from 4F2 in MEAS to 6F1, and 4F2's relocation to
 APAC after the 4F1 power failure. Older lists showing 4F2 at 64 E and 4F1 as the
 current APAC satellite predate that transition.
 
-4F2's band reference uses the [ITU's Inmarsat Asia-Pacific receive allocation](https://www.itu.int/net/Itu-R/space/res647/index.asp?nmod=asc&norder=freq_assgn).
-It does **not** assert that every frequency is active or decodable. No verified
-current 4F2 channel survey was found during this review. The old 4F1 table is
-not silently relabelled as 4F2. All supplied channel surveys remain partial;
-beam assignments and active channels must be checked against actual reception.
+4F2's channel presets combine the February 2024 APAC survey with
+[KrakenRF's Discovery Dish guide](https://github.com/krakenrf/discoverydish_docs/wiki/09.-Inmarsat-STD%E2%80%90C,-AERO-and-Pirates-Setup).
+The guide explicitly identifies 4F2 as the successor, lists Aero at
+1542.935–1546.085 MHz, refers readers to the same channel survey, and lists
+STD-C at 1541.450 MHz. Using that survey for 4F2 follows the guide's attribution;
+it is not a new 2026 on-air verification. Both sources and this limitation are
+retained in the JSON. All supplied surveys remain partial; beam assignments
+and active channels must be checked against actual reception.
 
 This is the L-band reception catalogue for InmarScope, not the entire Inmarsat
 spacecraft fleet. Global Xpress I-5 and other Ka-band spacecraft do not supply

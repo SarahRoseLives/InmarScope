@@ -11,6 +11,8 @@ struct BandPlanEntry
     double hiMHz;
     std::string label;
     uint32_t color; // RGBA8 (A=0xFF)
+    double frequencyMHz = 0.0; // explicit channel center; zero = allocation only
+    std::string service;
 };
 
 struct BandPlan
@@ -36,3 +38,12 @@ void scanBandPlans(const char* dir, std::vector<std::string>& names,
                    std::vector<std::string>& paths,
                    std::vector<std::string>* errors = nullptr);
 std::string bandPlanLabel(const BandPlan& plan);
+
+struct BandPlanGroup {
+    std::string service;
+    double loMHz, hiMHz, centerMHz;
+    std::vector<size_t> channels;
+};
+// Partition channel services into windows that fit the receiver's sample rate.
+// Broad allocations never become channel/tuning presets.
+std::vector<BandPlanGroup> bandPlanGroups(const BandPlan& plan, double sampleRateHz);

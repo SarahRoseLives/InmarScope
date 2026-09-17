@@ -74,6 +74,32 @@ void updateFeed(App& app)
     }
 }
 
+void tuneBandPlan(App& app, bool second, double centerMHz)
+{
+    if (app.sourceMode == 1 || !std::isfinite(centerMHz) || centerMHz <= 0) return;
+    auto* source = second ? app.activeB : app.active;
+    auto& view = second ? app.viewB : app.viewA;
+    auto& manager = second ? app.decodersB : app.decoders;
+    auto& frequency = second ? app.centerFreqMHzB : app.centerFreqMHz;
+    frequency = centerMHz;
+    if (source->running()) {
+        std::vector<std::pair<double, int>> keep;
+        for (const auto& decoder : manager.status()) keep.push_back({decoder.freqMHz, decoder.baud});
+        source->setCenterFreq(centerMHz * 1e6);
+        frequency = source->centerFreq() / 1e6;
+        manager.removeAll();
+        manager.configure(source->sampleRate(), source->centerFreq());
+        for (const auto& decoder : keep) manager.addDecoder(decoder.first * 1e6, decoder.second);
+        view.ring.clear(); view.waterfall.clear();
+        buildWindow(view, kFftSizes[app.fftSizeIdx], app.dbMin);
+        updateFreqAxis(view, source->centerFreq(), source->sampleRate(), view.curN);
+        // An explicit tuning choice supersedes the old voice-follow return point.
+        app.following = false; app.followChannelId = -1; app.followHome.clear();
+        app.followSeenCount = app.decoders.cassignLog().count();
+    }
+    view.resetView = true; view.fftSkip = false;
+}
+
 void startActive(App& app)
 {
     app.activeB->stop();
@@ -326,8 +352,19 @@ void startActive(App& app)
             app.iqRecorder.start(app.iqRecPath, app.active->sampleRate());
     }
 
-    if (ok)
+    if (ok) {
+        // Start is handled after processFft in the GUI frame. Publish the NEW
+        // receiver range now, before drawSpectrum consumes resetView.
+        auto reset = [&](SpectrumView& view, SdrSource* source) {
+            buildWindow(view, kFftSizes[app.fftSizeIdx], app.dbMin);
+            updateFreqAxis(view, source->centerFreq(), source->sampleRate(), view.curN);
+            view.resetView = true;
+            view.fftSkip = false;
+        };
+        reset(app.viewA, app.active);
+        if (app.dualMode) reset(app.viewB, app.activeB);
         app.status = app.dualMode ? "Running (dual SDR)" : "Running";
+    }
     else
         app.status = "Error: " + err;
 }

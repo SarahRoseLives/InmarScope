@@ -55,6 +55,14 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
     both choices persist. Reload after editing a plan; malformed JSON/ranges
     must show an error and never a partially loaded overlay. Check the bundled
     catalogue and recordings folders are present after extraction.
+    Select I4A or 4F2 before Start: the center frequency should change to its
+    Aero data group. Start at 2 Msps: the spectrum should show approximately
+    2 MHz, with the waterfall aligned, not a zoomed-in channel marker. Repeat
+    after stopping and changing from a narrow sample rate/different frequency.
+    Switch Aero data/voice/STD-C groups while running and confirm only the
+    selected receiver tunes. Expand Channel frequencies to select one channel.
+    Repeat with 250 ksps to check groups split into smaller capture windows.
+    National allocation plans must not retune; WAV tuning must be disabled.
 
 Report the release version, Windows/macOS/Linux version, radio model, API and
 Soapy driver versions, exact steps, expected/actual behaviour, and any displayed
@@ -65,6 +73,12 @@ Automated CI verifies compilation, mock backend tests, package manifests and
 startup. `SMOKE-RESULT.json` records whether rendering passed or the hosted VM
 lacked a usable OpenGL context. Verify the GUI on your own machine in the latter
 case. CI does not verify RF performance or real-device API behaviour.
+
+`spectrum_view_selftest` exercises the actual Start and ImPlot drawing code
+with a generated WAV and checks the first frame before any new FFT arrives.
+It checks all 27 overlays, independent A/B tuning and fixed-frequency WAVs.
+`band_plan_selftest` checks every satellite channel is assigned exactly once
+to a service group inside the selected capture bandwidth (62.5 ksps–10 Msps).
 
 The native map regression test now decodes a public libacars ADS-C fixture,
 passes it through AircraftTable, and checks map JSON. It also covers received

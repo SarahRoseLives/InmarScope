@@ -19,60 +19,80 @@
     {
       "lo": 1541.449999,
       "hi": 1541.450001,
+      "frequency": 1541.45,
+      "service": "STD-C",
       "label": "STDC EGC 1541.45 MHz (channel center)",
       "color": "FF9800"
     },
     {
       "lo": 1545.024999,
       "hi": 1545.025001,
+      "frequency": 1545.025,
+      "service": "Aero data",
       "label": "AERO 600 1545.03 MHz (channel center)",
       "color": "4287F5"
     },
     {
       "lo": 1545.029999,
       "hi": 1545.030001,
+      "frequency": 1545.03,
+      "service": "Aero data",
       "label": "AERO 600 1545.03 MHz (channel center)",
       "color": "4287F5"
     },
     {
       "lo": 1545.034999,
       "hi": 1545.035001,
+      "frequency": 1545.035,
+      "service": "Aero data",
       "label": "AERO 600 1545.04 MHz (channel center)",
       "color": "4287F5"
     },
     {
       "lo": 1545.039999,
       "hi": 1545.040001,
+      "frequency": 1545.04,
+      "service": "Aero data",
       "label": "AERO 600 1545.04 MHz (channel center)",
       "color": "4287F5"
     },
     {
       "lo": 1546.054999,
       "hi": 1546.055001,
+      "frequency": 1546.055,
+      "service": "Aero data",
       "label": "AERO 10500 1546.06 MHz (channel center)",
       "color": "4287F5"
     },
     {
       "lo": 1546.069999,
       "hi": 1546.070001,
+      "frequency": 1546.07,
+      "service": "Aero data",
       "label": "AERO 10500 1546.07 MHz (channel center)",
       "color": "4287F5"
     },
     {
       "lo": 1542.974999,
       "hi": 1542.975001,
+      "frequency": 1542.975,
+      "service": "Aero voice",
       "label": "AERO 8400 1542.97 MHz (channel center)",
       "color": "4287F5"
     },
     {
       "lo": 1542.979999,
       "hi": 1542.980001,
+      "frequency": 1542.98,
+      "service": "Aero voice",
       "label": "AERO 8400 1542.98 MHz (channel center)",
       "color": "4287F5"
     },
     {
       "lo": 1542.984999,
       "hi": 1542.985001,
+      "frequency": 1542.985,
+      "service": "Aero voice",
       "label": "AERO 8400 1542.98 MHz (channel center)",
       "color": "4287F5"
     }

@@ -82,6 +82,8 @@ static void bandPlanSelector(App& app, bool second) {
     int& index = second ? app.bandPlanIdxB : app.bandPlanIdx;
     auto& loaded = second ? app.bandPlanLoadedB : app.bandPlanLoaded;
     char* saved = second ? app.bandPlanFileB : app.bandPlanFile;
+    int& groupIndex = second ? app.bandPlanGroupB : app.bandPlanGroup;
+    bool changed = false;
     static ImGuiTextFilter filters[2];
     filters[second ? 1 : 0].Draw("Region / country / plan", -1);
     const char* preview = index >= 0 && index < (int)app.bandPlanNames.size() ? app.bandPlanNames[index].c_str() : "Select a band plan";
@@ -92,11 +94,56 @@ static void bandPlanSelector(App& app, bool second) {
             if (ImGui::Selectable(app.bandPlanNames[i].c_str(), i == index)) {
                 index = i; loaded = loadBandPlan(app.bandPlanPaths[i]);
                 std::snprintf(saved, 512, "%s", app.bandPlanPaths[i].c_str());
+                groupIndex = 0;
+                changed = true;
             }
         }
         ImGui::EndCombo();
     }
     if (index < 0 && *saved) ImGui::TextWrapped("Saved plan unavailable: %s", saved);
+    auto* source = second ? app.activeB : app.active;
+    double rate = source->sampleRate();
+    if (!source->running()) {
+        if (app.sourceMode == 7) rate = (second && app.rspSecond != 2 ? app.rspConfigB : app.rspConfig).rate;
+        else if (app.sourceMode == 3) rate = app.hackSampleRateMHz * 1e6;
+#ifdef HAS_AIRSPY
+        else if (app.sourceMode == 5) rate = kAirspyRates[std::clamp(app.airspySampleRateIdx, 0, kAirspyNumRates-1)];
+#endif
+        else if (app.sourceMode == 2) rate = app.serverSampleRateMHz * 1e6;
+        else rate = kRates[std::clamp(second ? app.sampleRateIdxB : app.sampleRateIdx, 0, kNumRates-1)];
+    }
+    const auto groups = bandPlanGroups(loaded, rate);
+    if (!groups.empty()) {
+        groupIndex = std::clamp(groupIndex, 0, int(groups.size())-1);
+        auto label = [](const BandPlanGroup& group) {
+            char text[160];
+            std::snprintf(text, sizeof(text), "%s: %.6f - %.6f MHz (%zu)", group.service.c_str(), group.loMHz, group.hiMHz, group.channels.size());
+            return std::string(text);
+        };
+        ImGui::BeginDisabled(app.sourceMode == 1);
+        ImGui::SetNextItemWidth(-1);
+        if (ImGui::BeginCombo("##frequency-group", label(groups[groupIndex]).c_str())) {
+            for (int i = 0; i < int(groups.size()); ++i)
+                if (ImGui::Selectable(label(groups[i]).c_str(), i == groupIndex)) { groupIndex = i; changed = true; }
+            ImGui::EndCombo();
+        }
+        if (ImGui::SmallButton("Tune selected group")) changed = true;
+        if (changed) tuneBandPlan(app, second, groups[groupIndex].centerMHz);
+        if (ImGui::TreeNode("Channel frequencies (MHz)")) {
+            for (const auto channel : groups[groupIndex].channels) {
+                const auto& entry = loaded.entries[channel];
+                ImGui::PushID(int(channel));
+                char frequency[32]; std::snprintf(frequency, sizeof(frequency), "%.6f", entry.frequencyMHz);
+                if (ImGui::SmallButton(frequency))
+                    tuneBandPlan(app, second, entry.frequencyMHz + rate / 1e6 * 0.04);
+                ImGui::SameLine(); ImGui::TextUnformatted(entry.label.c_str());
+                ImGui::PopID();
+            }
+            ImGui::TreePop();
+        }
+        ImGui::EndDisabled();
+        ImGui::TextWrapped(app.sourceMode == 1 ? "WAV frequency is fixed; tuning is unavailable." : "Selecting a plan or group tunes this receiver. Groups fit the selected sample rate.");
+    }
     if (loaded.valid && !loaded.notes.empty()) ImGui::TextWrapped("%s", loaded.notes.c_str());
     ImGui::PopID();
 }
@@ -1062,7 +1109,7 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
         // --- Band plan: solid coloured bar along the bottom ---
         bool showBp = voiceView ? app.showBandPlanB : app.showBandPlan;
         const BandPlan& bp = voiceView ? app.bandPlanLoadedB : app.bandPlanLoaded;
-        if (showBp && bp.valid && v.curN > 0)
+        if (showBp && bp.valid && bandValid)
         {
             const ImPlotRect vp = ImPlot::GetPlotLimits();
             double viewLo = vp.X.Min, viewHi = vp.X.Max;
@@ -1070,8 +1117,9 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
             auto* dl = ImPlot::GetPlotDrawList();
             constexpr float kBandH = 28.0f;
             ImVec2 pp = ImPlot::GetPlotPos(), ps = ImPlot::GetPlotSize();
-            float bandTop = pp.y + ps.y - kBandH;
-            float bandBot = bandTop + kBandH;
+            float bandTop = pp.y + std::max(0.0f, ps.y - kBandH);
+            float bandBot = pp.y + ps.y;
+            ImPlot::PushPlotClipRect();
             float pxPerMHz = (float)(ps.x / (viewHi - viewLo));
             for (auto& e : bp.entries)
             {
@@ -1098,6 +1146,7 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
                     }
                 }
             }
+            ImPlot::PopPlotClipRect();
         }
 
         ImPlot::EndPlot();

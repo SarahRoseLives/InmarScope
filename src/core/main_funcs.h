@@ -24,6 +24,7 @@ void updateCallHunter(App&);
 // session/session.cpp
 void updateFeed(App&);
 void startActive(App&);
+void tuneBandPlan(App&, bool second, double centerMHz);
 
 // gui/gui_panels.cpp
 void drawDockHost(App&);

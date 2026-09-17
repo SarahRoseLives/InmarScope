@@ -1,6 +1,6 @@
 # Included catalogue
 
-27 plans, 1739 entries.
+27 plans, 1771 entries.
 
 National coverage: Australia, Austria, Belgium, Brazil, Canada, France, Germany, Italy, Netherlands, People's Republic of China, Republic Of Ireland, Republic of Korea, Russia, Slovakia, Turkey, United Kingdom, United States of America.
 

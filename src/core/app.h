@@ -225,6 +225,7 @@ struct App
     char bandPlanFileB[512] = "";
     int    bandPlanIdx = 0;
     int    bandPlanIdxB = 0;
+    int    bandPlanGroup = 0, bandPlanGroupB = 0;
     BandPlan bandPlanLoaded;
     BandPlan bandPlanLoadedB;
     char   bandPlanDir[256] = "bandplans";

@@ -7,14 +7,25 @@ other radio modes or extend a receiver's tuning range.
 
 See [SATELLITES.md](SATELLITES.md) for I4A, 4F2, 3F5, 4F3 and 6F1, their
 regions/positions, and the separate historical 4F1 survey. Search **Inmarsat**
-to show all six entries. 4F2 currently has a receive-band reference only,
-not a verified channel list. The selected plan's notes appear below the selector.
+to show all six entries. 4F2 includes published APAC channel presets with
+source/date notes; active channels still need confirmation from reception.
 
 In Control, enable **Band Plan**, search **Region / country / plan**, and select
 a plan. Receiver B has its own independent search and selection. Selections are
 saved by file path so adding plans does not silently select a different one.
 **Reload plans** refreshes the catalogue and the currently selected files.
 Invalid files appear under **Band plan errors** and are never partially loaded.
+
+Selecting a satellite plan tunes that receiver to its first **Aero data** group.
+The frequency-group selector separates Aero data, Aero voice and STD-C, splitting
+each service into windows that fit 80% of the selected sample rate. It shows the
+frequency range and channel count. **Tune selected group** repeats the tuning;
+expand **Channel frequencies (MHz)** to see or tune an individual frequency.
+Single-channel tuning adds a small center offset to avoid the DC notch.
+Tuning works before Start and while running. It retains the sample rate and
+resets the display to the receiver's full bandwidth, not a tiny marker width.
+The antenna must already point at the selected satellite. WAV playback is fixed
+frequency. National allocation plans remain overlays and do not auto-tune.
 
 Place custom plans in any subfolder of `bandplans/`, then reload. Use UTF-8 JSON:
 
@@ -39,6 +50,9 @@ degrees (-180 to 180) are optional. Singular `region`/`country` names also work.
 Overlapping allocations are allowed. Satellite channel-center markers use
 one hertz either side of a surveyed center, drawn at minimum pixel width;
 this is not an occupied-bandwidth claim.
+Channel entries additionally contain `frequency` (center in MHz, inside lo/hi)
+and `service` (for example `Aero data`, `Aero voice`, `STD-C`). Without an explicit
+`frequency`, an entry is an allocation overlay and never a tuning preset.
 
 SDR++ files use Hz and a different schema. `tools/import_bandplans.py` converts
 the pinned catalogues to this format and preserves provenance/credits. Do not

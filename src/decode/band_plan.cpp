@@ -68,6 +68,13 @@ BandPlan loadBandPlan(const std::string& path) {
         e.loMHz = json_number_value(lo); e.hiMHz = json_number_value(hi);
         if (!std::isfinite(e.loMHz) || !std::isfinite(e.hiMHz) || e.loMHz < 0 || e.loMHz >= e.hiMHz || e.label.empty())
             return reject(prefix + "require 0 <= lo < hi in MHz and a non-empty label");
+        if (auto* frequency = json_object_get(entry, "frequency")) {
+            if (!json_is_number(frequency)) return reject(prefix + "frequency must be a channel center in MHz");
+            e.frequencyMHz = json_number_value(frequency);
+            if (!std::isfinite(e.frequencyMHz) || e.frequencyMHz <= 0 || e.frequencyMHz < e.loMHz || e.frequencyMHz > e.hiMHz)
+                return reject(prefix + "channel frequency must be inside lo/hi");
+        }
+        e.service = text(entry, "service");
         const auto* colorValue = json_object_get(entry, "color");
         if ((colorValue && !json_is_string(colorValue)) || !color(colorValue ? text(entry, "color") : "888888", e.color))
             return reject(prefix + "color must contain six hexadecimal digits (RRGGBB)");
@@ -76,6 +83,37 @@ BandPlan loadBandPlan(const std::string& path) {
     json_decref(root);
     std::sort(bp.entries.begin(), bp.entries.end(), [](const auto& a, const auto& b) { return a.loMHz < b.loMHz; });
     bp.valid = true; return bp;
+}
+std::vector<BandPlanGroup> bandPlanGroups(const BandPlan& plan, double sampleRateHz) {
+    std::vector<BandPlanGroup> result;
+    if (!plan.valid || !std::isfinite(sampleRateHz) || sampleRateHz <= 0) return result;
+    std::vector<std::string> services;
+    // Default to the Aero data group, rather than the first (often STD-C) frequency.
+    for (const auto& preferred : {"Aero data", "Aero voice", "STD-C"})
+        for (const auto& e : plan.entries)
+            if (e.frequencyMHz > 0 && e.service == preferred) { services.emplace_back(preferred); break; }
+    for (const auto& e : plan.entries)
+        if (e.frequencyMHz > 0 && std::find(services.begin(), services.end(), e.service) == services.end())
+            services.push_back(e.service);
+    const double usable = sampleRateHz / 1e6 * 0.8; // leave both filter edges clear
+    for (const auto& service : services) {
+        std::vector<size_t> indices;
+        for (size_t i = 0; i < plan.entries.size(); ++i)
+            if (plan.entries[i].frequencyMHz > 0 && plan.entries[i].service == service) indices.push_back(i);
+        std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) { return plan.entries[a].frequencyMHz < plan.entries[b].frequencyMHz; });
+        for (size_t begin = 0; begin < indices.size();) {
+            size_t end = begin + 1;
+            const double lo = plan.entries[indices[begin]].frequencyMHz;
+            while (end < indices.size() && plan.entries[indices[end]].frequencyMHz - lo <= usable) ++end;
+            const double hi = plan.entries[indices[end-1]].frequencyMHz;
+            // Offset a single channel slightly to avoid the receiver's DC notch.
+            result.push_back({service.empty() ? "Channels" : service, lo, hi,
+                              (lo+hi)*0.5 + (lo == hi ? usable*0.05 : 0.0),
+                              std::vector<size_t>(indices.begin()+begin, indices.begin()+end)});
+            begin = end;
+        }
+    }
+    return result;
 }
 std::string bandPlanLabel(const BandPlan& bp) {
     std::string label;
