@@ -2007,8 +2007,9 @@ void drawFlightMap(App& app)
                     pick->icao.c_str(),
                     pick->flight.empty() ? pick->reg.c_str() : pick->flight.c_str(),
                     pick->aesId);
-        if (pick->hasPos)
+        if (pick->hasPos) {
             ImGui::SameLine(); ImGui::Text("  %.4f,%.4f  %d ft", pick->lat, pick->lon, pick->alt);
+        }
     }
     else if (!pick && !app.flightMapWv.isReady())
     {
@@ -2019,6 +2020,9 @@ void drawFlightMap(App& app)
     {
         ImGui::TextDisabled("  Loading map...");
     }
+    // Aircraft discoveries update the table, never navigate the browser.
+    // The live traffic map retains the user's pan/zoom until explicitly focused.
+    if (pick && ImGui::Button("Show aircraft on map")) app.flightMapWv.setIcao(pick->icao);
     // Embed the map as an Edge WebView2 child window inside this panel.
     // Hide when another tab in the same dock is active.
     ImVec2 pos  = ImGui::GetCursorScreenPos();
@@ -2038,13 +2042,6 @@ void drawFlightMap(App& app)
     }
     else
         app.flightMapWv.setBounds((int)pos.x, (int)pos.y, w, h, tabActive);
-
-    static std::string lastIcao;
-    if (pick && pick->icao != lastIcao)
-    {
-        lastIcao = pick->icao;
-        app.flightMapWv.setIcao(pick->icao);
-    }
 
     ImGui::End();
 }

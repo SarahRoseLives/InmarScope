@@ -29,7 +29,9 @@ InmarScope. Close other applications using the same receiver.
 Select **SDRplay**, click **Find SDRplay devices**, choose a serial number, then
 click **Load device controls**. Choose an antenna and settings, then **Start**.
 Settings are saved separately for receivers A and B in `inmarscope.ini`.
-Frequency can change while receiving. Other hardware controls are edited while
+Frequency and RF/IF gain sliders can change while receiving (IF gain requires
+manual gain mode). Gain changes apply immediately to the selected receiver;
+RF gain remains adjustable with AGC enabled. Other hardware controls are edited while
 stopped and applied on the next Start. Serial selection survives enumeration
 order changes. An unavailable serial fails explicitly instead of selecting a
 different device.

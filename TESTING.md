@@ -13,7 +13,9 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
 2. Load device controls. Check that the displayed antennas match your model.
 3. Select the connected antenna, a known signal and a supported sample rate.
    Start. Confirm spectrum/waterfall activity and decoding of a known signal.
-4. Stop and change antenna, sample rate, bandwidth, manual gain and AGC. Restart
+4. While receiving, move RF gain and confirm the signal level changes without
+   stopping. Repeat on receiver B and with AGC enabled; manual IF gain remains
+   disabled under AGC. Stop and change antenna, sample rate, bandwidth and AGC. Restart
    after each change. Confirm the actual rate and signal level are sensible.
 5. Test the model-specific notch, bias tee and HDR controls that your setup
    supports. Use bias power only with compatible connected equipment.
@@ -28,6 +30,9 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
    API. B's model controls appear after the first start; stop to edit them.
 10. Check voice following on B while A continues signalling. IQ recording
     captures A only; confirm WAV playback has the correct rate and duration.
+11. Pan and zoom the Flight Map, then decode several different aircraft. The
+    live traffic map must retain your view without navigating to each decode.
+    Only clicking **Show aircraft on map** should focus the current aircraft.
 
 Report the release version, Windows/macOS/Linux version, radio model, API and
 Soapy driver versions, exact steps, expected/actual behaviour, and any displayed

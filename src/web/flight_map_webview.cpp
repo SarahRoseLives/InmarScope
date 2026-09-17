@@ -58,7 +58,8 @@ struct FlightMapWebView::Impl {
     void nav(const std::string& icao) {
         if (!webview) return;
         char url[160];
-        std::snprintf(url, sizeof(url), "https://globe.airplanes.live/?icao=%s", icao.c_str());
+        if (icao.empty()) std::snprintf(url, sizeof(url), "https://globe.airplanes.live/");
+        else std::snprintf(url, sizeof(url), "https://globe.airplanes.live/?icao=%s", icao.c_str());
         wchar_t wurl[160]; int i;
         for (i = 0; url[i]; ++i) wurl[i] = (wchar_t)(unsigned char)url[i];
         wurl[i] = 0;
@@ -96,11 +97,9 @@ HRESULT STDMETHODCALLTYPE CtrlCB::Invoke(HRESULT result, ICoreWebView2Controller
     g_impl->ready = true;
     logWrite("[webview] ready");
 
-    if (!g_impl->pendingIcao.empty()) {
-        std::string icao = g_impl->pendingIcao;
-        g_impl->pendingIcao.clear();
-        g_impl->nav(icao);
-    }
+    std::string icao = g_impl->pendingIcao;
+    g_impl->pendingIcao.clear();
+    g_impl->nav(icao); // Load the normal traffic map even before the first decode.
     return S_OK;
 }
 

@@ -46,6 +46,7 @@ public:
     void setCenterFreq(double hz) override;
     void setSampleRate(double hz) override;
     void setGain(double db) override;
+    bool setGainElement(const std::string& key, double value);
     void setBiasTee(bool on) override;
     void setPpm(double ppm) override;
     double centerFreq() const override { return frequency_; }

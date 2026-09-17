@@ -10,6 +10,9 @@ struct SoapySDRDevice { std::string serial, mode; double frequency=1545e6,rate=2
 struct SoapySDRStream { int reads=0; };
 static int devices=0,streams=0;
 static bool failOpen=false,failSetup=false,failActivate=false;
+static bool failGain=false;
+static std::string gainSerial, gainKey;
+static double gainValue=0;
 static std::atomic<bool> failRead{false};
 static const char* models[] = {"RSPdx", "RSPduo", "RSP1", "RSP1A", "RSP1B", "RSP2", "RSP2pro", "RSPdx-R2"};
 static const char* serials[] = {"001", "002", "003", "004", "005", "006", "007", "008"};
@@ -181,6 +184,8 @@ int SoapySDRDevice_setGain(SoapySDRDevice *device, const int direction, const si
 }
 
 int SoapySDRDevice_setGainElement(SoapySDRDevice *device, const int direction, const size_t channel, const char *name, const double value) {
+    if(failGain) return -1;
+    gainSerial=device->serial;gainKey=name;gainValue=value;
     return 0;
 }
 
@@ -287,11 +292,22 @@ int main() {
     RspConfig b=a;b.serial="002";REQUIRE(rxB.prepare(b,err)); REQUIRE(rxB.apply(b,err));
     REQUIRE(rxB.start(0,[&](const float* iq,int n){REQUIRE(n==1 && iq[0]==0.5f);++countB;},err));
     waitUntil([&]{return countA>3 && countB>3;});REQUIRE(rx.overflows()==1 && rxB.overflows()==1);
+    const int beforeGain=countA;
+    REQUIRE(rx.setGainElement("RFGR",7));
+    REQUIRE(gainSerial=="001" && gainKey=="RFGR" && gainValue==7);
+    REQUIRE(rxB.setGainElement("RFGR",8));
+    REQUIRE(gainSerial=="002" && gainValue==8);
+    REQUIRE(!rx.setGainElement("RFGR",60)); REQUIRE(!rx.setGainElement("missing",2));
+    failGain=true; REQUIRE(!rx.setGainElement("RFGR",9)); failGain=false;
+    REQUIRE(rx.running() && rxB.running() && streams==2);
+    waitUntil([&]{return countA>beforeGain+3;});
     rxB.stop();int stopped=countB;rxB.close();
     std::this_thread::sleep_for(std::chrono::milliseconds(5)); REQUIRE(countB==stopped && rx.running());
     failRead=true;waitUntil([&]{return !rx.running();}); REQUIRE(rx.streamFailed() && !rx.error().empty());
     rx.close();REQUIRE(devices==0 && streams==0);failRead=false;
     b.mode="SL";REQUIRE(rxB.prepare(b,err));REQUIRE(rxB.apply(b,err));rxB.close();
+    b.agc=true;b.mode="ST";REQUIRE(rxB.prepare(b,err));REQUIRE(rxB.apply(b,err));
+    REQUIRE(rxB.setGainElement("RFGR",5));REQUIRE(!rxB.setGainElement("IFGR",25));rxB.close();
     REQUIRE(devices==0 && streams==0);
     std::cout << "PASS: all eight RSP models, model-specific open arguments, discovery deduplication, config persistence, capabilities, validation, startup rollback, independent streams, overflow, disconnect, stop and slave PPM\n";
 }

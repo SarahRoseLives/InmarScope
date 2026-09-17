@@ -268,6 +268,20 @@ void SdrplaySource::setGain(double db) {
     if (hasAgc) check(SoapySDRDevice_setGainMode(device_, SOAPY_SDR_RX, 0, db < 0), "AGC");
     if (db >= 0) check(SoapySDRDevice_setGain(device_, SOAPY_SDR_RX, 0, db), "Gain");
 }
+bool SdrplaySource::setGainElement(const std::string& key, double value) {
+    if (!device_) { fail("Load the SDRplay device first."); return false; }
+    if (std::none_of(gains_.begin(), gains_.end(), [&](const RspControl& g) { return g.key == key; })) {
+        fail("Unknown gain element: " + key); return false;
+    }
+    if (key == "IFGR" && config_.agc) { fail("Disable AGC before changing IF gain."); return false; }
+    auto range = SoapySDRDevice_getGainElementRange(device_, SOAPY_SDR_RX, 0, key.c_str());
+    if (!std::isfinite(value) || value < range.minimum || value > range.maximum) {
+        fail("Gain outside current band range: " + key); return false;
+    }
+    if (!check(SoapySDRDevice_setGainElement(device_, SOAPY_SDR_RX, 0, key.c_str(), value), "Gain")) return false;
+    config_.gains[key] = value;
+    fail(""); return true;
+}
 void SdrplaySource::setBiasTee(bool on) {
     if (device_ && std::any_of(controls_.begin(), controls_.end(), [](const RspControl& c) { return c.key == "biasT_ctrl"; }))
         check(SoapySDRDevice_writeSetting(device_, "biasT_ctrl", on ? "true" : "false"), "Bias tee");
@@ -328,6 +342,7 @@ void SdrplaySource::close() {}
 void SdrplaySource::setCenterFreq(double hz) { frequency_ = hz; }
 void SdrplaySource::setSampleRate(double hz) { rate_ = hz; }
 void SdrplaySource::setGain(double) {}
+bool SdrplaySource::setGainElement(const std::string&, double) { return false; }
 void SdrplaySource::setBiasTee(bool) {}
 void SdrplaySource::setPpm(double) {}
 #endif

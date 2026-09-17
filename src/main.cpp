@@ -301,7 +301,9 @@ int main(int argc, char** argv)
         app.webServer.start(app.webServerPort);
     }
 #if defined(_WIN32)
-    app.flightMapWv.init(glfwGetWin32Window(window));
+    // The package smoke check renders the native UI without fetching the
+    // external map or creating a browser profile beside the release binary.
+    if (!smokeTest) app.flightMapWv.init(glfwGetWin32Window(window));
 #endif
 
     const ImVec4 clear_color = ImVec4(0.06f, 0.07f, 0.09f, 1.0f);

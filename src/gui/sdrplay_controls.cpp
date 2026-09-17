@@ -89,16 +89,25 @@ void receiver(App& app, SdrplaySource& source, RspConfig& cfg, bool second) {
         if (source.hasAgc) ImGui::Checkbox("Automatic gain", &cfg.agc);
         if (source.hasDc) ImGui::Checkbox("DC correction", &cfg.dc);
         if (source.hasIq) ImGui::Checkbox("IQ balance correction", &cfg.iq);
+        ImGui::EndDisabled();
         for (const auto& gain : source.gains()) {
             double v = cfg.gains.count(gain.key) ? cfg.gains.at(gain.key) : std::atof(gain.value.c_str());
             ImGui::BeginDisabled(cfg.agc && gain.key == "IFGR");
             const std::string label = gain.key == "RFGR" ? "RF gain reduction (LNA state)" : gain.name + " gain (driver units)";
-            if (ImGui::SliderScalar(label.c_str(), ImGuiDataType_Double, &v, &gain.minimum, &gain.maximum, "%.0f"))
-                cfg.gains[gain.key] = v;
+            if (ImGui::SliderScalar(label.c_str(), ImGuiDataType_Double, &v, &gain.minimum, &gain.maximum, "%.0f")) {
+                if (!source.running() || source.setGainElement(gain.key, v)) {
+                    cfg.gains[gain.key] = v;
+                    // This driver setting aliases RFGR; don't restore an old
+                    // value over the slider's saved gain on the next Start.
+                    if (gain.key == "RFGR") cfg.settings.erase("device:rfgain_sel");
+                }
+            }
             ImGui::EndDisabled();
         }
+        ImGui::BeginDisabled(running);
         if (ImGui::CollapsingHeader("Model-specific controls", ImGuiTreeNodeFlags_DefaultOpen)) {
             for (const auto& c : source.controls()) {
+                if (c.key == "rfgain_sel") continue; // RFGR slider is the single RF gain control.
                 const auto key = (c.channel ? "channel:" : "device:") + c.key;
                 auto value = cfg.settings.count(key) ? cfg.settings.at(key) : c.value;
                 bool changed = false;
@@ -117,7 +126,7 @@ void receiver(App& app, SdrplaySource& source, RspConfig& cfg, bool second) {
             }
         }
         ImGui::EndDisabled();
-        ImGui::TextDisabled("Hardware settings apply on Start; stop to edit them.");
+        ImGui::TextDisabled("Gain sliders apply live. Stop reception to edit other hardware settings.");
     }
     auto error = source.error();
     if (!error.empty()) ImGui::TextWrapped("%s", error.c_str());
