@@ -167,6 +167,7 @@ add_executable(InmarScope
     src/sdr/sdrpp_server_source.cpp
     src/sdr/iq_recorder.cpp
     src/gui/waterfall.cpp
+    src/gui/waterfall_labels.cpp
     src/decode/decoder.cpp
     src/decode/decoder_manager.cpp
     src/decode/acars_apps.cpp
@@ -346,6 +347,10 @@ if(BUILD_SDRPLAY_TESTS AND ENABLE_SDRPLAY AND SOAPY_INCLUDE_DIR AND SOAPY_LIBRAR
     target_include_directories(band_plan_selftest PRIVATE src ${JANSSON_INCLUDE_DIR})
     target_link_libraries(band_plan_selftest PRIVATE ${JANSSON_LIB})
     add_test(NAME band_plan_selftest COMMAND band_plan_selftest "${CMAKE_SOURCE_DIR}/bandplans")
+    add_executable(waterfall_labels_selftest tools/waterfall_labels_selftest.cpp src/gui/waterfall_labels.cpp src/decode/band_plan.cpp)
+    target_include_directories(waterfall_labels_selftest PRIVATE src ${JANSSON_INCLUDE_DIR})
+    target_link_libraries(waterfall_labels_selftest PRIVATE imgui ${JANSSON_LIB})
+    add_test(NAME waterfall_labels_selftest COMMAND waterfall_labels_selftest "${CMAKE_SOURCE_DIR}/bandplans")
     add_executable(voice_recording_selftest tools/voice_recording_selftest.cpp src/voice/wav_writer.cpp)
     target_include_directories(voice_recording_selftest PRIVATE src ${OGG_INCLUDE_DIRS} ${VORBIS_INCLUDE_DIRS} ${VORBISENC_INCLUDE_DIRS})
     target_link_directories(voice_recording_selftest PRIVATE ${OGG_LIBRARY_DIRS} ${VORBIS_LIBRARY_DIRS} ${VORBISENC_LIBRARY_DIRS})

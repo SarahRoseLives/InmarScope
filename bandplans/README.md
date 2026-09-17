@@ -16,6 +16,13 @@ saved by file path so adding plans does not silently select a different one.
 **Reload plans** refreshes the catalogue and the currently selected files.
 Invalid files appear under **Band plan errors** and are never partially loaded.
 
+The waterfall shows the selected plan name, frequency markers and active decoder
+labels (channel ID plus MHz and baud/EGC). Green means locked; amber means acquiring.
+Zoom or pan the spectrum to move the waterfall and labels together. Labels adapt
+to pane width and UI scale; crowded labels become markers. Hover a marker or label
+for its full details. National allocations use thin range strips, leaving the
+waterfall visible. A and B use their own plans and decoder states.
+
 Selecting a satellite plan tunes that receiver to its first **Aero data** group.
 The frequency-group selector separates Aero data, Aero voice and STD-C, splitting
 each service into windows that fit 80% of the sample rate or SDRplay IF bandwidth,

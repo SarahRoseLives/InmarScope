@@ -76,6 +76,18 @@ Soapy driver versions, exact steps, expected/actual behaviour, and any displayed
 error. Include a screenshot and the probe output if helpful. Do not include
 private received message content unless you intend to share it.
 
+For waterfall labels, select a satellite plan, start and zoom/pan the spectrum.
+Check that each marker stays over its signal frequency. Resize the waterfall and
+change UI scale: text should remain inside the pane without overlapping. Hover
+crowded markers for full frequency/mode details. Active channels show their ID
+and green (locked) or amber (acquiring) text. Repeat on B with a different plan,
+and with a national allocation plan to check its clipped range strips.
+
+`waterfall_labels_selftest` checks all 27 plans across 2,025 combinations of
+frequency span, pane size and UI scale, plus endpoint projection, panning,
+capture clipping, active-channel merging and dense-label suppression.
+The acquisition test also draws both waterfalls while checking stable decoder IDs.
+
 Automated CI verifies compilation, mock backend tests, package manifests and
 startup. `SMOKE-RESULT.json` records whether rendering passed or the hosted VM
 lacked a usable OpenGL context. Verify the GUI on your own machine in the latter

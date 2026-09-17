@@ -12,6 +12,7 @@
 #include "util/log.h"
 #include "version.h"
 #include "gui/waterfall.h"
+#include "gui/waterfall_labels.h"
 #include "gui/copyable.h"
 #include <algorithm>
 #include <chrono>
@@ -1157,7 +1158,6 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
 
 void drawWaterfall(App& app, SpectrumView& v, const char* title)
 {
-    (void)app;
     ImGui::Begin(title);
 
     float uMin = 0.0f, uMax = 1.0f;
@@ -1200,6 +1200,18 @@ void drawWaterfall(App& app, SpectrumView& v, const char* title)
     ImVec2 wfP0 = ImGui::GetCursorScreenPos();
     v.waterfall.draw(ImVec2(w, avail.y), uMin, uMax, xLo, xHi);
     v.fftSkip = false;
+    if (v.curN > 0 && !v.freqMHz.empty()) {
+        const bool second = &v == &app.viewB;
+        const bool showPlan = second ? app.showBandPlanB : app.showBandPlan;
+        const auto& plan = second ? app.bandPlanLoadedB : app.bandPlanLoaded;
+        auto& manager = second ? app.decodersB : app.decoders;
+        std::vector<WaterfallChannel> channels;
+        for (const auto& decoder : manager.status())
+            channels.push_back({decoder.freqMHz, decoder.channelId, decoder.baud, decoder.locked});
+        const auto labels = layoutWaterfallLabels(showPlan ? &plan : nullptr, channels,
+            v.viewXminMHz, v.viewXmaxMHz, v.freqMHz.front(), v.freqMHz.back(), ImVec2(w, avail.y));
+        drawWaterfallLabels(labels, wfP0, ImVec2(w, avail.y));
+    }
 
     // Drag-to-place preview line: white vertical line through the waterfall
     // at the frequency the user is hovering, so they can centre on a signal.

@@ -40,6 +40,14 @@ static void frame(App& app, bool browse = false) {
         ImGui::SetNextWindowSize(ImVec2(900, 300));
         drawSpectrum(app, app.viewB, app.decodersB, "Spectrum B test", browse, true);
     }
+    ImGui::SetNextWindowPos(ImVec2(0,620));
+    ImGui::SetNextWindowSize(ImVec2(480,80));
+    drawWaterfall(app, app.viewA, "Waterfall A test");
+    if (app.dualMode) {
+        ImGui::SetNextWindowPos(ImVec2(490,620));
+        ImGui::SetNextWindowSize(ImVec2(480,80));
+        drawWaterfall(app, app.viewB, "Waterfall B test");
+    }
     ImGui::Render();
 }
 static void wav(const std::filesystem::path& path, unsigned rate) {
