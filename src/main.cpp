@@ -122,9 +122,17 @@ int main(int argc, char** argv)
     if (!glfwInit())
         return 1;
 
+#if defined(__APPLE__)
+    const char* glsl_version = "#version 150";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+#else
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#endif
 
     GLFWwindow* window = glfwCreateWindow(1400, 900, "InmarScope", nullptr, nullptr);
     if (!window)
