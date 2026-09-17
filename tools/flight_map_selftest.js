@@ -10,7 +10,7 @@ let viewChanges=0;
 const map = {setView(){++viewChanges;return this;},fitBounds(){++viewChanges;},removeLayer(x){pins.delete(x);},invalidateSize(){}};
 const L = {map:()=>map,tileLayer:()=>({addTo(){return this;},on(){}}),latLngBounds:x=>x,
   circleMarker(pos){return {pos, addTo(){pins.add(this);return this;},setLatLng(x){this.pos=x;},getLatLng(){return this.pos;},setStyle(){},getTooltip(){return this.tip;},bindTooltip(x){this.tip=x;},setTooltipContent(x){this.tip=x;}};}};
-const context={L,document,window:{},ResizeObserver:class{observe(){}}};
+const context={L,document,window:{installSmoothWheelZoom:()=>({cancel(){}})},ResizeObserver:class{observe(){}}};
 vm.runInNewContext(fs.readFileSync('assets/flight-map/map.js','utf8'),context);
 const update=context.window.updateAircraft;
 assert.equal(pins.size,0);

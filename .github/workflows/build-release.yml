@@ -73,7 +73,7 @@ jobs:
           cmake --build build --parallel 3
           ctest --test-dir build --output-on-failure --no-tests=error
       - name: Received-aircraft map regression tests
-        run: node tools/flight_map_selftest.js build/flight-map-fixture.json
+        run: node tools/flight_map_selftest.js build/flight-map-fixture.json && node tools/flight_map_wheel_selftest.js
       - name: Package and check Windows
         if: runner.os == 'Windows'
         shell: pwsh

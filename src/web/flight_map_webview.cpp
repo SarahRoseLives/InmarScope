@@ -109,6 +109,9 @@ struct FlightMapWebView::Impl {
     ICoreWebView2Controller*  ctrl   = nullptr;
     ICoreWebView2*            webview = nullptr;
     bool ready = false;
+    RECT bounds{};
+    bool haveBounds = false;
+    bool visible = false;
     std::chrono::steady_clock::time_point lastUpdate{};
     std::chrono::steady_clock::time_point nextLookup{};
     std::future<LookupResult> lookup;
@@ -246,8 +249,13 @@ void FlightMapWebView::setBounds(int x, int y, int w, int h, bool visible) {
     // Pass coordinates as-is; ScreenToClient was causing the map
     // to anchor to screen centre instead of the parent window.
     RECT r = (w <= 0 || h <= 0 || !visible) ? RECT{-32000,-32000,-31999,-31999} : RECT{x, y, x + w, y + h};
-    impl_->ctrl->put_Bounds(r);
-    impl_->ctrl->put_IsVisible(visible && r.right > r.left && r.bottom > r.top);
+    // The host draws every frame. Avoid repeatedly resizing the compositor
+    // when the dock rectangle has not changed, especially during wheel zoom.
+    if (!impl_->haveBounds || !EqualRect(&r, &impl_->bounds)) {
+        if (SUCCEEDED(impl_->ctrl->put_Bounds(r))) { impl_->bounds = r; impl_->haveBounds = true; }
+    }
+    const bool show = visible && w > 0 && h > 0;
+    if (show != impl_->visible && SUCCEEDED(impl_->ctrl->put_IsVisible(show))) impl_->visible = show;
 }
 
 bool FlightMapWebView::isReady() const { return impl_ && impl_->ready; }

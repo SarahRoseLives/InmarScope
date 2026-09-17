@@ -55,7 +55,7 @@ for platform in ["windows-x64", "linux-x64", "macos-x64", "macos-arm64"]:
     if len(satellites) != 6 or {p["designator"] for p in satellites} != {"I4A", "4F2", "3F5", "4F3", "6F1", "4F1"}:
         raise RuntimeError("Missing or duplicate Inmarsat satellite plans")
     if platform == "windows-x64":
-        for path in ["flight-map/index.html", "flight-map/map.js", "flight-map/map.css", "flight-map/leaflet/leaflet.js", "flight-map/leaflet/leaflet.css", "flight-map/leaflet/LICENSE"]:
+        for path in ["flight-map/index.html", "flight-map/map.js", "flight-map/wheel_zoom.js", "flight-map/map.css", "flight-map/leaflet/leaflet.js", "flight-map/leaflet/leaflet.css", "flight-map/leaflet/LICENSE"]:
             if not files.get(path):
                 raise RuntimeError(f"Missing local flight map asset: {path}")
     if any(p.endswith((".ini", ".pem", ".key")) for p in files):
@@ -67,6 +67,9 @@ assets = sorted(directory.iterdir())
 assets.append(directory / "SHA256SUMS.txt")
 notes = Path("release-notes.md")
 notes.write_text(f"SDRplay testing release {tag}\n\n"
+    "Fixes delayed mouse-wheel zoom with frame-paced fractional zoom, cursor anchoring and accumulated wheel input. "
+    "Removes redundant WebView2 resize calls. Adds wheel regression tests covering direction changes, zoom limits "
+    "and drag/Fit interruption; received-aircraft membership and position lookup behaviour are unchanged.\n\n"
     "Includes upstream updates, antenna/model controls, two-device reception and RSPduo independent tuners.\n\n"
     "Corrects satellite names: I4A/Alphasat (25E), 4F2/APAC (143.5E), 3F5/AORE (54W), "
     "4F3/AMER (98W), and 6F1/IOE (83.5E). 4F2 has a receive-band reference only; current "

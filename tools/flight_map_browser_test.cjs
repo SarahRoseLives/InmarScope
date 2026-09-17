@@ -29,6 +29,9 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),http=require('n
       }
       assert.match(state.counts,/2 received/);assert.equal(state.markers,1);assert.equal(state.missing,1);
       console.log('PASS: actual native AircraftTable -> WebView2 -> marker; identity without position remains listed');
+      const zoom=await session.send('Runtime.evaluate',{expression:fs.readFileSync('tools/flight_map_wheel_browser.js','utf8')+'\nrunWheelRegression(false)',awaitPromise:true,returnByValue:true});
+      assert.ok(!zoom.exceptionDetails,JSON.stringify(zoom.exceptionDetails));
+      console.log('PASS native WebView2 wheel:',JSON.stringify(zoom.result.value));
     } else {
       const root=path.resolve('assets/flight-map');
       server=http.createServer((req,res)=>{
@@ -56,6 +59,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),http=require('n
       const chosen=await view();data[0].lat-=1;
       await page.evaluate(d=>window.updateAircraft(d),data);assert.deepEqual(await view(),chosen);
       await page.evaluate(()=>window.updateAircraft([]));assert.equal(await page.locator('.leaflet-interactive').count(),0);
+      const zoom=await page.evaluate(fs.readFileSync('tools/flight_map_wheel_browser.js','utf8')+'\nrunWheelRegression(true)');
+      console.log('PASS browser wheel with 500 aircraft:',JSON.stringify(zoom));
       assert.deepEqual(errors,[]);assert.ok(external.every(u=>u.startsWith('https://tile.openstreetmap.org/')));
       console.log('PASS: native fixture rendered in real browser; decoded/online source colors; unchanged viewport; clear; no browser traffic queries');
     }

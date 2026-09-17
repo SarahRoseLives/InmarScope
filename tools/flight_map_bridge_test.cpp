@@ -26,6 +26,7 @@ int main() {
             MSG message;
             while (PeekMessageW(&message,nullptr,0,0,PM_REMOVE)) { TranslateMessage(&message);DispatchMessageW(&message); }
             view.updateAircraft(table.snapshot());
+            view.setBounds(0,0,960,640,true);
             Sleep(25);
         }
         std::cout << view.positionStatus() << '\n';

@@ -41,6 +41,9 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
     clearing the Aircraft table, including while a lookup is pending.
     Pan/zoom, then decode another aircraft: the view must stay unchanged.
     **Fit received aircraft** frames the markers only when clicked.
+    Scroll several small wheel increments, reverse direction, then drag or click
+    Fit while zooming. Zoom should follow the cursor smoothly without delayed
+    whole-level jumps or movement after Fit/drag takes over. Try a populated map.
 12. Move/resize/detach several panes, then press **Reset pane layout** (or
     Ctrl+Shift+R). Check that default docking returns and radio settings remain.
 13. Select different country or satellite plans for A/B. Restart and confirm
@@ -63,6 +66,9 @@ passes it through AircraftTable, and checks map JSON. It also covers received
 identities with online-only positions, filtering unrelated response aircraft,
 expiry, malformed data, source labels, and clearing while a response is pending.
 The JavaScript test checks marker updates, removals, labels and unchanged view.
+`node tools/flight_map_wheel_selftest.js` checks wheel input accumulation,
+fractional frame updates, bounds and interruption. `tools/flight_map_browser_test.cjs`
+also tests real-browser zoom with 500 markers and native WebView2 wheel handling.
 For manual Windows integration, `flight_map_bridge_test.exe` exercises the real
 WebView2 bridge with synthetic receiver records for 25 seconds; it is not bundled
 with releases. Live provider availability and RF reception remain separate checks.

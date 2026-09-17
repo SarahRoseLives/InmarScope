@@ -1,10 +1,13 @@
 'use strict';
 // Membership is the native receiver snapshot. Optional online coordinates are
 // filtered against received ICAOs by native code; no browser traffic requests.
-const map = L.map('map', {worldCopyJump: true}).setView([20, 0], 2);
+const map = L.map('map', {
+  worldCopyJump: true, scrollWheelZoom: false, zoomSnap: 0, zoomAnimation: false
+}).setView([20, 0], 2);
 const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
+const wheelZoom = window.installSmoothWheelZoom(map);
 tiles.on('tileerror', () => {
   document.getElementById('tiles').textContent = 'Background tiles unavailable. Received aircraft positions still update.';
 });
@@ -44,6 +47,7 @@ window.updateAircraft = function (aircraft) {
   // Deliberately no setView/panTo/fitBounds here: updates preserve the viewport.
 };
 document.getElementById('fit').addEventListener('click', () => {
+  wheelZoom.cancel();
   if (markers.size) map.fitBounds(L.latLngBounds([...markers.values()].map(m => m.getLatLng())), {padding: [25, 25], maxZoom: 9});
 });
 new ResizeObserver(() => map.invalidateSize({pan: false})).observe(document.getElementById('map'));
