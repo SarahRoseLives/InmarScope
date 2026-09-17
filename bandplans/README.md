@@ -18,14 +18,22 @@ Invalid files appear under **Band plan errors** and are never partially loaded.
 
 Selecting a satellite plan tunes that receiver to its first **Aero data** group.
 The frequency-group selector separates Aero data, Aero voice and STD-C, splitting
-each service into windows that fit 80% of the selected sample rate. It shows the
+each service into windows that fit 80% of the sample rate or SDRplay IF bandwidth,
+whichever is narrower. It shows the
 frequency range and channel count. **Tune selected group** repeats the tuning;
 expand **Channel frequencies (MHz)** to see or tune an individual frequency.
-Single-channel tuning adds a small center offset to avoid the DC notch.
+Tuning avoids putting channel centers on the receiver's DC notch.
 Tuning works before Start and while running. It retains the sample rate and
 resets the display to the receiver's full bandwidth, not a tiny marker width.
 The antenna must already point at the selected satellite. WAV playback is fixed
 frequency. National allocation plans remain overlays and do not auto-tune.
+
+**Create decoders from plan** is enabled by default. Selecting a group or
+individual frequency creates its decoders with the channel's recorded baud/mode;
+Start restores that selection independently for A/B. Selecting a different group
+replaces that receiver's decoders. Disable the option for manual decoder management.
+The receiver being tuned is not a lock indication: the Decoders pane reports
+acquisition/lock for each actual signal. Voice carriers may be silent between calls.
 
 Place custom plans in any subfolder of `bandplans/`, then reload. Use UTF-8 JSON:
 
@@ -53,6 +61,9 @@ this is not an occupied-bandwidth claim.
 Channel entries additionally contain `frequency` (center in MHz, inside lo/hi)
 and `service` (for example `Aero data`, `Aero voice`, `STD-C`). Without an explicit
 `frequency`, an entry is an allocation overlay and never a tuning preset.
+Automatic decoder creation also requires `baud` (600, 1200, 8400 or 10500) for
+Aero, or `decoder: "egc"` for Inmarsat-C/EGC. Do not specify both. No mode is
+inferred from a label or a country's general allocation.
 
 SDR++ files use Hz and a different schema. `tools/import_bandplans.py` converts
 the pinned catalogues to this format and preserves provenance/credits. Do not

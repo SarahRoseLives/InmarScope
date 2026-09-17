@@ -222,6 +222,7 @@ bool SdrplaySource::apply(const RspConfig& config, std::string& err) {
         rate_ = SoapySDRDevice_getSampleRate(device_, SOAPY_SDR_RX, 0);
         if (!std::isfinite(rate_) || rate_ <= 0) throw std::runtime_error("Driver returned an invalid sample rate.");
         require(SoapySDRDevice_setBandwidth(device_, SOAPY_SDR_RX, 0, config.bandwidth), "Bandwidth");
+        bandwidth_ = SoapySDRDevice_getBandwidth(device_, SOAPY_SDR_RX, 0);
         if (hasPpm && config.mode != "SL") require(SoapySDRDevice_setFrequencyCorrection(device_, SOAPY_SDR_RX, 0, config.ppm), "PPM");
         if (hasDc) require(SoapySDRDevice_setDCOffsetMode(device_, SOAPY_SDR_RX, 0, config.dc), "DC correction");
         if (hasIq) require(SoapySDRDevice_setIQBalanceMode(device_, SOAPY_SDR_RX, 0, config.iq), "IQ correction");
@@ -331,6 +332,7 @@ void SdrplaySource::close() {
     stop();
     if (device_) { SoapySDRDevice_unmake(device_); device_ = nullptr; }
     controls_.clear(); gains_.clear(); antennas_.clear(); rates_.clear(); bandwidths_.clear();
+    bandwidth_ = 0;
 }
 #else
 std::vector<SdrDeviceInfo> SdrplaySource::listDevices() { fail("This build has no SoapySDR support. See COMPILE.md."); return {}; }

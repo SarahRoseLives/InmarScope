@@ -44,6 +44,8 @@ struct SpectrumView
     float frameDbMin = 0.0f, frameDbMax = -120.0f;
     double viewXminMHz = 0.0, viewXmaxMHz = 0.0;
     bool   resetView = true;
+    std::chrono::steady_clock::time_point lastBrowseRetune;
+    double lastBrowseCenterMHz = 0.0;
     float  specLeftInset = 0.0f, specRightInset = 0.0f;
     bool   fftSkip = false; // set by draw functions when panel is visible, read by processFft next frame
 };
@@ -209,8 +211,6 @@ struct App
     std::string status = "Idle";
 
     bool   bandBrowse = true;
-    std::chrono::steady_clock::time_point lastRetune;
-    double lastRetuneCtr = 0.0;
     float  browseEdgePct = 24.5f;
     float  browseThrottleMs = 20.0f;
     float  browseMinMovePct = 0.10f;
@@ -226,6 +226,8 @@ struct App
     int    bandPlanIdx = 0;
     int    bandPlanIdxB = 0;
     int    bandPlanGroup = 0, bandPlanGroupB = 0;
+    int    bandPlanChannel = -1, bandPlanChannelB = -1;
+    bool   decodeBandPlan = true, decodeBandPlanB = true;
     BandPlan bandPlanLoaded;
     BandPlan bandPlanLoadedB;
     char   bandPlanDir[256] = "bandplans";

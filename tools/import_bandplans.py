@@ -65,6 +65,7 @@ def main():
             # displayed at a minimum pixel width. Not an occupied bandwidth claim.
             label=kind.removeprefix('CHAN_').replace('_',' ')
             channels.append({'lo':round(mhz-0.000001,6),'hi':round(mhz+0.000001,6),
+                             **({'decoder':'egc'} if 'STDC' in kind else {'baud':int(kind.rsplit('_',1)[1])}),
                              'frequency':mhz,'service':'STD-C' if 'STDC' in kind else 'Aero voice' if '8400' in kind else 'Aero data',
                              'label':f'{label} {mhz:g} MHz (channel center)','color':'FF9800' if 'STDC' in kind else '4287F5'})
         if not channels: raise ValueError(f'Empty satellite table: {designator}')
@@ -87,6 +88,7 @@ def main():
         if not match or not baud: continue
         center=float(match[1].replace(',','.'))
         channels.append({'lo':round(center-0.000001,6),'hi':round(center+0.000001,6),
+                         'baud':int(baud[1]),
                          'frequency':center,'service':'Aero voice' if baud[1]=='8400' else 'Aero data',
                          'label':f'Aero {baud[1]} baud {center:g} MHz (channel center)','color':'4287F5'})
     if len(channels)!=32: raise ValueError('APAC survey changed; review conversion')
@@ -106,7 +108,7 @@ def main():
           'identity_and_stdc_source':'https://github.com/krakenrf/discoverydish_docs/wiki/09.-Inmarsat-STD%E2%80%90C,-AERO-and-Pirates-Setup',
           'reviewed':'2026-09-17',
           'notes':'Published APAC channel presets: February 2024 Wilson/Sergi.vdl2 survey. KrakenRF identifies 4F2 as the successor at 143.5E, gives the matching Aero range and refers to this survey. STD-C 1541.450 MHz is listed explicitly for 4F2. Active channels/spot beams require local confirmation; this is not a live 2026 survey.',
-          'bands':[{'lo':1541.449999,'hi':1541.450001,'frequency':1541.45,'service':'STD-C','label':'STD-C EGC 1541.450 MHz (channel center)','color':'FF9800'}]+channels}
+          'bands':[{'lo':1541.449999,'hi':1541.450001,'frequency':1541.45,'service':'STD-C','decoder':'egc','label':'STD-C EGC 1541.450 MHz (channel center)','color':'FF9800'}]+channels}
     write(ROOT/'bandplans'/'satellite'/'inmarsat-4f2.json',apac_current);plans.append(apac_current)
     licenses=ROOT/'bandplans'/'licenses';licenses.mkdir(exist_ok=True)
     for name,url in [('SDRPlusPlus.txt',f'https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/{SDRPP}/license'),('inmarsat-sniffer.txt',f'https://raw.githubusercontent.com/alphafox02/inmarsat-sniffer/{SATELLITES}/LICENSE')]:

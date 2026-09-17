@@ -63,6 +63,13 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
     selected receiver tunes. Expand Channel frequencies to select one channel.
     Repeat with 250 ksps to check groups split into smaller capture windows.
     National allocation plans must not retune; WAV tuning must be disabled.
+    Leave **Create decoders from plan** enabled. On Start, check each selected
+    channel appears in Decoders with its listed baud (or EGC for STD-C). Switching
+    groups should replace that receiver's channels; switching one frequency should
+    create just that channel. Stop/Start and check it is restored.
+    With dual receivers on different groups, leave both spectra idle: decoder IDs
+    and tuned frequencies must remain stable long enough to acquire signals.
+    Repeat at 2 Msps with a 200 kHz IF bandwidth: groups must fit the narrower IF.
 
 Report the release version, Windows/macOS/Linux version, radio model, API and
 Soapy driver versions, exact steps, expected/actual behaviour, and any displayed
@@ -79,6 +86,11 @@ with a generated WAV and checks the first frame before any new FFT arrives.
 It checks all 27 overlays, independent A/B tuning and fixed-frequency WAVs.
 `band_plan_selftest` checks every satellite channel is assigned exactly once
 to a service group inside the selected capture bandwidth (62.5 ksps–10 Msps).
+It also validates explicit Aero baud/EGC modes and checks that no bundled channel
+lands on the receiver center at the tested SDRplay rates. The spectrum integration
+test builds real decoders for every channel group on A and B, checks the frequencies
+and modes against the catalogue, and verifies that idle drawing preserves decoder
+IDs. This verifies acquisition configuration, not RF lock without a live signal.
 
 The native map regression test now decodes a public libacars ADS-C fixture,
 passes it through AircraftTable, and checks map JSON. It also covers received

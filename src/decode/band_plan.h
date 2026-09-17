@@ -13,6 +13,7 @@ struct BandPlanEntry
     uint32_t color; // RGBA8 (A=0xFF)
     double frequencyMHz = 0.0; // explicit channel center; zero = allocation only
     std::string service;
+    int baud = 0; // Aero baud; 1 = Inmarsat-C/EGC; 0 = no decoder preset
 };
 
 struct BandPlan

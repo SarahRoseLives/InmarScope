@@ -67,6 +67,11 @@ assets = sorted(directory.iterdir())
 assets.append(directory / "SHA256SUMS.txt")
 notes = Path("release-notes.md")
 notes.write_text(f"SDRplay testing release {tag}\n\n"
+    "Fixes acquisition blockers: dual plots no longer repeatedly retune and recreate decoders while idle. "
+    "Satellite channel groups now create the correct Aero baud/EGC decoders on selection and Start, "
+    "independently for A/B. All supplied satellite channels carry explicit decoder modes. "
+    "Groups respect SDRplay IF bandwidth and avoid placing carriers on the DC notch. "
+    "Regression tests instantiate every channel group and check stable decoder IDs. Live RF lock still requires tester confirmation.\n\n"
     "Fixes stale spectrum/waterfall frequency ranges on Start. Selecting a satellite band plan now tunes "
     "to its Aero data group; Aero voice/STD-C and individual frequencies are selectable independently for A/B. "
     "Channel groups fit the chosen sample rate, without zooming to tiny channel markers. "

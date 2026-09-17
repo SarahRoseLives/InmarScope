@@ -75,6 +75,19 @@ BandPlan loadBandPlan(const std::string& path) {
                 return reject(prefix + "channel frequency must be inside lo/hi");
         }
         e.service = text(entry, "service");
+        if (auto* baud = json_object_get(entry, "baud")) {
+            if (!json_is_integer(baud)) return reject(prefix + "baud must be an integer");
+            const auto value = json_integer_value(baud);
+            if (value != 600 && value != 1200 && value != 8400 && value != 10500)
+                return reject(prefix + "unsupported Aero baud");
+            e.baud = int(value);
+        }
+        if (auto* decoder = json_object_get(entry, "decoder")) {
+            if (!json_is_string(decoder) || text(entry, "decoder") != "egc" || e.baud)
+                return reject(prefix + "decoder must be egc without Aero baud");
+            e.baud = 1;
+        }
+        if (e.baud && e.frequencyMHz <= 0) return reject(prefix + "decoder requires a channel frequency");
         const auto* colorValue = json_object_get(entry, "color");
         if ((colorValue && !json_is_string(colorValue)) || !color(colorValue ? text(entry, "color") : "888888", e.color))
             return reject(prefix + "color must contain six hexadecimal digits (RRGGBB)");
@@ -106,9 +119,34 @@ std::vector<BandPlanGroup> bandPlanGroups(const BandPlan& plan, double sampleRat
             const double lo = plan.entries[indices[begin]].frequencyMHz;
             while (end < indices.size() && plan.entries[indices[end]].frequencyMHz - lo <= usable) ++end;
             const double hi = plan.entries[indices[end-1]].frequencyMHz;
-            // Offset a single channel slightly to avoid the receiver's DC notch.
+            double center = (lo+hi)*0.5;
+            const double rateMHz = sampleRateHz / 1e6;
+            const double guard = std::min(.010, rateMHz*.02);
+            auto clearance = [&](double candidate) {
+                double distance = rateMHz;
+                for (size_t i = begin; i < end; ++i)
+                    distance = std::min(distance, std::abs(candidate-plan.entries[indices[i]].frequencyMHz));
+                return distance;
+            };
+            // A group midpoint can land ON a carrier too (e.g. I4A's 1200-baud
+            // channel between two 600-baud channels). Avoid DC for whole groups,
+            // keeping every channel inside 44% of the usable capture bandwidth.
+            if (clearance(center) < guard) {
+                const double lower = hi - rateMHz*.44, upper = lo + rateMHz*.44;
+                const double nominal = center;
+                double bestShift = rateMHz;
+                for (size_t i = begin; i < end; ++i) {
+                    for (double sign : {-1., 1.}) {
+                        const double candidate = plan.entries[indices[i]].frequencyMHz + sign*guard;
+                        const double shift = std::abs(candidate-nominal);
+                        if (candidate >= lower && candidate <= upper && clearance(candidate) >= guard-1e-9 && shift < bestShift) {
+                            center = candidate; bestShift = shift;
+                        }
+                    }
+                }
+            }
             result.push_back({service.empty() ? "Channels" : service, lo, hi,
-                              (lo+hi)*0.5 + (lo == hi ? usable*0.05 : 0.0),
+                              center,
                               std::vector<size_t>(indices.begin()+begin, indices.begin()+end)});
             begin = end;
         }

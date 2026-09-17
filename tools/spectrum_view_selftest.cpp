@@ -1,6 +1,7 @@
 #include "imgui.h"
 #include "implot.h"
 #include "core/main_funcs.h"
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
@@ -13,8 +14,9 @@ class TestSource : public SdrSource {
 public:
     double frequency = 100e6, rate = 2e6;
     bool on = false;
+    int tunes = 0;
     std::vector<SdrDeviceInfo> listDevices() override { return {}; }
-    void setCenterFreq(double hz) override { frequency = hz; }
+    void setCenterFreq(double hz) override { frequency = hz; ++tunes; }
     void setSampleRate(double hz) override { rate = hz; }
     void setGain(double) override {}
     void setBiasTee(bool) override {}
@@ -28,11 +30,16 @@ public:
 static void require(bool ok, const char* message) {
     if (!ok) throw std::runtime_error(message);
 }
-static void frame(App& app) {
+static void frame(App& app, bool browse = false) {
     ImGui::NewFrame();
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(900, 300));
-    drawSpectrum(app, app.viewA, app.decoders, "Spectrum test", false, false);
+    drawSpectrum(app, app.viewA, app.decoders, "Spectrum test", browse, false);
+    if (app.dualMode) {
+        ImGui::SetNextWindowPos(ImVec2(0, 310));
+        ImGui::SetNextWindowSize(ImVec2(900, 300));
+        drawSpectrum(app, app.viewB, app.decodersB, "Spectrum B test", browse, true);
+    }
     ImGui::Render();
 }
 static void wav(const std::filesystem::path& path, unsigned rate) {
@@ -110,10 +117,69 @@ int main(int argc, char** argv) {
                 "receiver B tuning leaked to A");
         require(app->viewB.resetView && app->viewB.freqMHz.front() > 1540,
                 "receiver B did not publish the new range before drawing");
+        app->dualMode = true; app->browseThrottleMs = -1;
+        const int tunesA = receiverA.tunes, tunesB = receiverB.tunes;
+        for (int i = 0; i < 40; ++i) frame(*app, true);
+        std::printf("Idle dual view retunes: A=%d B=%d\n", receiverA.tunes-tunesA, receiverB.tunes-tunesB);
+        require(receiverA.tunes-tunesA <= 1 && receiverB.tunes-tunesB <= 1,
+                "idle dual plots repeatedly retune and destroy decoder acquisition");
         app->sourceMode = 1;
         tuneBandPlan(*app, false, 500);
         require(std::abs(receiverA.frequency / 1e6-group.centerMHz) < 1e-8, "WAV tuning must be blocked");
+        app->sourceMode = 7;
+        app->decoders.setAudioEnabled(false); app->decodersB.setAudioEnabled(false);
+        app->decoders.setMaxWorkers(1); app->decodersB.setMaxWorkers(1);
+        app->decoders.start(); app->decodersB.start();
+        size_t checkedChannels = 0, checkedGroups = 0;
+        // Build REAL decoder objects for every preset at both wide/narrow IF.
+        for (double bandwidth : {2000000., 200000.}) {
+            app->rspConfig.bandwidth = app->rspConfigB.bandwidth = bandwidth;
+            require(bandPlanCaptureRate(*app, false) == bandwidth, "IF bandwidth was ignored");
+            for (const auto& path : paths) {
+                const auto plan = loadBandPlan(path);
+                const auto groups = bandPlanGroups(plan, bandwidth);
+                app->bandPlanLoaded = app->bandPlanLoadedB = plan;
+                if (groups.empty()) {
+                    require(!activateBandPlan(*app, false), "allocation-only plan activated decoders");
+                    continue;
+                }
+                app->bandPlanChannel = app->bandPlanChannelB = -1;
+                for (int g = 0; g < int(groups.size()); ++g) {
+                    app->bandPlanGroup = app->bandPlanGroupB = g;
+                    for (bool second : {false, true}) {
+                        require(activateBandPlan(*app, second), "channel plan did not activate");
+                        auto& manager = second ? app->decodersB : app->decoders;
+                        auto status = manager.status();
+                        require(status.size() == groups[g].channels.size(), "missing/extra channel decoders");
+                        for (size_t index : groups[g].channels) {
+                            const auto& entry = plan.entries[index];
+                            require(std::any_of(status.begin(), status.end(), [&](const auto& decoder) {
+                                return std::abs(decoder.freqMHz-entry.frequencyMHz) < 1e-8 && decoder.baud == entry.baud;
+                            }), "channel frequency or demodulator mode mismatch");
+                        }
+                        const int beforeTunes = second ? receiverB.tunes : receiverA.tunes;
+                        for (int f = 0; f < 3; ++f) frame(*app, true);
+                        const auto after = manager.status();
+                        require(after.size() == status.size(), "idle rendering removed decoders");
+                        for (size_t n = 0; n < status.size(); ++n)
+                            require(after[n].channelId == status[n].channelId, "idle rendering recreated decoders");
+                        require((second ? receiverB.tunes : receiverA.tunes) == beforeTunes, "idle rendering retuned a selected group");
+                        checkedChannels += status.size(); ++checkedGroups;
+                    }
+                }
+            }
+        }
+        // Explicit individual-channel selection must not recreate an entire group.
+        app->bandPlanLoaded = apac; app->bandPlanChannel = 0;
+        require(activateBandPlan(*app, false), "single channel activation failed");
+        require(app->decoders.status().size() == 1 && app->decoders.status()[0].baud == kEgcBaud,
+                "STD-C selected the Aero demodulator");
+        app->decodeBandPlan = false;
+        require(activateBandPlan(*app, false), "manual tuning failed");
+        require(app->decoders.status().size() == 1, "manual decoder was dropped");
+        app->decoders.stop(); app->decodersB.stop();
         receiverA.stop(); receiverB.stop();
+        std::printf("PASS: %zu channel decoder configurations in %zu groups; both receivers, 2 MHz/200 kHz IF, stable decoder IDs and correct EGC mode\n", checkedChannels, checkedGroups);
         std::printf("PASS: startup, %zu overlays, full-bandwidth tuning, A/B isolation and fixed WAV frequency\n", paths.size());
     } catch (const std::exception& error) {
         std::fprintf(stderr, "FAIL: %s\n", error.what()); result = 1;

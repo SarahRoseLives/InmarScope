@@ -17,6 +17,7 @@
     {
       "lo": 1545.024999,
       "hi": 1545.025001,
+      "baud": 600,
       "frequency": 1545.025,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.03 MHz (channel center)",
@@ -25,6 +26,7 @@
     {
       "lo": 1545.029999,
       "hi": 1545.030001,
+      "baud": 600,
       "frequency": 1545.03,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.03 MHz (channel center)",
@@ -33,6 +35,7 @@
     {
       "lo": 1545.034999,
       "hi": 1545.035001,
+      "baud": 600,
       "frequency": 1545.035,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.04 MHz (channel center)",
@@ -41,6 +44,7 @@
     {
       "lo": 1545.039999,
       "hi": 1545.040001,
+      "baud": 600,
       "frequency": 1545.04,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.04 MHz (channel center)",
@@ -49,6 +53,7 @@
     {
       "lo": 1545.044999,
       "hi": 1545.045001,
+      "baud": 600,
       "frequency": 1545.045,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.05 MHz (channel center)",
@@ -57,6 +62,7 @@
     {
       "lo": 1545.054999,
       "hi": 1545.055001,
+      "baud": 600,
       "frequency": 1545.055,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.06 MHz (channel center)",
@@ -65,6 +71,7 @@
     {
       "lo": 1545.069999,
       "hi": 1545.070001,
+      "baud": 1200,
       "frequency": 1545.07,
       "service": "Aero data",
       "label": "Aero 1200 baud 1545.07 MHz (channel center)",
@@ -73,6 +80,7 @@
     {
       "lo": 1545.094999,
       "hi": 1545.095001,
+      "baud": 600,
       "frequency": 1545.095,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.1 MHz (channel center)",
@@ -81,6 +89,7 @@
     {
       "lo": 1545.134999,
       "hi": 1545.135001,
+      "baud": 600,
       "frequency": 1545.135,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.13 MHz (channel center)",
@@ -89,6 +98,7 @@
     {
       "lo": 1545.139999,
       "hi": 1545.140001,
+      "baud": 600,
       "frequency": 1545.14,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.14 MHz (channel center)",
@@ -97,6 +107,7 @@
     {
       "lo": 1545.144999,
       "hi": 1545.145001,
+      "baud": 600,
       "frequency": 1545.145,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.14 MHz (channel center)",
@@ -105,6 +116,7 @@
     {
       "lo": 1545.149999,
       "hi": 1545.150001,
+      "baud": 600,
       "frequency": 1545.15,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.15 MHz (channel center)",
@@ -113,6 +125,7 @@
     {
       "lo": 1545.154999,
       "hi": 1545.155001,
+      "baud": 600,
       "frequency": 1545.155,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.15 MHz (channel center)",
@@ -121,6 +134,7 @@
     {
       "lo": 1545.179999,
       "hi": 1545.180001,
+      "baud": 600,
       "frequency": 1545.18,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.18 MHz (channel center)",
@@ -129,6 +143,7 @@
     {
       "lo": 1545.209999,
       "hi": 1545.210001,
+      "baud": 600,
       "frequency": 1545.21,
       "service": "Aero data",
       "label": "Aero 600 baud 1545.21 MHz (channel center)",
@@ -137,6 +152,7 @@
     {
       "lo": 1546.004999,
       "hi": 1546.005001,
+      "baud": 10500,
       "frequency": 1546.005,
       "service": "Aero data",
       "label": "Aero 10500 baud 1546.01 MHz (channel center)",
@@ -145,6 +161,7 @@
     {
       "lo": 1546.034999,
       "hi": 1546.035001,
+      "baud": 10500,
       "frequency": 1546.035,
       "service": "Aero data",
       "label": "Aero 10500 baud 1546.04 MHz (channel center)",
@@ -153,6 +170,7 @@
     {
       "lo": 1546.054999,
       "hi": 1546.055001,
+      "baud": 10500,
       "frequency": 1546.055,
       "service": "Aero data",
       "label": "Aero 10500 baud 1546.06 MHz (channel center)",
@@ -161,6 +179,7 @@
     {
       "lo": 1546.069999,
       "hi": 1546.070001,
+      "baud": 10500,
       "frequency": 1546.07,
       "service": "Aero data",
       "label": "Aero 10500 baud 1546.07 MHz (channel center)",
@@ -169,6 +188,7 @@
     {
       "lo": 1546.084999,
       "hi": 1546.085001,
+      "baud": 10500,
       "frequency": 1546.085,
       "service": "Aero data",
       "label": "Aero 10500 baud 1546.09 MHz (channel center)",
@@ -177,6 +197,7 @@
     {
       "lo": 1542.934999,
       "hi": 1542.935001,
+      "baud": 8400,
       "frequency": 1542.935,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.93 MHz (channel center)",
@@ -185,6 +206,7 @@
     {
       "lo": 1542.939999,
       "hi": 1542.940001,
+      "baud": 8400,
       "frequency": 1542.94,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.94 MHz (channel center)",
@@ -193,6 +215,7 @@
     {
       "lo": 1542.944999,
       "hi": 1542.945001,
+      "baud": 8400,
       "frequency": 1542.945,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.94 MHz (channel center)",
@@ -201,6 +224,7 @@
     {
       "lo": 1542.949999,
       "hi": 1542.950001,
+      "baud": 8400,
       "frequency": 1542.95,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.95 MHz (channel center)",
@@ -209,6 +233,7 @@
     {
       "lo": 1542.954999,
       "hi": 1542.955001,
+      "baud": 8400,
       "frequency": 1542.955,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.95 MHz (channel center)",
@@ -217,6 +242,7 @@
     {
       "lo": 1542.959999,
       "hi": 1542.960001,
+      "baud": 8400,
       "frequency": 1542.96,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.96 MHz (channel center)",
@@ -225,6 +251,7 @@
     {
       "lo": 1542.964999,
       "hi": 1542.965001,
+      "baud": 8400,
       "frequency": 1542.965,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.96 MHz (channel center)",
@@ -233,6 +260,7 @@
     {
       "lo": 1542.969999,
       "hi": 1542.970001,
+      "baud": 8400,
       "frequency": 1542.97,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.97 MHz (channel center)",
@@ -241,6 +269,7 @@
     {
       "lo": 1542.974999,
       "hi": 1542.975001,
+      "baud": 8400,
       "frequency": 1542.975,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.97 MHz (channel center)",
@@ -249,6 +278,7 @@
     {
       "lo": 1542.979999,
       "hi": 1542.980001,
+      "baud": 8400,
       "frequency": 1542.98,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.98 MHz (channel center)",
@@ -257,6 +287,7 @@
     {
       "lo": 1542.984999,
       "hi": 1542.985001,
+      "baud": 8400,
       "frequency": 1542.985,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.98 MHz (channel center)",
@@ -265,6 +296,7 @@
     {
       "lo": 1542.994999,
       "hi": 1542.995001,
+      "baud": 8400,
       "frequency": 1542.995,
       "service": "Aero voice",
       "label": "Aero 8400 baud 1542.99 MHz (channel center)",

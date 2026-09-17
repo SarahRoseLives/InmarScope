@@ -83,6 +83,7 @@ static void bandPlanSelector(App& app, bool second) {
     auto& loaded = second ? app.bandPlanLoadedB : app.bandPlanLoaded;
     char* saved = second ? app.bandPlanFileB : app.bandPlanFile;
     int& groupIndex = second ? app.bandPlanGroupB : app.bandPlanGroup;
+    int& channelIndex = second ? app.bandPlanChannelB : app.bandPlanChannel;
     bool changed = false;
     static ImGuiTextFilter filters[2];
     filters[second ? 1 : 0].Draw("Region / country / plan", -1);
@@ -95,23 +96,14 @@ static void bandPlanSelector(App& app, bool second) {
                 index = i; loaded = loadBandPlan(app.bandPlanPaths[i]);
                 std::snprintf(saved, 512, "%s", app.bandPlanPaths[i].c_str());
                 groupIndex = 0;
+                channelIndex = -1;
                 changed = true;
             }
         }
         ImGui::EndCombo();
     }
     if (index < 0 && *saved) ImGui::TextWrapped("Saved plan unavailable: %s", saved);
-    auto* source = second ? app.activeB : app.active;
-    double rate = source->sampleRate();
-    if (!source->running()) {
-        if (app.sourceMode == 7) rate = (second && app.rspSecond != 2 ? app.rspConfigB : app.rspConfig).rate;
-        else if (app.sourceMode == 3) rate = app.hackSampleRateMHz * 1e6;
-#ifdef HAS_AIRSPY
-        else if (app.sourceMode == 5) rate = kAirspyRates[std::clamp(app.airspySampleRateIdx, 0, kAirspyNumRates-1)];
-#endif
-        else if (app.sourceMode == 2) rate = app.serverSampleRateMHz * 1e6;
-        else rate = kRates[std::clamp(second ? app.sampleRateIdxB : app.sampleRateIdx, 0, kNumRates-1)];
-    }
+    const double rate = bandPlanCaptureRate(app, second);
     const auto groups = bandPlanGroups(loaded, rate);
     if (!groups.empty()) {
         groupIndex = std::clamp(groupIndex, 0, int(groups.size())-1);
@@ -124,25 +116,29 @@ static void bandPlanSelector(App& app, bool second) {
         ImGui::SetNextItemWidth(-1);
         if (ImGui::BeginCombo("##frequency-group", label(groups[groupIndex]).c_str())) {
             for (int i = 0; i < int(groups.size()); ++i)
-                if (ImGui::Selectable(label(groups[i]).c_str(), i == groupIndex)) { groupIndex = i; changed = true; }
+                if (ImGui::Selectable(label(groups[i]).c_str(), i == groupIndex)) { groupIndex = i; channelIndex = -1; changed = true; }
             ImGui::EndCombo();
         }
-        if (ImGui::SmallButton("Tune selected group")) changed = true;
-        if (changed) tuneBandPlan(app, second, groups[groupIndex].centerMHz);
+        bool& decode = second ? app.decodeBandPlanB : app.decodeBandPlan;
+        if (ImGui::Checkbox("Create decoders from plan", &decode) && decode) changed = true;
+        if (ImGui::SmallButton("Tune selected group")) { channelIndex = -1; changed = true; }
+        if (changed) activateBandPlan(app, second);
         if (ImGui::TreeNode("Channel frequencies (MHz)")) {
             for (const auto channel : groups[groupIndex].channels) {
                 const auto& entry = loaded.entries[channel];
                 ImGui::PushID(int(channel));
                 char frequency[32]; std::snprintf(frequency, sizeof(frequency), "%.6f", entry.frequencyMHz);
-                if (ImGui::SmallButton(frequency))
-                    tuneBandPlan(app, second, entry.frequencyMHz + rate / 1e6 * 0.04);
+                if (ImGui::SmallButton(frequency)) {
+                    channelIndex = int(channel);
+                    activateBandPlan(app, second);
+                }
                 ImGui::SameLine(); ImGui::TextUnformatted(entry.label.c_str());
                 ImGui::PopID();
             }
             ImGui::TreePop();
         }
         ImGui::EndDisabled();
-        ImGui::TextWrapped(app.sourceMode == 1 ? "WAV frequency is fixed; tuning is unavailable." : "Selecting a plan or group tunes this receiver. Groups fit the selected sample rate.");
+        ImGui::TextWrapped(app.sourceMode == 1 ? "WAV frequency is fixed; tuning is unavailable." : "Selecting a plan or group tunes this receiver. Decoder modes come from the channel plan; groups fit the sample rate and IF bandwidth.");
     }
     if (loaded.valid && !loaded.notes.empty()) ImGui::TextWrapped("%s", loaded.notes.c_str());
     ImGui::PopID();
@@ -1000,6 +996,10 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
         ImPlotRect lim = ImPlot::GetPlotLimits();
         v.viewXminMHz = lim.X.Min;
         v.viewXmaxMHz = lim.X.Max;
+        if (v.resetView) {
+            v.lastBrowseCenterMHz = 0.5 * (lim.X.Min + lim.X.Max);
+            v.lastBrowseRetune = std::chrono::steady_clock::now();
+        }
 
         // Band-browse retuning: in dual mode use explicit SDR pointers,
         // otherwise use app.active (which covers RTL/WAV/SDR++/HackRF).
@@ -1021,10 +1021,10 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
             double marginR = (sdrCtr + halfBand) - (viewCtr + viewHalf);
             double minMargin = std::min(marginL, marginR);
             double trigger = fsMHz * (app.browseEdgePct * 0.01);
-            bool moved = std::fabs(viewCtr - app.lastRetuneCtr) > fsMHz * (app.browseMinMovePct * 0.01);
+            bool moved = std::fabs(viewCtr - v.lastBrowseCenterMHz) > fsMHz * (app.browseMinMovePct * 0.01);
             auto now = std::chrono::steady_clock::now();
             double sinceMs =
-                std::chrono::duration<double, std::milli>(now - app.lastRetune).count();
+                std::chrono::duration<double, std::milli>(now - v.lastBrowseRetune).count();
             if (fsMHz > 0.0 && minMargin < trigger && moved && sinceMs > app.browseThrottleMs)
             {
                 if (voiceView)
@@ -1044,8 +1044,8 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
                 {
                     retunePreserving(app, viewCtr);
                 }
-                app.lastRetune = now;
-                app.lastRetuneCtr = viewCtr;
+                v.lastBrowseRetune = now;
+                v.lastBrowseCenterMHz = viewCtr;
             }
         }
 

@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     REQUIRE(satellites.at("4F2").entries.size() == 33);
     REQUIRE(satellites.at("4F2").entries.front().frequencyMHz == 1541.45);
     for (const auto& item : satellites) {
-        for (double rate : {62500., 250000., 2000000., 10000000.}) {
+        for (double rate : {62500., 96000., 125000., 192000., 250000., 384000., 500000., 768000., 1000000., 2000000., 6000000., 8000000., 10000000.}) {
             const auto groups = bandPlanGroups(item.second, rate);
             REQUIRE(!groups.empty() && groups.front().service == "Aero data");
             std::set<size_t> seen;
@@ -41,6 +41,11 @@ int main(int argc, char** argv) {
                 REQUIRE(group.hiMHz - group.loMHz <= rate / 1e6 * .8 + 1e-9);
                 for (size_t channel : group.channels) {
                     REQUIRE(seen.insert(channel).second);
+                    const auto& entry = item.second.entries[channel];
+                    REQUIRE(entry.baud == 1 || entry.baud == 600 || entry.baud == 1200 || entry.baud == 8400 || entry.baud == 10500);
+                    REQUIRE((entry.service == "STD-C") == (entry.baud == 1));
+                    REQUIRE((entry.service == "Aero voice") == (entry.baud == 8400));
+                    REQUIRE(std::abs(entry.frequencyMHz-group.centerMHz) > 1e-7);
                     REQUIRE(std::abs(item.second.entries[channel].frequencyMHz - group.centerMHz) < rate / 2e6);
                 }
             }
@@ -65,6 +70,10 @@ int main(int argc, char** argv) {
     write(R"({"name":"Test","bands":[{"lo":1,"hi":2,"label":"Invalid color","color":"ZZZZZZ"}]})");REQUIRE(!loadBandPlan(file.string()).valid);
     write("{broken");REQUIRE(!loadBandPlan(file.string()).valid);
     write(R"({"name":"Test","bands":[{"lo":1,"hi":2,"frequency":3,"label":"Out of range"}]})");
+    REQUIRE(!loadBandPlan(file.string()).valid);
+    write(R"({"name":"Test","bands":[{"lo":1,"hi":2,"frequency":1.5,"baud":9600,"label":"Unsupported baud"}]})");
+    REQUIRE(!loadBandPlan(file.string()).valid);
+    write(R"({"name":"Test","bands":[{"lo":1,"hi":2,"frequency":1.5,"baud":1200,"decoder":"egc","label":"Ambiguous mode"}]})");
     REQUIRE(!loadBandPlan(file.string()).valid);
     std::filesystem::remove(file);std::filesystem::remove(root/"region");std::filesystem::remove(root);
     std::cout << "PASS: 27 plans / 1771 entries; channel groups fit 62.5 kHz to 10 MHz without missing/duplicating channels; allocations never auto-tune; malformed data rejected\n";

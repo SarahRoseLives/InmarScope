@@ -71,6 +71,7 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(showBandPlan); WI(bandPlanIdx); WI(showBandPlanB); WI(bandPlanIdxB); WS(bandPlanDir);
     WS(bandPlanFile); WS(bandPlanFileB);
     WI(bandPlanGroup); WI(bandPlanGroupB);
+    WI(bandPlanChannel); WI(bandPlanChannelB); WI(decodeBandPlan); WI(decodeBandPlanB);
     WI(flightMapWv.onlinePositions);
     WI(outFile); WS(outFilePath); WI(outUdp); WS(outUdpHost); WI(outUdpPort);
     WI(outFormat); WS(outStation); WI(outSbs); WI(outSbsPort);
@@ -159,6 +160,7 @@ void cfgReadLine(App& app, const char* line)
     RB(showBandPlan); RI(bandPlanIdx); RB(showBandPlanB); RI(bandPlanIdxB); RS(bandPlanDir);
     RS(bandPlanFile); RS(bandPlanFileB);
     RI(bandPlanGroup); RI(bandPlanGroupB);
+    RI(bandPlanChannel); RI(bandPlanChannelB); RB(decodeBandPlan); RB(decodeBandPlanB);
     RB(flightMapWv.onlinePositions);
     RB(outFile); RS(outFilePath); RB(outUdp); RS(outUdpHost); RI(outUdpPort);
     RI(outFormat); RS(outStation); RB(outSbs); RI(outSbsPort);

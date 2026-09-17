@@ -74,7 +74,30 @@ void updateFeed(App& app)
     }
 }
 
-void tuneBandPlan(App& app, bool second, double centerMHz)
+double bandPlanCaptureRate(const App& app, bool second)
+{
+    auto* source = second ? app.activeB : app.active;
+    double rate = source->sampleRate();
+    if (!source->running()) {
+        if (app.sourceMode == 7) rate = (second && app.rspSecond != 2 ? app.rspConfigB : app.rspConfig).rate;
+        else if (app.sourceMode == 3) rate = app.hackSampleRateMHz * 1e6;
+#ifdef HAS_AIRSPY
+        else if (app.sourceMode == 5) rate = kAirspyRates[std::clamp(app.airspySampleRateIdx, 0, kAirspyNumRates-1)];
+#endif
+        else if (app.sourceMode == 2) rate = app.serverSampleRateMHz * 1e6;
+        else rate = kRates[std::clamp(second ? app.sampleRateIdxB : app.sampleRateIdx, 0, kNumRates-1)];
+    }
+    if (app.sourceMode == 7) {
+        const auto& rsp = second ? app.rspB : app.rsp;
+        const auto& config = second ? app.rspConfigB : app.rspConfig;
+        const double bandwidth = rsp.running() ? rsp.bandwidth() : config.bandwidth;
+        if (std::isfinite(bandwidth) && bandwidth > 0) rate = std::min(rate, bandwidth);
+    }
+    return rate;
+}
+
+void tuneBandPlan(App& app, bool second, double centerMHz,
+                 const std::vector<std::pair<double, int>>* channels)
 {
     if (app.sourceMode == 1 || !std::isfinite(centerMHz) || centerMHz <= 0) return;
     auto* source = second ? app.activeB : app.active;
@@ -84,12 +107,15 @@ void tuneBandPlan(App& app, bool second, double centerMHz)
     frequency = centerMHz;
     if (source->running()) {
         std::vector<std::pair<double, int>> keep;
-        for (const auto& decoder : manager.status()) keep.push_back({decoder.freqMHz, decoder.baud});
+        if (channels) keep = *channels;
+        else for (const auto& decoder : manager.status()) keep.push_back({decoder.freqMHz, decoder.baud});
         source->setCenterFreq(centerMHz * 1e6);
         frequency = source->centerFreq() / 1e6;
         manager.removeAll();
         manager.configure(source->sampleRate(), source->centerFreq());
-        for (const auto& decoder : keep) manager.addDecoder(decoder.first * 1e6, decoder.second);
+        for (const auto& decoder : keep)
+            if (std::abs(decoder.first-frequency) * 1e6 < bandPlanCaptureRate(app, second)*0.45)
+                manager.addDecoder(decoder.first * 1e6, decoder.second);
         view.ring.clear(); view.waterfall.clear();
         buildWindow(view, kFftSizes[app.fftSizeIdx], app.dbMin);
         updateFreqAxis(view, source->centerFreq(), source->sampleRate(), view.curN);
@@ -98,6 +124,44 @@ void tuneBandPlan(App& app, bool second, double centerMHz)
         app.followSeenCount = app.decoders.cassignLog().count();
     }
     view.resetView = true; view.fftSkip = false;
+}
+
+bool activateBandPlan(App& app, bool second)
+{
+    if (app.sourceMode == 1) return false;
+    const auto& plan = second ? app.bandPlanLoadedB : app.bandPlanLoaded;
+    const double rate = bandPlanCaptureRate(app, second);
+    const auto groups = bandPlanGroups(plan, rate);
+    if (groups.empty()) return false;
+    int& groupIndex = second ? app.bandPlanGroupB : app.bandPlanGroup;
+    int& channelIndex = second ? app.bandPlanChannelB : app.bandPlanChannel;
+    groupIndex = std::clamp(groupIndex, 0, int(groups.size())-1);
+    const auto& group = groups[groupIndex];
+    std::vector<size_t> indices = group.channels;
+    double center = group.centerMHz;
+    if (channelIndex >= 0 && channelIndex < int(plan.entries.size()) && plan.entries[channelIndex].frequencyMHz > 0) {
+        indices = {size_t(channelIndex)};
+        center = plan.entries[channelIndex].frequencyMHz + rate / 1e6 * .04;
+    } else channelIndex = -1;
+    std::vector<std::pair<double, int>> channels;
+    for (size_t index : indices) {
+        const auto& entry = plan.entries[index];
+        if (!entry.baud) continue;
+        const auto pair = std::make_pair(entry.frequencyMHz, entry.baud);
+        if (std::find(channels.begin(), channels.end(), pair) == channels.end()) channels.push_back(pair);
+    }
+    const bool decode = second ? app.decodeBandPlanB : app.decodeBandPlan;
+    tuneBandPlan(app, second, center, decode && !channels.empty() ? &channels : nullptr);
+    auto* source = second ? app.activeB : app.active;
+    if (decode) {
+        auto& manager = second ? app.decodersB : app.decoders;
+        app.status = std::string(second ? "B: " : "A: ") + (channels.empty()
+            ? "No decoder modes in this plan; add decoders manually."
+            : source->running()
+            ? std::to_string(manager.decoderCount()) + " plan decoders acquiring"
+            : std::to_string(channels.size()) + " plan decoders ready for Start");
+    }
+    return true;
 }
 
 void startActive(App& app)
@@ -364,6 +428,8 @@ void startActive(App& app)
         reset(app.viewA, app.active);
         if (app.dualMode) reset(app.viewB, app.activeB);
         app.status = app.dualMode ? "Running (dual SDR)" : "Running";
+        if (app.showBandPlan && app.decodeBandPlan) activateBandPlan(app, false);
+        if (app.dualMode && app.showBandPlanB && app.decodeBandPlanB) activateBandPlan(app, true);
     }
     else
         app.status = "Error: " + err;

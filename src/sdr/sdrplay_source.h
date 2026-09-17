@@ -51,6 +51,7 @@ public:
     void setPpm(double ppm) override;
     double centerFreq() const override { return frequency_; }
     double sampleRate() const override { return rate_; }
+    double bandwidth() const { return bandwidth_; }
     bool start(int deviceIndex, SdrSampleCb cb, std::string& error) override;
     void stop() override;
     bool running() const override { return running_; }
@@ -66,6 +67,7 @@ private:
     std::vector<std::string> antennas_;
     std::vector<double> rates_, bandwidths_;
     std::atomic<double> frequency_{1545e6}, rate_{2e6};
+    std::atomic<double> bandwidth_{0};
     std::atomic<bool> running_{false};
     std::atomic<uint64_t> overflows_{0};
     std::thread reader_;

@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #define REQUIRE(x) do { if(!(x)) {std::cerr << "FAILED line " << __LINE__ << ": " #x << std::endl; std::exit(1);} } while(0)
-struct SoapySDRDevice { std::string serial, mode; double frequency=1545e6,rate=2e6;std::map<std::string,std::string> settings; };
+struct SoapySDRDevice { std::string serial, mode; double frequency=1545e6,rate=2e6,bandwidth=1536000;std::map<std::string,std::string> settings; };
 struct SoapySDRStream { int reads=0; };
 static int devices=0,streams=0;
 static bool failOpen=false,failSetup=false,failActivate=false;
@@ -164,8 +164,10 @@ int SoapySDRDevice_setAntenna(SoapySDRDevice *device, const int direction, const
 }
 
 int SoapySDRDevice_setBandwidth(SoapySDRDevice *device, const int direction, const size_t channel, const double bw) {
+    device->bandwidth = bw > 0 ? bw : 1536000;
     return 0;
 }
+double SoapySDRDevice_getBandwidth(const SoapySDRDevice* device, const int, const size_t) { return device->bandwidth; }
 
 int SoapySDRDevice_setDCOffsetMode(SoapySDRDevice *device, const int direction, const size_t channel, const bool automatic) {
     return 0;
@@ -284,6 +286,9 @@ int main() {
     bad=a;bad.settings["device:agc_setpoint"]="-100";REQUIRE(!rx.apply(bad,err));
     bad=a;bad.settings["device:agc_setpoint"]="-25.5";REQUIRE(!rx.apply(bad,err));
     a.rate=2000001;REQUIRE(rx.apply(a,err));REQUIRE(rx.sampleRate()==2000000);
+    REQUIRE(rx.bandwidth()==1536000);
+    a.bandwidth=200000; REQUIRE(rx.apply(a,err)); REQUIRE(rx.bandwidth()==200000);
+    a.bandwidth=0; REQUIRE(rx.apply(a,err)); REQUIRE(rx.bandwidth()==1536000);
     failSetup=true;REQUIRE(!rx.start(0,{},err));REQUIRE(streams==0);failSetup=false;
     failActivate=true;REQUIRE(!rx.start(0,{},err));REQUIRE(streams==0);failActivate=false;
     std::atomic<int> countA{0},countB{0};
