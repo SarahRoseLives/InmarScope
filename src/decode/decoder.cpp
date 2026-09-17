@@ -256,6 +256,13 @@ void Decoder::onAcars2(const jaero_acars_msg* msg)
     m.channelId = channelId_;
     m.freqMHz = chanFreqHz_ / 1e6;
     m.aesId = msg->aes_id;
+
+    if (m.aesId != 0)
+    {
+        char icaoBuf[8];
+        std::snprintf(icaoBuf, sizeof(icaoBuf), "%06X", m.aesId);
+        m.icao = icaoBuf;
+    }
     m.gesId = msg->ges_id;
     m.downlink = msg->downlink;
     m.mode = msg->mode;
@@ -301,7 +308,8 @@ void Decoder::onAcars2(const jaero_acars_msg* msg)
             m.lat = app.lat;
             m.lon = app.lon;
             m.alt = app.alt;
-            m.icao = app.icaoHex;
+            if (!app.icaoHex.empty())
+                m.icao = app.icaoHex;
             m.flight = app.flightId;
         }
     }
