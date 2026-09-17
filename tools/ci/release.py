@@ -67,6 +67,9 @@ assets = sorted(directory.iterdir())
 assets.append(directory / "SHA256SUMS.txt")
 notes = Path("release-notes.md")
 notes.write_text(f"SDRplay testing release {tag}\n\n"
+    "Makes Record voice calls the first control in both Decoders and Voice Calls, sharing the existing "
+    "A/B recording state. Existing WAV/OGG and output-folder settings are preserved. Adds recording-file "
+    "tests for PCM frames, WAV/OGG finalization and empty-file cleanup.\n\n"
     "Fixes delayed mouse-wheel zoom with frame-paced fractional zoom, cursor anchoring and accumulated wheel input. "
     "Removes redundant WebView2 resize calls. Adds wheel regression tests covering direction changes, zoom limits "
     "and drag/Fit interruption; received-aircraft membership and position lookup behaviour are unchanged.\n\n"

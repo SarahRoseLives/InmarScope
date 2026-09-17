@@ -23,7 +23,7 @@ Windows builds can be found on official project page: **https://sarahsforge.dev/
 - **Inmarsat-C / EGC** — 1200 bps BPSK decoding with EGC SafetyNet/FleetNet message output
 - **SDRplay** — model-discovered antenna selection, sample rates, bandwidth, gains, AGC, PPM, DC/IQ correction and driver-exposed settings (bias tee, notch filters, external reference and HDR where supported). Requires SoapySDRPlay3 and the SDRplay API service; see [SDRPLAY.md](SDRPLAY.md).
 - **Dual-SDR voice follow** — use two RTL-SDRs, two SDRplay devices, or the two RSPduo tuners for separate spectra and voice following
-- **Voice call recording** — WAV and OGG Vorbis output, tagged with aircraft ICAO
+- **Voice call recording** — WAV and OGG Vorbis output, tagged with aircraft ICAO. **Record voice calls** is at the top of both Decoders and Voice Calls; format and folder settings are in Decoders.
 - **Live spectrum & waterfall** — real-time FFT with drag-to-place decoder placement
 - **Embedded flight map (Windows)** — only aircraft detected by receivers A/B can appear. Decoded ADS-C coordinates take priority; optional ADSB.lol lookups provide positions for received identities without coordinates. Blue markers are decoded, orange markers are online positions. Lookup sends only received ICAO IDs, never message contents. OpenStreetMap provides background tiles; incoming aircraft never change your pan/zoom.
 - **SBS/BaseStation output** — TCP server on port 30003 for virtual radar clients

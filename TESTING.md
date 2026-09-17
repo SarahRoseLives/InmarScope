@@ -30,6 +30,11 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
    API. B's model controls appear after the first start; stop to edit them.
 10. Check voice following on B while A continues signalling. IQ recording
     captures A only; confirm WAV playback has the correct rate and duration.
+    **Record voice calls** is the first control in both **Decoders** and
+    **Voice Calls**. Toggle either one and confirm both show the same state.
+    Select WAV/OGG and the output folder in Decoders; record a call, stop recording,
+    and play the resulting file. Repeat with receiver B. Check the toggle remains
+    accessible in a short pane (scroll to the top if needed).
 11. The Flight Map must start with no aircraft until your decoder receives
     them. Decode ADS-C positions and compare the markers with the Aircraft
     table. With **Online positions for received aircraft** enabled, identity-only

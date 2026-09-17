@@ -1176,9 +1176,23 @@ void drawWaterfall(App& app, SpectrumView& v, const char* title)
     ImGui::End();
 }
 
+// Both panes operate the same recording state and receiver managers.
+static void drawRecordVoiceToggle(App& app)
+{
+    if (ImGui::Checkbox(_L("Record voice calls"), &app.recordVoice))
+    {
+        app.decoders.setRecording(app.recordVoice, app.recordDir);
+        app.decodersB.setRecording(app.recordVoice, app.recordDir);
+        RecordFormat rf = (app.recordFormat == 1) ? RecordFormat::OGG : RecordFormat::WAV;
+        app.decoders.setRecordFormat(rf);
+        app.decodersB.setRecordFormat(rf);
+    }
+}
+
 void drawDecoders(App& app)
 {
     ImGui::Begin((std::string(_L("Decoders")) + "###Decoders").c_str());
+    drawRecordVoiceToggle(app);
 
     auto decs = app.decoders.status();
     if (app.dualMode)
@@ -1257,16 +1271,6 @@ void drawDecoders(App& app)
         }
     }
 
-    if (ImGui::Checkbox(_L("Record voice calls"), &app.recordVoice))
-    {
-        app.decoders.setRecording(app.recordVoice, app.recordDir);
-        app.decodersB.setRecording(app.recordVoice, app.recordDir);
-        // Re-apply the format so it always matches the current combo choice.
-        RecordFormat rf = (app.recordFormat == 1) ? RecordFormat::OGG : RecordFormat::WAV;
-        app.decoders.setRecordFormat(rf);
-        app.decodersB.setRecordFormat(rf);
-    }
-    ImGui::SameLine();
     const char* recFmts[] = {"WAV", "OGG"};
     ImGui::SetNextItemWidth(70);
     if (ImGui::Combo("##recfmt", &app.recordFormat, recFmts, 2))
@@ -2446,6 +2450,11 @@ void drawConstellation(App& app)
 void drawVoiceCalls(App& app)
 {
     ImGui::Begin((std::string(_L("Voice Calls")) + "###Voice Calls").c_str());
+    drawRecordVoiceToggle(app);
+    if (app.recordVoice)
+        ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "REC (%d active, %s)",
+                          app.decoders.recordingCount() + (app.dualMode ? app.decodersB.recordingCount() : 0),
+                          app.recordFormat ? "OGG" : "WAV");
 
     auto calls = app.decoders.voiceCallLog().snapshot();
     if (app.dualMode)
