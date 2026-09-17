@@ -24,4 +24,18 @@ elements.get('fit').click();assert.equal(viewChanges,2);
 update([]);assert.equal(pins.size,0);assert.equal(viewChanges,2);
 update([{id:'bad',lat:91,lon:0},{id:'unknown'},{id:'zero',lat:0,lon:0,alt:0}]);assert.equal(pins.size,1);
 assert.equal(elements.get('missing').children.length,2);
+update([{id:'online',lat:10,lon:20,alt:30000,positionSource:'ADSB.lol (online)',posTime:Date.now()/1000}]);
+assert.match([...pins][0].tip.textContent,/ADSB.lol \(online\)/);
+assert.equal(viewChanges,2);
+update([]);assert.equal(pins.size,0);
+if (process.argv[2]) {
+  // JSON emitted by the native ADS-C -> AircraftTable -> received-ID lookup test.
+  const native=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+  assert.equal(native.length,2);
+  update(native);assert.equal(pins.size,2);
+  assert.ok([...pins].some(p=>p.tip.textContent.includes('Decoded ADS-C')));
+  assert.ok([...pins].some(p=>p.tip.textContent.includes('ADSB.lol (online)')));
+  assert.equal(viewChanges,2);
+  update([]);assert.equal(pins.size,0);
+}
 console.log('PASS: only supplied aircraft, no invented positions, marker updates/removal, safe labels, no automatic recenter');

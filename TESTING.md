@@ -32,8 +32,13 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
     captures A only; confirm WAV playback has the correct rate and duration.
 11. The Flight Map must start with no aircraft until your decoder receives
     them. Decode ADS-C positions and compare the markers with the Aircraft
-    table. Identity-only messages belong in **No decoded position**, not at
-    guessed coordinates. Test A/B duplicates and clearing the Aircraft table.
+    table. With **Online positions for received aircraft** enabled, identity-only
+    aircraft may get orange ADSB.lol positions; decoded positions stay blue and
+    take priority. Only IDs in the receiver table may appear. With the option
+    off, identity-only aircraft remain in **Received without a known position**.
+    Check the lookup status, disconnect the network, and confirm decoded markers
+    still update. Check the option survives restart. Test A/B duplicates and
+    clearing the Aircraft table, including while a lookup is pending.
     Pan/zoom, then decode another aircraft: the view must stay unchanged.
     **Fit received aircraft** frames the markers only when clicked.
 12. Move/resize/detach several panes, then press **Reset pane layout** (or
@@ -52,3 +57,12 @@ Automated CI verifies compilation, mock backend tests, package manifests and
 startup. `SMOKE-RESULT.json` records whether rendering passed or the hosted VM
 lacked a usable OpenGL context. Verify the GUI on your own machine in the latter
 case. CI does not verify RF performance or real-device API behaviour.
+
+The native map regression test now decodes a public libacars ADS-C fixture,
+passes it through AircraftTable, and checks map JSON. It also covers received
+identities with online-only positions, filtering unrelated response aircraft,
+expiry, malformed data, source labels, and clearing while a response is pending.
+The JavaScript test checks marker updates, removals, labels and unchanged view.
+For manual Windows integration, `flight_map_bridge_test.exe` exercises the real
+WebView2 bridge with synthetic receiver records for 25 seconds; it is not bundled
+with releases. Live provider availability and RF reception remain separate checks.

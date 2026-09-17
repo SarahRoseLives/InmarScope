@@ -1,5 +1,6 @@
 'use strict';
-// The only aircraft input is the native decoder snapshot. No traffic API.
+// Membership is the native receiver snapshot. Optional online coordinates are
+// filtered against received ICAOs by native code; no browser traffic requests.
 const map = L.map('map', {worldCopyJump: true}).setView([20, 0], 2);
 const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -30,15 +31,16 @@ window.updateAircraft = function (aircraft) {
       markers.set(a.id, marker);
     } else marker.setLatLng([a.lat, a.lon]);
     const age = Math.max(0, Math.floor(Date.now() / 1000 - (a.posTime || 0)));
-    marker.setStyle({fillOpacity: age > 900 ? 0.35 : 0.9});
+    marker.setStyle({fillOpacity: age > 900 ? 0.35 : 0.9, fillColor: a.positionSource === 'ADSB.lol (online)' ? '#ffb347' : '#27c5ff'});
     const text = document.createElement('span');
-    text.textContent = label(a) + '\n' + a.lat.toFixed(4) + ', ' + a.lon.toFixed(4) + ' · ' + a.alt + ' ft\nLast decoded position: ' + Math.floor(age / 60) + ' min ago';
+    text.textContent = label(a) + '\n' + a.lat.toFixed(4) + ', ' + a.lon.toFixed(4) + ' · ' + a.alt + ' ft\n' +
+      (a.positionSource || 'Decoded ADS-C') + ' position: ' + Math.floor(age / 60) + ' min ago';
     if (marker.getTooltip()) marker.setTooltipContent(text);
     else marker.bindTooltip(text);
   }
   for (const [id, marker] of markers) if (!keep.has(id)) { map.removeLayer(marker); markers.delete(id); }
   document.getElementById('counts').textContent = aircraft.length + ' received · ' + markers.size + ' with position';
-  document.getElementById('missing-count').textContent = 'No decoded position: ' + noPosition;
+  document.getElementById('missing-count').textContent = 'Received without a known position: ' + noPosition;
   // Deliberately no setView/panTo/fitBounds here: updates preserve the viewport.
 };
 document.getElementById('fit').addEventListener('click', () => {

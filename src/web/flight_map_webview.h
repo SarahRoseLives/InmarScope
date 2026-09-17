@@ -15,6 +15,8 @@ public:
     void updateAircraft(const std::vector<AircraftEntry>& aircraft);
     void setBounds(int x, int y, int w, int h, bool visible = true);
     bool isReady() const;
+    bool onlinePositions = true;
+    std::string positionStatus() const;
     struct Impl;
     Impl* impl_ = nullptr;
 };

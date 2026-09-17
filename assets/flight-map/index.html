@@ -12,7 +12,7 @@
 <body>
 <header><strong>Received aircraft</strong><span id="counts">Waiting for decoded aircraft</span><button id="fit" type="button">Fit received aircraft</button></header>
 <main id="map" aria-label="Map of locally received aircraft"></main>
-<aside><span id="tiles">Background: OpenStreetMap. Aircraft: your receiver only.</span><details><summary id="missing-count">No decoded position: 0</summary><ul id="missing"></ul></details></aside>
+<aside><span id="tiles">Aircraft: received IDs only. Blue: decoded position. Orange: online position from <a href="https://www.adsb.lol/docs/open-data/api/" target="_blank" rel="noopener">ADSB.lol (ODbL)</a>. Background: OpenStreetMap.</span><details><summary id="missing-count">Received without a known position: 0</summary><ul id="missing"></ul></details></aside>
 <script src="leaflet/leaflet.js"></script>
 <script src="map.js"></script>
 </body>

@@ -1992,6 +1992,8 @@ void drawFlightMap(App& app)
         acs.insert(acs.end(), second.begin(), second.end());
     }
     app.flightMapWv.updateAircraft(acs);
+    ImGui::Checkbox("Online positions for received aircraft", &app.flightMapWv.onlinePositions);
+    ImGui::TextWrapped("%s", app.flightMapWv.positionStatus().c_str());
     if (!app.flightMapWv.isReady()) ImGui::TextDisabled("Loading received-aircraft map...");
     // Embed the map as an Edge WebView2 child window inside this panel.
     // Hide when another tab in the same dock is active.
