@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'">
+<title>InmarScope received aircraft</title>
+<link rel="stylesheet" href="leaflet/leaflet.css">
+<link rel="stylesheet" href="map.css">
+</head>
+<body>
+<header><strong>Received aircraft</strong><span id="counts">Waiting for decoded aircraft</span><button id="fit" type="button">Fit received aircraft</button></header>
+<main id="map" aria-label="Map of locally received aircraft"></main>
+<aside><span id="tiles">Background: OpenStreetMap. Aircraft: your receiver only.</span><details><summary id="missing-count">No decoded position: 0</summary><ul id="missing"></ul></details></aside>
+<script src="leaflet/leaflet.js"></script>
+<script src="map.js"></script>
+</body>
+</html>

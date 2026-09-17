@@ -1982,47 +1982,12 @@ void drawFlightMap(App& app)
     ImGui::Begin((std::string(_L("Flight Map")) + "###Flight Map").c_str());
 
     auto acs = app.decoders.aircraftTable().snapshot();
-    std::sort(acs.begin(), acs.end(),
-              [](const AircraftEntry& a, const AircraftEntry& b) { return a.lastSeen > b.lastSeen; });
-    const AircraftEntry* pick = nullptr;
-
-    // Prefer the ICAO of the voice call the user is currently listening to.
-    uint32_t monitoredAes = app.decoders.voiceAes();
-    if (monitoredAes) {
-        std::string monitoredIcao = app.decoders.aircraftTable().icao(monitoredAes);
-        if (!monitoredIcao.empty()) {
-            for (auto& a : acs) {
-                if (a.aesId == monitoredAes) { pick = &a; break; }
-            }
-        }
+    if (app.dualMode) {
+        auto second = app.decodersB.aircraftTable().snapshot();
+        acs.insert(acs.end(), second.begin(), second.end());
     }
-    if (!pick) {
-        for (auto& a : acs)
-            if (!a.icao.empty()) { pick = &a; break; }
-    }
-
-    if (pick && !app.flightMapWv.isReady())
-    {
-        ImGui::Text("%s  %s  %06X",
-                    pick->icao.c_str(),
-                    pick->flight.empty() ? pick->reg.c_str() : pick->flight.c_str(),
-                    pick->aesId);
-        if (pick->hasPos) {
-            ImGui::SameLine(); ImGui::Text("  %.4f,%.4f  %d ft", pick->lat, pick->lon, pick->alt);
-        }
-    }
-    else if (!pick && !app.flightMapWv.isReady())
-    {
-        ImGui::TextDisabled("No aircraft with ICAO yet.");
-    }
-
-    if (!app.flightMapWv.isReady())
-    {
-        ImGui::TextDisabled("  Loading map...");
-    }
-    // Aircraft discoveries update the table, never navigate the browser.
-    // The live traffic map retains the user's pan/zoom until explicitly focused.
-    if (pick && ImGui::Button("Show aircraft on map")) app.flightMapWv.setIcao(pick->icao);
+    app.flightMapWv.updateAircraft(acs);
+    if (!app.flightMapWv.isReady()) ImGui::TextDisabled("Loading received-aircraft map...");
     // Embed the map as an Edge WebView2 child window inside this panel.
     // Hide when another tab in the same dock is active.
     ImVec2 pos  = ImGui::GetCursorScreenPos();

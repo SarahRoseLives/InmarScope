@@ -23,7 +23,7 @@ Windows builds can be found on official project page: **https://sarahsforge.dev/
 - **Dual-SDR voice follow** — use two RTL-SDRs, two SDRplay devices, or the two RSPduo tuners for separate spectra and voice following
 - **Voice call recording** — WAV and OGG Vorbis output, tagged with aircraft ICAO
 - **Live spectrum & waterfall** — real-time FFT with drag-to-place decoder placement
-- **Embedded flight map** — tracks aircraft positions on globe.airplanes.live via Microsoft Edge WebView2
+- **Embedded flight map (Windows)** — plots locally decoded aircraft positions from receivers A/B, with no external aircraft traffic feed. Identity-only records are listed without a marker. OpenStreetMap provides background tiles; incoming aircraft never change your pan/zoom.
 - **SBS/BaseStation output** — TCP server on port 30003 for virtual radar clients
 - **JAERO-compatible output** — JSON dump, text log, and UDP forwarding
 - **Country blacklist** — mute and skip recording for selected countries using ICAO address lookup

@@ -109,6 +109,7 @@ def main():
     if windows:
         if not args.sdk:
             raise RuntimeError("Windows requires --sdk")
+        shutil.copytree(ROOT / "assets/flight-map", dest / "flight-map")
         for dll in (ROOT / "build").glob("*.dll"):
             shutil.copy2(dll, dest)
         windows_runtime(dest, args.sdk.resolve())

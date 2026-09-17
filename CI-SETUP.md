@@ -72,7 +72,12 @@ The script records SDK download URLs/hashes and the plugin revision; update
 these deliberately and rerun the entire matrix when upgrading dependencies.
 
 Linux uses apt dependencies. macOS uses Homebrew and bundles its non-system
-runtime libraries. Hosted images and OS packages evolve; every tagged release
+runtime libraries. CI also tests decoder-only map snapshots and marker updates
+without contacting a traffic provider. The Windows package includes the local
+`flight-map/` page and pinned Leaflet 1.9.4 assets; release validation requires
+these files. Keep the full folder with the executable when distributing it.
+
+Hosted images and OS packages evolve; every tagged release
 is rebuilt and tested rather than reusing a previous binary. No signing secrets
 are needed; Windows is unsigned and macOS is ad-hoc signed. Public signing and
 Apple notarization are separate future setup steps.

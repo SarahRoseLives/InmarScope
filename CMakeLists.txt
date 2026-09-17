@@ -186,7 +186,11 @@ add_executable(InmarScope
     src/output/message_feed.cpp
     src/update/version_check.cpp
     src/web/flight_map_webview.cpp
+    src/web/flight_map_data.cpp
 )
+add_custom_command(TARGET InmarScope POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/assets/flight-map" "$<TARGET_FILE_DIR:InmarScope>/flight-map")
 # Microsoft Edge WebView2 for the embedded Flight Map browser (Windows only).
 if(WIN32)
     set(WEBVIEW2_ROOT ${CMAKE_SOURCE_DIR}/third_party/webview2/build/native)
@@ -234,6 +238,8 @@ find_library(ZLIB_LIB NAMES z libz zlib REQUIRED)
 find_library(SQLITE3_LIB NAMES sqlite3 libsqlite3 REQUIRED)
 find_library(XML2_LIB NAMES xml2 libxml2 REQUIRED)
 find_library(JANSSON_LIB NAMES jansson libjansson REQUIRED)
+find_path(JANSSON_INCLUDE_DIR NAMES jansson.h REQUIRED)
+target_include_directories(InmarScope PRIVATE ${JANSSON_INCLUDE_DIR})
 
 # libogg + libvorbis for OGG Vorbis voice recording.
 if(PkgConfig_FOUND)
@@ -322,6 +328,10 @@ endif()
 option(BUILD_SDRPLAY_TESTS "Build SDRplay fault-injection tests and probe" OFF)
 if(BUILD_SDRPLAY_TESTS AND ENABLE_SDRPLAY AND SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
     enable_testing()
+    add_executable(flight_map_selftest tools/flight_map_selftest.cpp src/web/flight_map_data.cpp)
+    target_include_directories(flight_map_selftest PRIVATE src ${JANSSON_INCLUDE_DIR})
+    target_link_libraries(flight_map_selftest PRIVATE ${JANSSON_LIB})
+    add_test(NAME flight_map_selftest COMMAND flight_map_selftest)
     add_executable(sdrplay_selftest tools/sdrplay_selftest.cpp src/sdr/sdrplay_source.cpp)
     target_include_directories(sdrplay_selftest PRIVATE src "${CMAKE_BINARY_DIR}/soapy-include")
     target_compile_definitions(sdrplay_selftest PRIVATE HAS_SOAPYSDR=1 SOAPY_SDR_DLL_EXPORTS=1)

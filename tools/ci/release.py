@@ -45,6 +45,10 @@ for platform in ["windows-x64", "linux-x64", "macos-x64", "macos-arm64"]:
     for path in ["CI-SETUP.md", "SDRPLAY.md", "TESTING.md", "TEST-RESULTS.txt"]:
         if not files.get(path):
             raise RuntimeError(f"Missing release documentation: {path}")
+    if platform == "windows-x64":
+        for path in ["flight-map/index.html", "flight-map/map.js", "flight-map/map.css", "flight-map/leaflet/leaflet.js", "flight-map/leaflet/leaflet.css", "flight-map/leaflet/LICENSE"]:
+            if not files.get(path):
+                raise RuntimeError(f"Missing local flight map asset: {path}")
     if any(p.endswith((".ini", ".pem", ".key")) for p in files):
         raise RuntimeError("Unexpected local configuration in release")
 for doc in ["CI-SETUP.md", "SDRPLAY.md", "TESTING.md"]:
@@ -60,7 +64,9 @@ notes.write_text(f"SDRplay testing release {tag}\n\n"
     "so rendering remains a tester check on that platform. Crashes and other startup failures block publication. "
     "RF hardware testing is still required. See TESTING.md for the tester checklist.\n\n"
     "RF gain now adjusts during reception, independently for A and B, including with AGC enabled. "
-    "The Flight Map no longer navigates to each newly detected aircraft; focusing is an explicit button action.\n\n"
+    "The Flight Map now plots only locally decoded aircraft from receivers A/B, with no airplanes.live traffic feed. "
+    "Aircraft without decoded coordinates are listed separately. Incoming updates preserve pan/zoom; "
+    "Fit received aircraft frames the markers only when clicked. OpenStreetMap supplies background tiles only.\n\n"
     "Fixes non-RSPduo devices being rejected by RSPduo-only open arguments. Windows includes a rebuilt "
     "SoapySDRPlay3 driver supporting RSP1B and RSPdx-R2 as well as earlier models.\n\n"
     "Windows: extract the ZIP and install SDRplay API/service 3.15 or newer. "

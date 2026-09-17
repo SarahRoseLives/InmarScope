@@ -1,5 +1,7 @@
 #include "web/flight_map_webview.h"
 #include "util/log.h"
+#include "web/flight_map_data.h"
+#include "version.h"
 
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -17,6 +19,8 @@
 
 #include <cstdio>
 #include <string>
+#include <filesystem>
+#include <chrono>
 
 struct EnvCB : ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler {
     LONG ref = 1;
@@ -49,21 +53,12 @@ struct FlightMapWebView::Impl {
     ICoreWebView2Controller*  ctrl   = nullptr;
     ICoreWebView2*            webview = nullptr;
     bool ready = false;
-    std::string pendingIcao;
+    std::chrono::steady_clock::time_point lastUpdate{};
 
     ~Impl() {
         if (ctrl) { ctrl->Close(); ctrl->Release(); ctrl = nullptr; }
+        if (webview) { webview->Release(); webview = nullptr; }
         if (env)  { env->Release();  env  = nullptr; }
-    }
-    void nav(const std::string& icao) {
-        if (!webview) return;
-        char url[160];
-        if (icao.empty()) std::snprintf(url, sizeof(url), "https://globe.airplanes.live/");
-        else std::snprintf(url, sizeof(url), "https://globe.airplanes.live/?icao=%s", icao.c_str());
-        wchar_t wurl[160]; int i;
-        for (i = 0; url[i]; ++i) wurl[i] = (wchar_t)(unsigned char)url[i];
-        wurl[i] = 0;
-        webview->Navigate(wurl);
     }
 };
 
@@ -94,12 +89,28 @@ HRESULT STDMETHODCALLTYPE CtrlCB::Invoke(HRESULT result, ICoreWebView2Controller
     controller->put_Bounds(r);
     controller->put_IsVisible(FALSE);
 
-    g_impl->ready = true;
-    logWrite("[webview] ready");
-
-    std::string icao = g_impl->pendingIcao;
-    g_impl->pendingIcao.clear();
-    g_impl->nav(icao); // Load the normal traffic map even before the first decode.
+    wchar_t executable[32768]{};
+    if (!GetModuleFileNameW(nullptr, executable, 32768)) return E_FAIL;
+    const auto folder = std::filesystem::path(executable).parent_path() / "flight-map";
+    ICoreWebView2_3* local = nullptr;
+    hr = g_impl->webview->QueryInterface(IID_ICoreWebView2_3, reinterpret_cast<void**>(&local));
+    if (FAILED(hr)) { logWrite("[webview] Update WebView2 runtime for the local flight map"); return hr; }
+    hr = local->SetVirtualHostNameToFolderMapping(L"inmarscope.local", folder.c_str(), COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_DENY_CORS);
+    local->Release();
+    if (FAILED(hr)) return hr;
+    ICoreWebView2Settings* settings = nullptr;
+    if (SUCCEEDED(g_impl->webview->get_Settings(&settings))) {
+        ICoreWebView2Settings2* settings2 = nullptr;
+        if (SUCCEEDED(settings->QueryInterface(IID_ICoreWebView2Settings2, reinterpret_cast<void**>(&settings2)))) {
+            const std::string agent = "InmarScope/" INMARSCOPE_VERSION " (+https://github.com/blkph0x/InmarScope)";
+            const std::wstring wide(agent.begin(), agent.end());
+            settings2->put_UserAgent(wide.c_str()); settings2->Release();
+        }
+        settings->Release();
+    }
+    hr = g_impl->webview->Navigate(L"https://inmarscope.local/index.html");
+    g_impl->ready = SUCCEEDED(hr);
+    logWrite("[webview] local received-aircraft map: 0x%lx", (unsigned long)hr);
     return S_OK;
 }
 
@@ -117,10 +128,22 @@ void FlightMapWebView::init(void* nativeHwnd) {
     CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr, cb);
 }
 
-void FlightMapWebView::setIcao(const std::string& icao) {
-    if (!impl_) return;
-    if (impl_->ready && impl_->webview) impl_->nav(icao);
-    else impl_->pendingIcao = icao;
+void FlightMapWebView::updateAircraft(const std::vector<AircraftEntry>& aircraft) {
+    if (!impl_ || !impl_->ready || !impl_->webview) return;
+    LPWSTR source = nullptr;
+    const HRESULT sourceResult = impl_->webview->get_Source(&source);
+    const bool localPage = SUCCEEDED(sourceResult) && source &&
+        std::wstring(source).rfind(L"https://inmarscope.local/", 0) == 0;
+    CoTaskMemFree(source);
+    if (!localPage) return; // Never pass decoded records to an external page.
+    const auto now = std::chrono::steady_clock::now();
+    if (now - impl_->lastUpdate < std::chrono::seconds(1)) return;
+    impl_->lastUpdate = now;
+    // JSON_ENSURE_ASCII safely represents decoded strings in JavaScript and
+    // UTF-16. Retry each second, including when initial page loading is slow.
+    const auto script = "window.updateAircraft && window.updateAircraft(" + flightMapJson(aircraft) + ");";
+    const std::wstring wide(script.begin(), script.end());
+    impl_->webview->ExecuteScript(wide.c_str(), nullptr);
 }
 
 void FlightMapWebView::setBounds(int x, int y, int w, int h, bool visible) {
@@ -144,7 +167,7 @@ struct FlightMapWebView::Impl {};
 
 FlightMapWebView::~FlightMapWebView() { delete impl_; }
 void FlightMapWebView::init(void*) {}
-void FlightMapWebView::setIcao(const std::string&) {}
+void FlightMapWebView::updateAircraft(const std::vector<AircraftEntry>&) {}
 void FlightMapWebView::setBounds(int, int, int, int, bool) {}
 bool FlightMapWebView::isReady() const { return false; }
 

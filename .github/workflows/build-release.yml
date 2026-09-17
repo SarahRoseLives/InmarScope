@@ -61,6 +61,8 @@ jobs:
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SDRPLAY_TESTS=ON -DREQUIRE_SDRPLAY=ON -DSOAPY_INCLUDE_DIR="$PWD/vendor/pothos/include" -DSOAPY_LIBRARY="$PWD/vendor/pothos/lib/SoapySDR.lib"
           cmake --build build --parallel 2
           ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Received-aircraft map regression tests
+        run: node tools/flight_map_selftest.js
       - name: Configure and build Unix
         if: runner.os != 'Windows'
         shell: bash

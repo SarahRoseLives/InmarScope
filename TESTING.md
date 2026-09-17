@@ -30,9 +30,12 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
    API. B's model controls appear after the first start; stop to edit them.
 10. Check voice following on B while A continues signalling. IQ recording
     captures A only; confirm WAV playback has the correct rate and duration.
-11. Pan and zoom the Flight Map, then decode several different aircraft. The
-    live traffic map must retain your view without navigating to each decode.
-    Only clicking **Show aircraft on map** should focus the current aircraft.
+11. The Flight Map must start with no aircraft until your decoder receives
+    them. Decode ADS-C positions and compare the markers with the Aircraft
+    table. Identity-only messages belong in **No decoded position**, not at
+    guessed coordinates. Test A/B duplicates and clearing the Aircraft table.
+    Pan/zoom, then decode another aircraft: the view must stay unchanged.
+    **Fit received aircraft** frames the markers only when clicked.
 
 Report the release version, Windows/macOS/Linux version, radio model, API and
 Soapy driver versions, exact steps, expected/actual behaviour, and any displayed

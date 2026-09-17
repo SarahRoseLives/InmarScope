@@ -302,7 +302,7 @@ int main(int argc, char** argv)
     }
 #if defined(_WIN32)
     // The package smoke check renders the native UI without fetching the
-    // external map or creating a browser profile beside the release binary.
+    // map tiles or creating a browser profile beside the release binary.
     if (!smokeTest) app.flightMapWv.init(glfwGetWin32Window(window));
 #endif
 
