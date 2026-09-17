@@ -47,6 +47,7 @@ BandPlan loadBandPlan(const std::string& path) {
     auto reject = [&](const std::string& why) { bp.error = why; bp.entries.clear(); json_decref(root); return bp; };
     if (!json_is_object(root)) return reject("Expected a JSON object");
     bp.name = text(root, "name"); bp.designator = text(root, "designator");
+    bp.notes = text(root, "notes");
     if (bp.name.empty()) return reject("A non-empty name is required");
     if (auto* p = json_object_get(root, "position")) {
         if (!json_is_number(p) || !std::isfinite(json_number_value(p)) || std::abs(json_number_value(p)) > 180)

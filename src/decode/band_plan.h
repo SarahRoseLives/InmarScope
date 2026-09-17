@@ -17,6 +17,7 @@ struct BandPlan
 {
     std::string name;
     std::string designator;
+    std::string notes;
     double position = 0.0;      // orbital degrees (negative = west)
     std::string filePath;
     std::vector<BandPlanEntry> entries;

@@ -1,14 +1,18 @@
 {
-  "name": "I3-F5 (surveyed channels; partial)",
+  "name": "I-3 F5 / 3F5 - 54W (surveyed channels; partial)",
   "designator": "3F5",
   "position": -54.0,
   "regions": [
     "Inmarsat",
-    "AORE"
+    "AORE",
+    "Atlantic Ocean East"
   ],
   "countries": [],
   "source": "https://raw.githubusercontent.com/alphafox02/inmarsat-sniffer/c5e767ec75b1511fdc44a0644f600d228144467d/satellites.c",
   "source_sha256": "d468150f0fb83e90d756894285c68bb08329b5c53b1ba463c95ec45660fdb9be",
+  "fleet_source": "https://www.viasat.com/content/dam/us-site/government/missions/documents/Viasat-Aero-Services-brochure-September-2025-digital.pdf",
+  "region_source": "https://www.jsatmobile.com/general1/id=222",
+  "reviewed": "2026-09-17",
   "license": "GPL-3.0-or-later",
   "notes": "Surveyed channel centers, not complete allocations. Verify active frequencies locally. No geographic aliases inferred from the source.",
   "bands": [

@@ -13,6 +13,15 @@ SDRPP = '8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af'
 SATELLITES = 'c5e767ec75b1511fdc44a0644f600d228144467d'
 NAMES = 'australia austria belgium brazil canada china france general germany-mobile-lte-bands germany-mobile-networks germany ireland italy netherlands qo-100 republic-of-korea russia slovakia turkey united-kingdom usa'.split()
 COLORS = {'amateur':'4CAF50','broadcast':'FF9800','military':'B85AC9','aviation':'4287F5','marine':'00A6A6','satellite':'D76B37','mobile':'C75151'}
+FLEET_SOURCE = 'https://www.viasat.com/content/dam/us-site/government/missions/documents/Viasat-Aero-Services-brochure-September-2025-digital.pdf'
+REGION_SOURCE = 'https://www.jsatmobile.com/general1/id=222'
+# Keep legacy filenames so existing saved A/B selections remain valid.
+SATELLITE_NAMES = {
+    '4F3': ('4F3', 'I-4 F3 / 4F3 - 98W', ['AMER', 'Americas', 'AORW']),
+    '3F5': ('3F5', 'I-3 F5 / 3F5 - 54W', ['AORE', 'Atlantic Ocean East']),
+    'AF1': ('I4A', 'Alphasat / I4A / I-4A F4 / AF1 - 25E', ['EMEA', 'Europe Middle East Africa']),
+    'F1': ('6F1', 'I-6 F1 / 6F1 - 83.5E', ['IOE', 'Indian Ocean East']),
+}
 
 def fetch(url):
     with urllib.request.urlopen(url) as response:
@@ -58,8 +67,10 @@ def main():
             channels.append({'lo':round(mhz-0.000001,6),'hi':round(mhz+0.000001,6),
                              'label':f'{label} {mhz:g} MHz (channel center)','color':'FF9800' if 'STDC' in kind else '4287F5'})
         if not channels: raise ValueError(f'Empty satellite table: {designator}')
-        output={'name':name+' (surveyed channels; partial)','designator':designator,'position':float(position),
-                'regions':['Inmarsat',region], 'countries':[], 'source':url,'source_sha256':hashlib.sha256(raw).hexdigest(),
+        canonical,display,regions=SATELLITE_NAMES[designator]
+        output={'name':display+' (surveyed channels; partial)','designator':canonical,'position':float(position),
+                'regions':['Inmarsat']+regions, 'countries':[], 'source':url,'source_sha256':hashlib.sha256(raw).hexdigest(),
+                'fleet_source':FLEET_SOURCE,'region_source':REGION_SOURCE,'reviewed':'2026-09-17',
                 'license':'GPL-3.0-or-later','notes':'Surveyed channel centers, not complete allocations. Verify active frequencies locally. No geographic aliases inferred from the source.', 'bands':channels}
         write(ROOT/'bandplans'/'satellite'/f'inmarsat-{designator.lower()}.json',output);plans.append(output)
     # Extract numerical reception facts for the missing APAC table; do not copy
@@ -77,12 +88,22 @@ def main():
         channels.append({'lo':round(center-0.000001,6),'hi':round(center+0.000001,6),
                          'label':f'Aero {baud[1]} baud {center:g} MHz (channel center)','color':'4287F5'})
     if len(channels)!=32: raise ValueError('APAC survey changed; review conversion')
-    apac={'name':'I4-F1 APAC (2024 survey; partial)','designator':'4F1','position':143.5,
-          'regions':['Inmarsat','APAC','Asia Pacific'],'countries':[],
+    apac={'name':'I-4 F1 / 4F1 - historical 143.5E APAC survey (not current 4F2)','designator':'4F1','position':143.5,
+          'regions':['Inmarsat','Historical','APAC','Asia Pacific'],'countries':[],
           'source':apac_url,'source_sha256':hashlib.sha256(apac_raw).hexdigest(),
           'source_credit':'Frequency facts: David L. Wilson and Sergi.vdl2, February 2024; published by thebaldgeek.',
-          'notes':'Historical reception survey, not a current complete allocation. Verify locally. +/-1 Hz is a display marker, not channel bandwidth.', 'bands':channels}
+          'notes':'Historical survey labelled 4F1 by its author. APAC is now served by 4F2 at 143.5E; these channel centers have NOT been verified for 4F2. This position is historical, not a current 4F1 pointing instruction. +/-1 Hz is a display marker, not channel bandwidth.', 'bands':channels}
     write(ROOT/'bandplans'/'satellite'/'inmarsat-4f1.json',apac);plans.append(apac)
+    # No verified contemporary per-channel APAC survey was available. Provide
+    # the sourced receive-band reference rather than relabel historical channels.
+    apac_current={'name':'I-4 F2 / 4F2 - 143.5E (receive band only; channels unverified)',
+          'designator':'4F2','position':143.5,'regions':['Inmarsat','APAC','Asia Pacific','POR'],
+          'countries':[], 'fleet_source':FLEET_SOURCE,'region_source':REGION_SOURCE,
+          'source':'https://www.itu.int/net/Itu-R/space/res647/index.asp?nmod=asc&norder=freq_assgn',
+          'reviewed':'2026-09-17',
+          'notes':'4F2 serves APAC at 143.5E (JSAT service bulletin, 10 September 2025). This is the general 1525-1559 MHz space-to-Earth receive band, not a verified active-channel list. Historical 4F1 channels are available separately and must be verified locally.',
+          'bands':[{'lo':1525.0,'hi':1559.0,'label':'4F2 APAC L-band receive reference (not individual channels)','color':'D76B37'}]}
+    write(ROOT/'bandplans'/'satellite'/'inmarsat-4f2.json',apac_current);plans.append(apac_current)
     licenses=ROOT/'bandplans'/'licenses';licenses.mkdir(exist_ok=True)
     for name,url in [('SDRPlusPlus.txt',f'https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/{SDRPP}/license'),('inmarsat-sniffer.txt',f'https://raw.githubusercontent.com/alphafox02/inmarsat-sniffer/{SATELLITES}/LICENSE')]:
         (licenses/name).write_bytes(fetch(url))
@@ -90,7 +111,8 @@ def main():
     countries=sorted({c for p in plans for c in p['countries']})
     report=f'# Included catalogue\n\n{len(plans)} plans, {sum(len(p["bands"]) for p in plans)} entries.\n\n'
     report+='National coverage: '+', '.join(countries)+'.\n\n'
-    report+='Inmarsat survey tables: '+', '.join(p['designator']+' ('+', '.join(p['regions'][1:])+')' for p in plans if p['regions'][0]=='Inmarsat')+'.\n\n'
+    report+='Inmarsat plans: '+', '.join(p['designator']+' ('+', '.join(p['regions'][1:])+')' for p in plans if p['regions'][0]=='Inmarsat')+'.\n\n'
+    report+='See [SATELLITES.md](SATELLITES.md) for the current L-band regional coverage, satellite aliases, orbital positions and the distinction between channel surveys, receive-band references and historical data.\n\n'
     report+='This is every plan in the pinned source catalogues, **not every country or every satellite/beam**. National plans vary in scope and may be outdated; Inmarsat tables are partial surveys. Generic international entries are not substitutes for missing national plans.\n\n'
     report+='Excluded malformed source records (not guessed or silently repaired): '+json.dumps(rejected,ensure_ascii=False)+'.\n\n'
     report+='Sources and conversion:\n\n- SDR++ '+SDRPP+': all 21 supplied plans; frequencies converted from Hz to MHz, source names/credits retained in each JSON file.\n- inmarsat-sniffer '+SATELLITES+': all 4 satellite channel tables; center markers use +/-1 Hz for display only, not asserted bandwidth. Original C table copyright: 2026 CEMAXECUTER LLC.\n\n'

@@ -97,6 +97,7 @@ static void bandPlanSelector(App& app, bool second) {
         ImGui::EndCombo();
     }
     if (index < 0 && *saved) ImGui::TextWrapped("Saved plan unavailable: %s", saved);
+    if (loaded.valid && !loaded.notes.empty()) ImGui::TextWrapped("%s", loaded.notes.c_str());
     ImGui::PopID();
 }
 

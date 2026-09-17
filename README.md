@@ -16,7 +16,7 @@ Windows builds can be found on official project page: **https://sarahsforge.dev/
 
 - **Copyable tables** — Copy button, right-click, or Ctrl+C copies decoded text from any pane
 - **Reset pane layout** — visible button, View menu, or Ctrl+Shift+R restores default docking without changing radio settings
-- **Regional band plans** — 26 bundled plans with 1,738 validated entries, searchable country/region names and independent A/B selection. See [the catalogue](bandplans/CATALOGUE.md) for actual coverage and source limitations; this is not every country worldwide.
+- **Regional band plans** — 27 bundled plans with 1,739 validated entries, searchable country/region names and independent A/B selection. [Inmarsat plans](bandplans/SATELLITES.md) cover I4A, 4F2, 3F5, 4F3 and 6F1, plus historical 4F1; 4F2 is a receive-band reference only. See [the catalogue](bandplans/CATALOGUE.md) for actual coverage and source limitations; this is not every country worldwide.
 - **Pop-out panes** — drag a tab out of the dock to float it anywhere on the desktop
 - **PPM adjustment** — crystal offset control for RTL-SDR, RTL-TCP, dual RTL, HackRF, and Airspy
 - **Inmarsat Aero** — 600/1200/8400 bps OQPSK signal decoding, voice AMBE decoding, ACARS/ADS-C/CPDLC message parsing

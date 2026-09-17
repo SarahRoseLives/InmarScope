@@ -1,0 +1,25 @@
+{
+  "name": "I-4 F2 / 4F2 - 143.5E (receive band only; channels unverified)",
+  "designator": "4F2",
+  "position": 143.5,
+  "regions": [
+    "Inmarsat",
+    "APAC",
+    "Asia Pacific",
+    "POR"
+  ],
+  "countries": [],
+  "fleet_source": "https://www.viasat.com/content/dam/us-site/government/missions/documents/Viasat-Aero-Services-brochure-September-2025-digital.pdf",
+  "region_source": "https://www.jsatmobile.com/general1/id=222",
+  "source": "https://www.itu.int/net/Itu-R/space/res647/index.asp?nmod=asc&norder=freq_assgn",
+  "reviewed": "2026-09-17",
+  "notes": "4F2 serves APAC at 143.5E (JSAT service bulletin, 10 September 2025). This is the general 1525-1559 MHz space-to-Earth receive band, not a verified active-channel list. Historical 4F1 channels are available separately and must be verified locally.",
+  "bands": [
+    {
+      "lo": 1525.0,
+      "hi": 1559.0,
+      "label": "4F2 APAC L-band receive reference (not individual channels)",
+      "color": "D76B37"
+    }
+  ]
+}

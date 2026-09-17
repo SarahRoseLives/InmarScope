@@ -1,10 +1,12 @@
 # Included catalogue
 
-26 plans, 1738 entries.
+27 plans, 1739 entries.
 
 National coverage: Australia, Austria, Belgium, Brazil, Canada, France, Germany, Italy, Netherlands, People's Republic of China, Republic Of Ireland, Republic of Korea, Russia, Slovakia, Turkey, United Kingdom, United States of America.
 
-Inmarsat survey tables: 4F3 (AORW), 3F5 (AORE), AF1 (EMEA), F1 (IOE), 4F1 (APAC, Asia Pacific).
+Inmarsat plans: 4F3 (AMER, Americas, AORW), 3F5 (AORE, Atlantic Ocean East), I4A (EMEA, Europe Middle East Africa), 6F1 (IOE, Indian Ocean East), 4F1 (Historical, APAC, Asia Pacific), 4F2 (APAC, Asia Pacific, POR).
+
+See [SATELLITES.md](SATELLITES.md) for the current L-band regional coverage, satellite aliases, orbital positions and the distinction between channel surveys, receive-band references and historical data.
 
 This is every plan in the pinned source catalogues, **not every country or every satellite/beam**. National plans vary in scope and may be outdated; Inmarsat tables are partial surveys. Generic international entries are not substitutes for missing national plans.
 

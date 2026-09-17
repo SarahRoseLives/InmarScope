@@ -5,6 +5,11 @@ source revisions, exclusions and coverage limits. These are reception guides,
 not a complete worldwide allocation database. Plans do not add decoders for
 other radio modes or extend a receiver's tuning range.
 
+See [SATELLITES.md](SATELLITES.md) for I4A, 4F2, 3F5, 4F3 and 6F1, their
+regions/positions, and the separate historical 4F1 survey. Search **Inmarsat**
+to show all six entries. 4F2 currently has a receive-band reference only,
+not a verified channel list. The selected plan's notes appear below the selector.
+
 In Control, enable **Band Plan**, search **Region / country / plan**, and select
 a plan. Receiver B has its own independent search and selection. Selections are
 saved by file path so adding plans does not silently select a different one.

@@ -1,9 +1,10 @@
 {
-  "name": "I4-F1 APAC (2024 survey; partial)",
+  "name": "I-4 F1 / 4F1 - historical 143.5E APAC survey (not current 4F2)",
   "designator": "4F1",
   "position": 143.5,
   "regions": [
     "Inmarsat",
+    "Historical",
     "APAC",
     "Asia Pacific"
   ],
@@ -11,7 +12,7 @@
   "source": "https://raw.githubusercontent.com/thebaldgeek/thebaldgeek.github.io/828314e0512604879df6828ee5cbda2d02f9ea6d/L-Band.md",
   "source_sha256": "64a5a62c9b9b2f94ce99d4e75b341cd8579c1a73fd4daf57a15129a1aee8cb61",
   "source_credit": "Frequency facts: David L. Wilson and Sergi.vdl2, February 2024; published by thebaldgeek.",
-  "notes": "Historical reception survey, not a current complete allocation. Verify locally. +/-1 Hz is a display marker, not channel bandwidth.",
+  "notes": "Historical survey labelled 4F1 by its author. APAC is now served by 4F2 at 143.5E; these channel centers have NOT been verified for 4F2. This position is historical, not a current 4F1 pointing instruction. +/-1 Hz is a display marker, not channel bandwidth.",
   "bands": [
     {
       "lo": 1545.024999,

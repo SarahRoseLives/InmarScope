@@ -78,7 +78,7 @@ without contacting a traffic provider. The Windows package includes the local
 these files. Keep the full folder with the executable when distributing it.
 Every OS package also contains `bandplans/` and a clean `recordings/` output
 folder. CI tests all bundled plans with the native parser and release validation
-checks the complete 26-plan inventory. `tools/import_bandplans.py` reproduces
+checks the complete 27-plan inventory and all six Inmarsat identities. `tools/import_bandplans.py` reproduces
 the pinned source conversion; update catalogue counts/tests deliberately when
 adding plans. Never package personal recordings.
 
