@@ -88,6 +88,23 @@ View more information at the [airspy/airspyone_host](https://github.com/airspy/a
 Airspy headers are vendored in `third_party/airspy/`. The build automatically
 enables Airspy (`HAS_AIRSPY=1`) when libairspy is found by CMake.
 
+#### Optional: ADALM-Pluto / Pluto+ support
+
+Download and extract the official `Windows.zip` from the Analog Devices
+[`libiio` release](https://github.com/analogdevicesinc/libiio/releases/latest),
+then point `LIBIIO_ROOT` at the extracted directory. It must contain `include/`
+and `Windows-MinGW-W64/`:
+
+```bash
+export LIBIIO_ROOT='C:/path/to/libiio'
+cmake -S . -B build -G Ninja
+```
+
+The build enables the native Pluto+/AD936x source (`HAS_LIBIIO=1`) when both
+`iio.h` and the MinGW libiio import library are found. It copies `libiio.dll`
+and the two additional runtime DLLs required by the official archive next to
+the executable.
+
 ### 3. Clone the InmarScope repository
 
 Obtain the project source code using Git in the **MINGW64** shell:
@@ -118,7 +135,8 @@ build/libgcc_s_seh-1.dll, libwinpthread-1.dll, libstdc++-6.dll,
       libjansson-4.dll, WebView2Loader.dll
 ```
 
-(plus `build/libairspy.dll` when Airspy support is enabled)
+(plus `build/libairspy.dll` and/or `build/libiio.dll` when those optional
+sources are enabled)
 
 The DLLs are copied next to the `.exe` automatically (POST_BUILD step), so it
 runs standalone from a double-click or from PyCharm without MSYS2 on `PATH`.
@@ -216,6 +234,12 @@ needed.
 Install `libairspy-dev` (Debian/Ubuntu), `airspy` (Arch), or `airspy-devel`
 (Fedora). The build enables Airspy (`HAS_AIRSPY=1`) automatically when libairspy
 is found by CMake.
+
+#### Optional: ADALM-Pluto / Pluto+ support
+
+Install `libiio-dev` (Debian/Ubuntu), `libiio` (Arch), or `libiio-devel`
+(Fedora). The build enables the native Pluto+/AD936x source (`HAS_LIBIIO=1`)
+automatically when libiio is found by CMake.
 
 ### 2. Clone the InmarScope repository
 

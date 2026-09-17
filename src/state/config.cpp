@@ -51,6 +51,10 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WS(serverHost); WI(serverPort); WI(serverCompression); WI(serverSampleType);
     WD(serverSampleRateMHz);
     WS(rtlTcpHost); WI(rtlTcpPort);
+#ifdef HAS_LIBIIO
+    WS(plutoUri); WD(plutoSampleRateMHz); WD(plutoBandwidthMHz);
+    WI(plutoAgc); WF(plutoGainDb); WI(plutoRfPort);
+#endif
     WD(hackSampleRateMHz); WI(hackLna); WI(hackVga); WI(hackAmp); WI(hackBias);
 #ifdef HAS_AIRSPY
     WI(airspySampleRateIdx); WI(airspyGainMode); WI(airspySenseGain); WI(airspyLinearGain);
@@ -119,6 +123,10 @@ void cfgReadLine(App& app, const char* line)
     RS(serverHost); RI(serverPort); RB(serverCompression); RI(serverSampleType);
     RD(serverSampleRateMHz);
     RS(rtlTcpHost); RI(rtlTcpPort);
+#ifdef HAS_LIBIIO
+    RS(plutoUri); RD(plutoSampleRateMHz); RD(plutoBandwidthMHz);
+    RB(plutoAgc); RF(plutoGainDb); RI(plutoRfPort);
+#endif
     RD(hackSampleRateMHz); RI(hackLna); RI(hackVga); RB(hackAmp); RB(hackBias);
 #ifdef HAS_AIRSPY
     RI(airspySampleRateIdx); RI(airspyGainMode); RI(airspySenseGain); RI(airspyLinearGain);

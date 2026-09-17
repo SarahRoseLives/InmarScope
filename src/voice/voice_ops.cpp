@@ -69,6 +69,12 @@ void retuneActive(App& app, double centerMHz)
     else if (app.sourceMode == 5)
         app.airspy.setCenterFreq(hz);
 #endif
+    else if (app.sourceMode == 6)
+        app.rtltcp.setCenterFreq(hz);
+#ifdef HAS_LIBIIO
+    else if (app.sourceMode == 7)
+        app.pluto.setCenterFreq(hz);
+#endif
     app.decoders.removeAll();
     app.decoders.configure(app.active->sampleRate(), hz);
     // Rebuild the frequency axis now (processFft already ran this frame with the
@@ -101,6 +107,10 @@ void retunePreserving(App& app, double centerMHz)
 #endif
     else if (app.sourceMode == 6)
         app.rtltcp.setCenterFreq(hz);
+#ifdef HAS_LIBIIO
+    else if (app.sourceMode == 7)
+        app.pluto.setCenterFreq(hz);
+#endif
     app.decoders.removeAll();
     app.decoders.configure(app.active->sampleRate(), hz);
     for (auto& k : keep)
@@ -605,4 +615,3 @@ void updateCallHunter(App& app)
         ++j;
     }
 }
-
