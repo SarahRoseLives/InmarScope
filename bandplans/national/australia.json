@@ -1,0 +1,389 @@
+{
+  "name": "Australia",
+  "designator": "AU",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Australia"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/australia.json",
+  "source_sha256": "34043b00780ec76bf33893a340ca70b18fa63bed46486845df93c3cd736308ad",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Australia",
+    "country_name": "Australia",
+    "country_code": "AU",
+    "author_name": "Owen",
+    "author_url": "https://github.com/Ozies"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 0.1357,
+      "hi": 0.1378,
+      "label": "2200m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "630m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.52,
+      "hi": 1.71,
+      "label": "Medium Wave Broadcast (AM Broadcast)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1.8,
+      "hi": 1.875,
+      "label": "160m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2.3,
+      "hi": 2.468,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.2,
+      "hi": 3.4,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.7,
+      "label": "80m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.776,
+      "hi": 3.8,
+      "label": "80m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.95,
+      "hi": 4.0,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 4.75,
+      "hi": 4.995,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.005,
+      "hi": 5.06,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.3515,
+      "hi": 5.3665,
+      "label": "60m Ham Band (Unavailable)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.9,
+      "hi": 6.2,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.3,
+      "label": "40m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.2,
+      "hi": 7.45,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 9.4,
+      "hi": 9.9,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.15,
+      "label": "30m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 11.6,
+      "hi": 12.1,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 13.57,
+      "hi": 13.87,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.35,
+      "label": "20m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 15.1,
+      "hi": 15.8,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 17.48,
+      "hi": 17.9,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.168,
+      "label": "17m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.9,
+      "hi": 19.02,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "15m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.45,
+      "hi": 21.85,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "12m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 25.67,
+      "hi": 26.1,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 26.965,
+      "hi": 27.405,
+      "label": "27MHz CB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 27.68,
+      "hi": 27.98,
+      "label": "27MHz Marine Band",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 28.0,
+      "hi": 29.7,
+      "label": "10m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 50.0,
+      "hi": 54.0,
+      "label": "6m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 87.5,
+      "hi": 108.0,
+      "label": "FM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 108.0,
+      "hi": 117.975,
+      "label": "Air Band VOR/ILS",
+      "color": "4287F5"
+    },
+    {
+      "lo": 117.975,
+      "hi": 137.0,
+      "label": "Air Band Voice",
+      "color": "4287F5"
+    },
+    {
+      "lo": 137.0,
+      "hi": 138.0,
+      "label": "Polar Orbiting Satellites",
+      "color": "D76B37"
+    },
+    {
+      "lo": 144.0,
+      "hi": 148.0,
+      "label": "2m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 156.0,
+      "hi": 162.05,
+      "label": "VHF Marine Band",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 174.0,
+      "hi": 195.0,
+      "label": "Digital TV Broadcast (DVB-T)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 195.0,
+      "hi": 209.0,
+      "label": "Digital Radio Broadcast (DAB+)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 209.0,
+      "hi": 230.0,
+      "label": "Digital TV Broadcast (DVB-T)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 430.0,
+      "hi": 450.0,
+      "label": "70cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 476.425,
+      "hi": 477.4125,
+      "label": "UHF CB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 526.0,
+      "hi": 694.0,
+      "label": "Digital TV Broadcast (DVB-T)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 915.0,
+      "hi": 928.0,
+      "label": "ISM Band",
+      "color": "888888"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1300.0,
+      "label": "23cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2300.0,
+      "hi": 2302.0,
+      "label": "13cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2400.0,
+      "hi": 2483.5,
+      "label": "2.4GHz WiFi (ISM Band)",
+      "color": "888888"
+    },
+    {
+      "lo": 2400.0,
+      "hi": 2450.0,
+      "label": "13cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3300.0,
+      "hi": 3400.0,
+      "label": "9cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3400.0,
+      "hi": 3600.0,
+      "label": "9cm Ham Band (Restricted)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5150.0,
+      "hi": 5590.0,
+      "label": "5GHz WiFi (ISM Band)",
+      "color": "888888"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5835.0,
+      "label": "5GHz WiFi (ISM Band)",
+      "color": "888888"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5850.0,
+      "label": "6cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10000.0,
+      "hi": 10500.0,
+      "label": "3cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24000.0,
+      "hi": 24250.0,
+      "label": "12mm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 47000.0,
+      "hi": 47200.0,
+      "label": "6mm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 76000.0,
+      "hi": 81000.0,
+      "label": "4mm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 122250.0,
+      "hi": 123000.0,
+      "label": "122-123GHz Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 134000.0,
+      "hi": 141000.0,
+      "label": "134-141GHz Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 241000.0,
+      "hi": 250000.0,
+      "label": "241-250GHz Ham Band",
+      "color": "4CAF50"
+    }
+  ]
+}

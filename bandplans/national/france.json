@@ -1,0 +1,533 @@
+{
+  "name": "France",
+  "designator": "FR",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "France"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/france.json",
+  "source_sha256": "e1e7fe5303ab67a2802470dc06ccfd5b5a1088148da1d5024a56c7e3889509ff",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "France",
+    "country_name": "France",
+    "country_code": "FR",
+    "author_name": "Fred F4EED, Armand31",
+    "author_url": "http://f4eed.wordpress.com, https://github.com/Armand31"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 0.1355,
+      "hi": 0.1378,
+      "label": "137KHz - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.1485,
+      "hi": 0.519,
+      "label": "Grande ondes",
+      "color": "FF9800"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "472KHz - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.52,
+      "hi": 1.705,
+      "label": "Ondes moyennes (AM Broadcast)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1.607,
+      "hi": 1.81,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 1.81,
+      "hi": 1.85,
+      "label": "160m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2.3,
+      "hi": 2.5,
+      "label": "120m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2.5,
+      "hi": 2.85,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 2.85,
+      "hi": 3.155,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.155,
+      "hi": 3.4,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 3.2,
+      "hi": 3.4,
+      "label": "90m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.4,
+      "hi": 3.5,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.6,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 3.6,
+      "hi": 3.8,
+      "label": "80m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.9,
+      "hi": 4.0,
+      "label": "75m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 4.065,
+      "hi": 4.44,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.65,
+      "hi": 4.75,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 4.75,
+      "hi": 4.995,
+      "label": "60m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.005,
+      "hi": 5.06,
+      "label": "60m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.3515,
+      "hi": 5.3665,
+      "label": "60m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.45,
+      "hi": 5.73,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 5.9,
+      "hi": 6.2,
+      "label": "49m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 6.2,
+      "hi": 6.525,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 6.525,
+      "hi": 6.765,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.2,
+      "label": "40m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.2,
+      "hi": 7.45,
+      "label": "41m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 8.195,
+      "hi": 8.815,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 8.815,
+      "hi": 9.04,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 9.4,
+      "hi": 9.9,
+      "label": "31m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10.005,
+      "hi": 10.1,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.15,
+      "label": "30m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 11.175,
+      "hi": 11.4,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 11.6,
+      "hi": 12.1,
+      "label": "25m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 12.23,
+      "hi": 13.2,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 13.2,
+      "hi": 13.36,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 13.57,
+      "hi": 13.87,
+      "label": "21m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.35,
+      "label": "20m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 15.01,
+      "hi": 15.1,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 15.1,
+      "hi": 15.8,
+      "label": "19m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 16.36,
+      "hi": 17.41,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 17.48,
+      "hi": 17.9,
+      "label": "16m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 17.9,
+      "hi": 18.03,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.168,
+      "label": "17m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.78,
+      "hi": 18.9,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 18.9,
+      "hi": 19.02,
+      "label": "15m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 19.68,
+      "hi": 19.8,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "15m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.45,
+      "hi": 21.85,
+      "label": "13 mètres - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 21.925,
+      "hi": 22.0,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 22.0,
+      "hi": 22.855,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 23.2,
+      "hi": 23.35,
+      "label": "Aviation - HF",
+      "color": "4287F5"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "12m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 25.07,
+      "hi": 25.21,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 25.67,
+      "hi": 26.1,
+      "label": "11m - radiodiffusion",
+      "color": "FF9800"
+    },
+    {
+      "lo": 26.1,
+      "hi": 26.175,
+      "label": "Marine - HF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 26.96,
+      "hi": 27.41,
+      "label": "11m - CB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.0,
+      "hi": 29.7,
+      "label": "10m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 50.0,
+      "hi": 54.0,
+      "label": "6m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 80.0,
+      "hi": 108.0,
+      "label": "Radiodiffusion - Bande FM",
+      "color": "FF9800"
+    },
+    {
+      "lo": 108.0,
+      "hi": 118.0,
+      "label": "Aviation - VOR/ILS",
+      "color": "4287F5"
+    },
+    {
+      "lo": 118.0,
+      "hi": 137.0,
+      "label": "Aviation - Voix",
+      "color": "4287F5"
+    },
+    {
+      "lo": 137.0,
+      "hi": 138.0,
+      "label": "Polar Orbiting Satellites",
+      "color": "D76B37"
+    },
+    {
+      "lo": 144.0,
+      "hi": 146.0,
+      "label": "2m - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 156.0,
+      "hi": 162.025,
+      "label": "Marine",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 162.3625,
+      "hi": 162.5875,
+      "label": "NOAA Weather Radio",
+      "color": "FF9800"
+    },
+    {
+      "lo": 174.0,
+      "hi": 223.0,
+      "label": "Radiodiffusion - Bande DAB",
+      "color": "FF9800"
+    },
+    {
+      "lo": 225.0,
+      "hi": 380.0,
+      "label": "Military Aviation",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 240.0,
+      "hi": 270.0,
+      "label": "Satellite militaire",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 380.0,
+      "hi": 400.0,
+      "label": "Police (TETRAPOL)",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 420.0,
+      "hi": 450.0,
+      "label": "70cm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 446.0,
+      "hi": 446.2,
+      "label": "PMR446",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 470.0,
+      "hi": 694.0,
+      "label": "TNT (DVB-T)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1300.0,
+      "label": "23cm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1452.0,
+      "hi": 1492.0,
+      "label": "Radiodiffusion - Bande DAB",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2300.0,
+      "hi": 2450.0,
+      "label": "13cm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3400.0,
+      "hi": 3475.0,
+      "label": "9cm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5850.0,
+      "label": "6cm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10000.0,
+      "hi": 10500.0,
+      "label": "3cm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5850.0,
+      "label": "5,650GHz - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24000.0,
+      "hi": 24250.0,
+      "label": "12mm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 47000.0,
+      "hi": 47200.0,
+      "label": "6mm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 75500.0,
+      "hi": 81500.0,
+      "label": "4mm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 122250.0,
+      "hi": 123000.0,
+      "label": "2,5mm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 134000.0,
+      "hi": 141000.0,
+      "label": "2mm - Radioamateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 241000.0,
+      "hi": 250000.0,
+      "label": "1mm - Radioamateur",
+      "color": "4CAF50"
+    }
+  ]
+}

@@ -62,6 +62,44 @@ static bool drawPpmAdjust(const char* label, float* ppm)
 
 void drawSdrplayControls(App& app);
 
+void reloadBandPlans(App& app) {
+    scanBandPlans(app.bandPlanDir, app.bandPlanNames, app.bandPlanPaths, &app.bandPlanErrors);
+    auto restore = [&](int& index, char* saved, BandPlan& loaded) {
+        if (*saved) {
+            auto found = std::find(app.bandPlanPaths.begin(), app.bandPlanPaths.end(), saved);
+            index = found == app.bandPlanPaths.end() ? -1 : int(found - app.bandPlanPaths.begin());
+        }
+        if (index >= 0 && index < (int)app.bandPlanPaths.size()) {
+            loaded = loadBandPlan(app.bandPlanPaths[index]);
+            std::snprintf(saved, 512, "%s", app.bandPlanPaths[index].c_str());
+        } else { index = -1; loaded = {}; }
+    };
+    restore(app.bandPlanIdx, app.bandPlanFile, app.bandPlanLoaded);
+    restore(app.bandPlanIdxB, app.bandPlanFileB, app.bandPlanLoadedB);
+}
+static void bandPlanSelector(App& app, bool second) {
+    ImGui::PushID(second ? "plansB" : "plansA");
+    int& index = second ? app.bandPlanIdxB : app.bandPlanIdx;
+    auto& loaded = second ? app.bandPlanLoadedB : app.bandPlanLoaded;
+    char* saved = second ? app.bandPlanFileB : app.bandPlanFile;
+    static ImGuiTextFilter filters[2];
+    filters[second ? 1 : 0].Draw("Region / country / plan", -1);
+    const char* preview = index >= 0 && index < (int)app.bandPlanNames.size() ? app.bandPlanNames[index].c_str() : "Select a band plan";
+    ImGui::SetNextItemWidth(-1);
+    if (ImGui::BeginCombo("##plan", preview)) {
+        for (int i = 0; i < (int)app.bandPlanNames.size(); ++i) {
+            if (!filters[second ? 1 : 0].PassFilter(app.bandPlanNames[i].c_str())) continue;
+            if (ImGui::Selectable(app.bandPlanNames[i].c_str(), i == index)) {
+                index = i; loaded = loadBandPlan(app.bandPlanPaths[i]);
+                std::snprintf(saved, 512, "%s", app.bandPlanPaths[i].c_str());
+            }
+        }
+        ImGui::EndCombo();
+    }
+    if (index < 0 && *saved) ImGui::TextWrapped("Saved plan unavailable: %s", saved);
+    ImGui::PopID();
+}
+
 void drawControls(App& app)
 {
     if (app.sourceMode == 7 && (app.rsp.streamFailed() || app.rspB.streamFailed())) {
@@ -611,62 +649,21 @@ void drawControls(App& app)
     if (app.sourceMode == 1)
         ImGui::TextDisabled("  (WAV: tuning is fixed to the file)");
 
-    // Band plan bar along bottom of spectrum
-    if (ImGui::Checkbox(_L("Band Plan"), &app.showBandPlan));
-    if (app.showBandPlan)
-    {
-        ImGui::SameLine();
-        if (ImGui::SmallButton("Reload##bpr"))
-            scanBandPlans(app.bandPlanDir, app.bandPlanNames, app.bandPlanPaths);
-        ImGui::SameLine();
-        if (ImGui::SmallButton("Folder##bpf"))
-        {
-#if defined(_WIN32)
-            ShellExecuteA(nullptr, "open", app.bandPlanDir, nullptr, nullptr, SW_SHOW);
-#endif
-        }
-        if (app.bandPlanNames.empty())
-        {
-            ImGui::SameLine();
-            ImGui::TextDisabled("(no .json bandplans in bandplans/)");
-        }
-        else
-        {
-            if (app.bandPlanIdx >= (int)app.bandPlanNames.size())
-                app.bandPlanIdx = 0;
-            ImGui::SetNextItemWidth(-1);
-            if (ImGui::Combo("##bplan-sel", &app.bandPlanIdx,
-                             [](void* data, int idx) -> const char* {
-                                 auto& v = *(std::vector<std::string>*)data;
-                                 return idx >= 0 && idx < (int)v.size() ? v[idx].c_str() : "";
-                             },
-                             &app.bandPlanNames, (int)app.bandPlanNames.size()))
-            {
-                if (app.bandPlanIdx >= 0 && app.bandPlanIdx < (int)app.bandPlanPaths.size())
-                    app.bandPlanLoaded = loadBandPlan(app.bandPlanPaths[app.bandPlanIdx]);
-            }
-        }
+    // Independent plans and region/country searches for receivers A and B.
+    ImGui::Checkbox(_L("Band Plan"), &app.showBandPlan);
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Reload plans")) reloadBandPlans(app);
+    if (ImGui::InputText("Band plan folder", app.bandPlanDir, sizeof(app.bandPlanDir), ImGuiInputTextFlags_EnterReturnsTrue))
+        reloadBandPlans(app);
+    ImGui::TextDisabled("%d valid plans; search by region, country, satellite or name.", (int)app.bandPlanNames.size());
+    if (app.showBandPlan) bandPlanSelector(app, false);
+    if (app.dualMode) {
+        ImGui::Checkbox(_L("Band Plan (B)"), &app.showBandPlanB);
+        if (app.showBandPlanB) bandPlanSelector(app, true);
     }
-
-    if (app.dualMode)
-    {
-        if (ImGui::Checkbox(_L("Band Plan (B)"), &app.showBandPlanB));
-        if (app.showBandPlanB && !app.bandPlanNames.empty())
-        {
-            if (app.bandPlanIdxB >= (int)app.bandPlanNames.size())
-                app.bandPlanIdxB = 0;
-            ImGui::SetNextItemWidth(-1);
-            if (ImGui::Combo("##bplan-sel-b", &app.bandPlanIdxB,
-                             [](void* data, int idx) -> const char* {
-                                 auto& v = *(std::vector<std::string>*)data;
-                                 return idx >= 0 && idx < (int)v.size() ? v[idx].c_str() : "";
-                             },
-                             &app.bandPlanNames, (int)app.bandPlanNames.size()))
-            {
-                if (app.bandPlanIdxB >= 0 && app.bandPlanIdxB < (int)app.bandPlanPaths.size())
-                    app.bandPlanLoadedB = loadBandPlan(app.bandPlanPaths[app.bandPlanIdxB]);
-            }
-        }
+    if (!app.bandPlanErrors.empty() && ImGui::TreeNode("Band plan errors")) {
+        for (const auto& error : app.bandPlanErrors) ImGui::TextWrapped("%s", error.c_str());
+        ImGui::TreePop();
     }
 
     ImGui::Separator();
@@ -1080,7 +1077,14 @@ void drawSpectrum(App& app, SpectrumView& v, DecoderManager& mgr, const char* ti
                 if (e.hiMHz < viewLo || e.loMHz > viewHi) continue;
                 float loPx = pp.x + (float)((std::max(e.loMHz, viewLo) - viewLo) * pxPerMHz);
                 float hiPx = pp.x + (float)((std::min(e.hiMHz, viewHi) - viewLo) * pxPerMHz);
+                if (hiPx - loPx < 3.0f) {
+                    const float middle = (loPx + hiPx) * 0.5f;
+                    loPx = std::max(pp.x, middle - 1.5f);
+                    hiPx = std::min(pp.x + ps.x, middle + 1.5f);
+                }
                 dl->AddRectFilled(ImVec2(loPx, bandTop), ImVec2(hiPx, bandBot), e.color);
+                if (ImGui::IsMouseHoveringRect(ImVec2(loPx, bandTop), ImVec2(hiPx, bandBot)))
+                    ImGui::SetTooltip("%s\n%.6f - %.6f MHz", e.label.c_str(), e.loMHz, e.hiMHz);
                 float segW = hiPx - loPx;
                 if (segW > 50 && !e.label.empty())
                 {
@@ -2761,6 +2765,9 @@ void drawDockHost(App& app)
     // on first run (no node) or when explicitly forced (Reset Layout / dual /
     // a layout-version bump).
     static bool forceLayout = false;
+    const auto& layoutIo = ImGui::GetIO();
+    if (!layoutIo.WantTextInput && layoutIo.KeyCtrl && layoutIo.KeyShift && ImGui::IsKeyPressed(ImGuiKey_R, false))
+        forceLayout = true;
     if (app.forceDefaultLayout) { forceLayout = true; app.forceDefaultLayout = false; }
     static bool lastDual = false;
     if (app.dualMode != lastDual) { forceLayout = true; lastDual = app.dualMode; }
@@ -2830,13 +2837,16 @@ void drawDockHost(App& app)
         ImGui::DockBuilderDockWindow((std::string(_L("LES Freq")) + "###LES Freq").c_str(), rbot);
         ImGui::DockBuilderDockWindow((std::string(_L("Constellation")) + "###Constellation").c_str(), rcon);
         ImGui::DockBuilderFinish(dockId);
+        ImGui::MarkIniSettingsDirty();
     }
 
     if (ImGui::BeginMenuBar())
     {
+        if (ImGui::Button("Reset pane layout")) forceLayout = true;
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Restore the original pane positions and sizes, including floating panes. Radio settings are preserved. Ctrl+Shift+R");
         if (ImGui::BeginMenu(_L("View")))
         {
-            if (ImGui::MenuItem(_L("Reset Layout")))
+            if (ImGui::MenuItem("Reset pane layout to default", "Ctrl+Shift+R"))
                 forceLayout = true;
             ImGui::Separator();
             ImGui::MenuItem(_L("Drag a tab out to float a pane on the desktop"), nullptr, false, false);

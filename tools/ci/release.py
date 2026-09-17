@@ -45,6 +45,12 @@ for platform in ["windows-x64", "linux-x64", "macos-x64", "macos-arm64"]:
     for path in ["CI-SETUP.md", "SDRPLAY.md", "TESTING.md", "TEST-RESULTS.txt"]:
         if not files.get(path):
             raise RuntimeError(f"Missing release documentation: {path}")
+    for path in ["bandplans/README.md", "bandplans/CATALOGUE.md", "recordings/README.md"]:
+        if not files.get(path):
+            raise RuntimeError(f"Missing band plan/recording folder documentation: {path}")
+    plans = [p for p in files if p.startswith("bandplans/") and p.endswith(".json")]
+    if len(plans) != 26:
+        raise RuntimeError("Expected the complete 26-plan bundled catalogue")
     if platform == "windows-x64":
         for path in ["flight-map/index.html", "flight-map/map.js", "flight-map/map.css", "flight-map/leaflet/leaflet.js", "flight-map/leaflet/leaflet.css", "flight-map/leaflet/LICENSE"]:
             if not files.get(path):
@@ -59,6 +65,11 @@ assets.append(directory / "SHA256SUMS.txt")
 notes = Path("release-notes.md")
 notes.write_text(f"SDRplay testing release {tag}\n\n"
     "Includes upstream updates, antenna/model controls, two-device reception and RSPduo independent tuners.\n\n"
+    "Adds a visible Reset pane layout button and Ctrl+Shift+R. Bundles 26 band plans (17 countries, "
+    "generic international/QO-100 plans and five Inmarsat survey regions), plus a recordings output folder. "
+    "Plans are searchable by country/region and independently selected for A/B, with strict format validation. "
+    "This is not an exhaustive worldwide catalogue; see bandplans/CATALOGUE.md for sources, historical survey limits "
+    "and 13 excluded malformed source entries. Upstream's original packaged folders were not available in its public repo.\n\n"
     "All four platform builds and mock SDRplay tests passed in GitHub Actions. "
     "Packaged startup results are below; unavailable-opengl means the hosted VM has no usable graphics context, "
     "so rendering remains a tester check on that platform. Crashes and other startup failures block publication. "

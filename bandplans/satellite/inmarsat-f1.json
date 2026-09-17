@@ -1,0 +1,106 @@
+{
+  "name": "I-6 F1 (surveyed channels; partial)",
+  "designator": "F1",
+  "position": 83.5,
+  "regions": [
+    "Inmarsat",
+    "IOE"
+  ],
+  "countries": [],
+  "source": "https://raw.githubusercontent.com/alphafox02/inmarsat-sniffer/c5e767ec75b1511fdc44a0644f600d228144467d/satellites.c",
+  "source_sha256": "d468150f0fb83e90d756894285c68bb08329b5c53b1ba463c95ec45660fdb9be",
+  "license": "GPL-3.0-or-later",
+  "notes": "Surveyed channel centers, not complete allocations. Verify active frequencies locally. No geographic aliases inferred from the source.",
+  "bands": [
+    {
+      "lo": 1545.159999,
+      "hi": 1545.160001,
+      "label": "AERO 600 1545.16 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.164999,
+      "hi": 1545.165001,
+      "label": "AERO 600 1545.16 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.184999,
+      "hi": 1545.185001,
+      "label": "AERO 600 1545.18 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.214999,
+      "hi": 1545.215001,
+      "label": "AERO 600 1545.21 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.219999,
+      "hi": 1545.220001,
+      "label": "AERO 600 1545.22 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.224999,
+      "hi": 1545.225001,
+      "label": "AERO 600 1545.22 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.042499,
+      "hi": 1546.042501,
+      "label": "AERO 10500 1546.04 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.092499,
+      "hi": 1546.092501,
+      "label": "AERO 10500 1546.09 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.107499,
+      "hi": 1546.107501,
+      "label": "AERO 10500 1546.11 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.122499,
+      "hi": 1546.122501,
+      "label": "AERO 10500 1546.12 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.157499,
+      "hi": 1546.157501,
+      "label": "AERO 8400 1546.16 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.162499,
+      "hi": 1546.162501,
+      "label": "AERO 8400 1546.16 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.167499,
+      "hi": 1546.167501,
+      "label": "AERO 8400 1546.17 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.172499,
+      "hi": 1546.172501,
+      "label": "AERO 8400 1546.17 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.177499,
+      "hi": 1546.177501,
+      "label": "AERO 8400 1546.18 MHz (channel center)",
+      "color": "4287F5"
+    }
+  ]
+}

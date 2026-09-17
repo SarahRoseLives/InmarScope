@@ -1,0 +1,209 @@
+{
+  "name": "I4-F1 APAC (2024 survey; partial)",
+  "designator": "4F1",
+  "position": 143.5,
+  "regions": [
+    "Inmarsat",
+    "APAC",
+    "Asia Pacific"
+  ],
+  "countries": [],
+  "source": "https://raw.githubusercontent.com/thebaldgeek/thebaldgeek.github.io/828314e0512604879df6828ee5cbda2d02f9ea6d/L-Band.md",
+  "source_sha256": "64a5a62c9b9b2f94ce99d4e75b341cd8579c1a73fd4daf57a15129a1aee8cb61",
+  "source_credit": "Frequency facts: David L. Wilson and Sergi.vdl2, February 2024; published by thebaldgeek.",
+  "notes": "Historical reception survey, not a current complete allocation. Verify locally. +/-1 Hz is a display marker, not channel bandwidth.",
+  "bands": [
+    {
+      "lo": 1545.024999,
+      "hi": 1545.025001,
+      "label": "Aero 600 baud 1545.03 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.029999,
+      "hi": 1545.030001,
+      "label": "Aero 600 baud 1545.03 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.034999,
+      "hi": 1545.035001,
+      "label": "Aero 600 baud 1545.04 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.039999,
+      "hi": 1545.040001,
+      "label": "Aero 600 baud 1545.04 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.044999,
+      "hi": 1545.045001,
+      "label": "Aero 600 baud 1545.05 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.054999,
+      "hi": 1545.055001,
+      "label": "Aero 600 baud 1545.06 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.069999,
+      "hi": 1545.070001,
+      "label": "Aero 1200 baud 1545.07 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.094999,
+      "hi": 1545.095001,
+      "label": "Aero 600 baud 1545.1 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.134999,
+      "hi": 1545.135001,
+      "label": "Aero 600 baud 1545.13 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.139999,
+      "hi": 1545.140001,
+      "label": "Aero 600 baud 1545.14 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.144999,
+      "hi": 1545.145001,
+      "label": "Aero 600 baud 1545.14 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.149999,
+      "hi": 1545.150001,
+      "label": "Aero 600 baud 1545.15 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.154999,
+      "hi": 1545.155001,
+      "label": "Aero 600 baud 1545.15 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.179999,
+      "hi": 1545.180001,
+      "label": "Aero 600 baud 1545.18 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.209999,
+      "hi": 1545.210001,
+      "label": "Aero 600 baud 1545.21 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.004999,
+      "hi": 1546.005001,
+      "label": "Aero 10500 baud 1546.01 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.034999,
+      "hi": 1546.035001,
+      "label": "Aero 10500 baud 1546.04 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.054999,
+      "hi": 1546.055001,
+      "label": "Aero 10500 baud 1546.06 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.069999,
+      "hi": 1546.070001,
+      "label": "Aero 10500 baud 1546.07 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.084999,
+      "hi": 1546.085001,
+      "label": "Aero 10500 baud 1546.09 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.934999,
+      "hi": 1542.935001,
+      "label": "Aero 8400 baud 1542.93 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.939999,
+      "hi": 1542.940001,
+      "label": "Aero 8400 baud 1542.94 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.944999,
+      "hi": 1542.945001,
+      "label": "Aero 8400 baud 1542.94 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.949999,
+      "hi": 1542.950001,
+      "label": "Aero 8400 baud 1542.95 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.954999,
+      "hi": 1542.955001,
+      "label": "Aero 8400 baud 1542.95 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.959999,
+      "hi": 1542.960001,
+      "label": "Aero 8400 baud 1542.96 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.964999,
+      "hi": 1542.965001,
+      "label": "Aero 8400 baud 1542.96 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.969999,
+      "hi": 1542.970001,
+      "label": "Aero 8400 baud 1542.97 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.974999,
+      "hi": 1542.975001,
+      "label": "Aero 8400 baud 1542.97 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.979999,
+      "hi": 1542.980001,
+      "label": "Aero 8400 baud 1542.98 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.984999,
+      "hi": 1542.985001,
+      "label": "Aero 8400 baud 1542.98 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.994999,
+      "hi": 1542.995001,
+      "label": "Aero 8400 baud 1542.99 MHz (channel center)",
+      "color": "4287F5"
+    }
+  ]
+}

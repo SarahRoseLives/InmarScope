@@ -103,6 +103,9 @@ def main():
     docs = ["README.md", "COMPILE.md", "CI-SETUP.md", "SDRPLAY.md", "TESTING.md", "LICENSE"]
     for doc in docs:
         shutil.copy2(ROOT / doc, dest / doc)
+    shutil.copytree(ROOT / "bandplans", dest / "bandplans")
+    (dest / "recordings").mkdir()
+    shutil.copy2(ROOT / "recordings/README.md", dest / "recordings/README.md")
     font = Path("third_party/imgui/misc/fonts/Roboto-Medium.ttf")
     (dest / font).parent.mkdir(parents=True)
     shutil.copy2(ROOT / font, dest / font)

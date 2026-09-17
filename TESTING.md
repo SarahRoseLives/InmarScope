@@ -36,6 +36,12 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
     guessed coordinates. Test A/B duplicates and clearing the Aircraft table.
     Pan/zoom, then decode another aircraft: the view must stay unchanged.
     **Fit received aircraft** frames the markers only when clicked.
+12. Move/resize/detach several panes, then press **Reset pane layout** (or
+    Ctrl+Shift+R). Check that default docking returns and radio settings remain.
+13. Select different country or satellite plans for A/B. Restart and confirm
+    both choices persist. Reload after editing a plan; malformed JSON/ranges
+    must show an error and never a partially loaded overlay. Check the bundled
+    catalogue and recordings folders are present after extraction.
 
 Report the release version, Windows/macOS/Linux version, radio model, API and
 Soapy driver versions, exact steps, expected/actual behaviour, and any displayed

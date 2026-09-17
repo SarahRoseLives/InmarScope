@@ -1,0 +1,1080 @@
+{
+  "name": "Russia",
+  "designator": "RU",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Russia"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/russia.json",
+  "source_sha256": "b20a93e18c2339e51035b2564df51f986ae2641cc634f521f50d420425f1c6ca",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Russia",
+    "country_name": "Russia",
+    "country_code": "RU",
+    "author_name": "Raov",
+    "author_url": "https://twitter.com/UB8QBD"
+  },
+  "excluded_invalid_source_entries": [
+    {
+      "name": "C-Band",
+      "type": "broadcast",
+      "start": 5850000000,
+      "end": 5650000000
+    }
+  ],
+  "bands": [
+    {
+      "lo": 0.1357,
+      "hi": 0.1378,
+      "label": "2200m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.144,
+      "hi": 0.415,
+      "label": "LW",
+      "color": "FF9800"
+    },
+    {
+      "lo": 0.52,
+      "hi": 1.602,
+      "label": "MW",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1.81,
+      "hi": 1.838,
+      "label": "160m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.838,
+      "hi": 1.84,
+      "label": "160m NB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.84,
+      "hi": 2.0,
+      "label": "160m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.2,
+      "hi": 3.4,
+      "label": "SW 90m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.51,
+      "label": "80m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.51,
+      "hi": 3.56,
+      "label": "80m CW Contest",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.56,
+      "hi": 3.57,
+      "label": "80m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.57,
+      "hi": 3.6,
+      "label": "80m NB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.6,
+      "hi": 3.65,
+      "label": "80m SSB Contest",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.65,
+      "hi": 3.7,
+      "label": "80m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.7,
+      "hi": 3.8,
+      "label": "80m SSB Contest",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.9,
+      "hi": 4.0,
+      "label": "SW 75m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 4.75,
+      "hi": 5.06,
+      "label": "SW 60m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.9,
+      "hi": 6.2,
+      "label": "SW 49m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.04,
+      "label": "40m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.04,
+      "hi": 7.05,
+      "label": "40m NB, Digi 500Hz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.05,
+      "hi": 7.053,
+      "label": "40m Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.053,
+      "hi": 7.2,
+      "label": "40m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 9.5,
+      "hi": 9.9,
+      "label": "SW 31m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.13,
+      "label": "30m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10.13,
+      "hi": 10.15,
+      "label": "30m NB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 11.65,
+      "hi": 12.05,
+      "label": "SW 25m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 13.6,
+      "hi": 13.8,
+      "label": "SW 22m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.07,
+      "label": "20m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.07,
+      "hi": 14.099,
+      "label": "20m NB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.099,
+      "hi": 14.101,
+      "label": "20m Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.101,
+      "hi": 14.112,
+      "label": "20m Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.112,
+      "hi": 14.35,
+      "label": "20m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 15.1,
+      "hi": 15.6,
+      "label": "SW 19m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 17.55,
+      "hi": 17.9,
+      "label": "SW 16m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.095,
+      "label": "17m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.095,
+      "hi": 18.109,
+      "label": "17m NB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.109,
+      "hi": 18.111,
+      "label": "17m Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.111,
+      "hi": 18.12,
+      "label": "17m Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.12,
+      "hi": 18.168,
+      "label": "17m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.07,
+      "label": "15m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.07,
+      "hi": 21.11,
+      "label": "15m NB Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.11,
+      "hi": 21.12,
+      "label": "15m Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.12,
+      "hi": 21.149,
+      "label": "15m NB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.149,
+      "hi": 21.151,
+      "label": "15m Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.151,
+      "hi": 21.45,
+      "label": "15m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.45,
+      "hi": 21.85,
+      "label": "SW 13m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.915,
+      "label": "12m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.915,
+      "hi": 24.929,
+      "label": "12m NB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.929,
+      "hi": 24.931,
+      "label": "12m Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.931,
+      "hi": 24.99,
+      "label": "12m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 25.65,
+      "hi": 26.1,
+      "label": "SW 11m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 26.96,
+      "hi": 27.41,
+      "label": "CB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.0,
+      "hi": 28.07,
+      "label": "10m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.07,
+      "hi": 28.15,
+      "label": "10m NB Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.15,
+      "hi": 28.19,
+      "label": "10m NB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.19,
+      "hi": 28.199,
+      "label": "10m Regional Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.199,
+      "hi": 28.201,
+      "label": "10m International Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.201,
+      "hi": 28.225,
+      "label": "10m Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.225,
+      "hi": 28.3,
+      "label": "10m Wide Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.3,
+      "hi": 28.32,
+      "label": "10m Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.32,
+      "hi": 29.0,
+      "label": "10m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.0,
+      "hi": 29.1,
+      "label": "10m Wide",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.1,
+      "hi": 29.2,
+      "label": "10m FM Simplex",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.2,
+      "hi": 29.3,
+      "label": "10m Wide Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.3,
+      "hi": 29.51,
+      "label": "10m Sat",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.51,
+      "hi": 29.52,
+      "label": "10m Guard Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.52,
+      "hi": 29.59,
+      "label": "10m FM Repeater IN",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.59,
+      "hi": 29.61,
+      "label": "10m FM Call",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.61,
+      "hi": 29.62,
+      "label": "10m FM Simplex Repeater",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.62,
+      "hi": 29.7,
+      "label": "10m FM Repeater OUT",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 65.9,
+      "hi": 74.0,
+      "label": "Broadcast FM(OIRT)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 87.5,
+      "hi": 108.0,
+      "label": "Broadcast FM(CCIR)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 108.0,
+      "hi": 118.0,
+      "label": "Air Band VOR/ILS",
+      "color": "4287F5"
+    },
+    {
+      "lo": 118.0,
+      "hi": 137.0,
+      "label": "Air Band Voice",
+      "color": "4287F5"
+    },
+    {
+      "lo": 137.0,
+      "hi": 138.0,
+      "label": "Polar Orbiting Satellites",
+      "color": "D76B37"
+    },
+    {
+      "lo": 144.035,
+      "hi": 144.11,
+      "label": "2m CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.11,
+      "hi": 144.18,
+      "label": "2m CW+Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.18,
+      "hi": 144.36,
+      "label": "2m CW+SSB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.36,
+      "hi": 144.4,
+      "label": "2m CW+SSB+Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.4,
+      "hi": 144.49,
+      "label": "2m Beacons (CW+Digi)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.5,
+      "hi": 144.794,
+      "label": "2m Wide Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.794,
+      "hi": 144.99,
+      "label": "2m Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.99,
+      "hi": 145.194,
+      "label": "2m FM Repeater IN",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.194,
+      "hi": 145.206,
+      "label": "2m FM Sat",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.206,
+      "hi": 145.594,
+      "label": "2m FM",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.594,
+      "hi": 145.7935,
+      "label": "2m FM Repeater OUT",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.7935,
+      "hi": 145.806,
+      "label": "2m FM Sat",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.806,
+      "hi": 146.0,
+      "label": "2m Sat",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 151.7125,
+      "hi": 156.0125,
+      "label": "Train communications",
+      "color": "888888"
+    },
+    {
+      "lo": 156.0,
+      "hi": 162.025,
+      "label": "Marine",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 225.0,
+      "hi": 240.0,
+      "label": "Military Air",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 240.0,
+      "hi": 270.0,
+      "label": "Military Sat / Military Air",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 270.0,
+      "hi": 380.0,
+      "label": "Military Air",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 430.0,
+      "hi": 432.025,
+      "label": "70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 432.025,
+      "hi": 432.1,
+      "label": "70cm CW+Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 432.1,
+      "hi": 432.4,
+      "label": "70cm CW+SSB+Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 432.4,
+      "hi": 432.5,
+      "label": "70cm Beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 432.5,
+      "hi": 433.0,
+      "label": "70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 433.0,
+      "hi": 433.075,
+      "label": "70cm FM Repeaters in",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 433.075,
+      "hi": 433.6,
+      "label": "LPD / 70cm FM Repeaters in",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 433.6,
+      "hi": 434.0,
+      "label": "LPD / 70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 434.0,
+      "hi": 434.1,
+      "label": "LPD / 70cm CW+Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 434.1,
+      "hi": 434.6,
+      "label": "LPD / 70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 434.6,
+      "hi": 434.775,
+      "label": "LPD / 70cm FM Repeaters out",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 434.775,
+      "hi": 435.0,
+      "label": "70cm FM Repeaters out",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 435.0,
+      "hi": 440.0,
+      "label": "70cm SAT",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 446.0,
+      "hi": 446.2,
+      "label": "PMR",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 451.0,
+      "hi": 456.0,
+      "label": "LTE-FDD-450 Uplink",
+      "color": "FF9800"
+    },
+    {
+      "lo": 461.0,
+      "hi": 466.0,
+      "label": "LTE-FDD-450 Downlink",
+      "color": "FF9800"
+    },
+    {
+      "lo": 470.0,
+      "hi": 790.0,
+      "label": "UHF TV",
+      "color": "FF9800"
+    },
+    {
+      "lo": 791.0,
+      "hi": 821.0,
+      "label": "LTE-800-FDD Downlink",
+      "color": "FF9800"
+    },
+    {
+      "lo": 832.0,
+      "hi": 862.0,
+      "label": "LTE-800-FDD Uplink",
+      "color": "FF9800"
+    },
+    {
+      "lo": 880.0,
+      "hi": 915.0,
+      "label": "GSM-900 Uplink",
+      "color": "FF9800"
+    },
+    {
+      "lo": 925.0,
+      "hi": 960.0,
+      "label": "GSM-900 Downlink",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1000.0,
+      "hi": 1089.998,
+      "label": "L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1089.998,
+      "hi": 1090.002,
+      "label": "ADS-B / L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1090.002,
+      "hi": 1260.0,
+      "label": "L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1260.0,
+      "hi": 1270.0,
+      "label": "23cm SAT / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1270.0,
+      "hi": 1290.994,
+      "label": "23cm / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1290.994,
+      "hi": 1291.481,
+      "label": "23cm FM Repeater IN / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1291.481,
+      "hi": 1296.0,
+      "label": "23cm / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1296.025,
+      "hi": 1296.15,
+      "label": "23cm CW+Digi / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1296.15,
+      "hi": 1296.8,
+      "label": "23cm / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1296.8,
+      "hi": 1296.994,
+      "label": "23cm Beacons (CW+Digi) / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1296.994,
+      "hi": 1297.49,
+      "label": "23cm FM Repeater OUT / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1297.49,
+      "hi": 1298.0,
+      "label": "23cm FM / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1298.0,
+      "hi": 1300.0,
+      "label": "23cm / L-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1300.0,
+      "hi": 1710.0,
+      "label": "L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1710.0,
+      "hi": 1785.0,
+      "label": "DCS-1800 Uplink / L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1785.0,
+      "hi": 1805.0,
+      "label": "L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1805.0,
+      "hi": 1880.0,
+      "label": "DCS-1800 Downlink / L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1880.0,
+      "hi": 1900.0,
+      "label": "DECT Phones / L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1900.0,
+      "hi": 1920.0,
+      "label": "L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1920.0,
+      "hi": 1980.0,
+      "label": "UMTS-FDD Uplink / L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1980.0,
+      "hi": 2000.0,
+      "label": "L-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2000.0,
+      "hi": 2010.0,
+      "label": "S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2010.0,
+      "hi": 2025.0,
+      "label": "UMTS-TDD / S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2025.0,
+      "hi": 2110.0,
+      "label": "S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2110.0,
+      "hi": 2170.0,
+      "label": "UMTS-FDD Downlink / S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2170.0,
+      "hi": 2320.0,
+      "label": "S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2320.0,
+      "hi": 2320.15,
+      "label": "13cm EME / S-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2320.15,
+      "hi": 2400.0,
+      "label": "S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2400.0,
+      "hi": 2450.0,
+      "label": "13cm SAT / 2.4GHz WiFi / S-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2450.0,
+      "hi": 2483.5,
+      "label": "2.4GHz WiFi / S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2483.5,
+      "hi": 2500.0,
+      "label": "S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2500.0,
+      "hi": 2570.0,
+      "label": "LTE-FDD Uplink / S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2570.0,
+      "hi": 2620.0,
+      "label": "LTE-TDD / S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2620.0,
+      "hi": 2690.0,
+      "label": "LTE-FDD Downlink / S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2690.0,
+      "hi": 4000.0,
+      "label": "S-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 4000.0,
+      "hi": 5150.0,
+      "label": "C-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5150.0,
+      "hi": 5350.0,
+      "label": "5GHz WiFi / C-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5350.0,
+      "hi": 5650.0,
+      "label": "C-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5670.0,
+      "label": "6cm CW+Digi / 5GHz WiFi / C-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5670.0,
+      "hi": 5725.0,
+      "label": "5GHz WiFi / C-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5725.0,
+      "hi": 5760.0,
+      "label": "6cm Digi / 5GHz WiFi / C-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5760.0,
+      "hi": 5762.0,
+      "label": "C-Band / 5GHz WiFi",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5762.0,
+      "hi": 5790.0,
+      "label": "6cm Digi / 5GHz WiFi / C-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5790.0,
+      "hi": 5850.0,
+      "label": "6cm CW+Digi / 5GHz WiFi / C-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5850.0,
+      "hi": 8000.0,
+      "label": "C-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 8000.0,
+      "hi": 10000.0,
+      "label": "X-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10000.0,
+      "hi": 10150.0,
+      "label": "3cm CW+Digi / X-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10150.0,
+      "hi": 10250.0,
+      "label": "3cm / X-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10250.0,
+      "hi": 10350.0,
+      "label": "3cm CW+Digi / X-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10350.0,
+      "hi": 10368.0,
+      "label": "3cm / X-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10368.0,
+      "hi": 10370.0,
+      "label": "3cm CW+Digi / X-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10370.0,
+      "hi": 10450.0,
+      "label": "3cm / X-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10450.0,
+      "hi": 10500.0,
+      "label": "3cm SAT / X-Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10500.0,
+      "hi": 12000.0,
+      "label": "X-Band",
+      "color": "FF9800"
+    },
+    {
+      "lo": 24000.0,
+      "hi": 24048.0,
+      "label": "1.2cm SAT",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24048.0,
+      "hi": 24050.0,
+      "label": "1.2cm Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24050.0,
+      "hi": 24250.0,
+      "label": "1.2cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 47002.0,
+      "hi": 47200.0,
+      "label": "6mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 76000.0,
+      "hi": 78000.0,
+      "label": "4mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 122251.0,
+      "hi": 123000.0,
+      "label": "2.5mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 134001.0,
+      "hi": 141000.0,
+      "label": "2mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 241000.0,
+      "hi": 250000.0,
+      "label": "1mm",
+      "color": "4CAF50"
+    }
+  ]
+}

@@ -31,6 +31,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <filesystem>
 
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -285,11 +286,21 @@ int main(int argc, char** argv)
         app.decodersB.setRecordFormat(rf);
     }
     if (!smokeTest) app.verCheck.start("inmarscope", INMARSCOPE_VERSION);
-    scanBandPlans(app.bandPlanDir, app.bandPlanNames, app.bandPlanPaths);
-    if (app.bandPlanIdx >= 0 && app.bandPlanIdx < (int)app.bandPlanPaths.size())
-        app.bandPlanLoaded = loadBandPlan(app.bandPlanPaths[app.bandPlanIdx]);
-    if (app.bandPlanIdxB >= 0 && app.bandPlanIdxB < (int)app.bandPlanPaths.size())
-        app.bandPlanLoadedB = loadBandPlan(app.bandPlanPaths[app.bandPlanIdxB]);
+    // Find bundled plans when launched from a different working directory.
+    std::error_code directoryError;
+    if (std::strcmp(app.bandPlanDir, "bandplans") == 0 && !std::filesystem::is_directory("bandplans", directoryError)) {
+        auto program = std::filesystem::absolute(argv[0], directoryError);
+#if defined(_WIN32)
+        wchar_t executable[32768]{};
+        if (GetModuleFileNameW(nullptr, executable, 32768)) program = executable;
+#endif
+        const auto plans = program.parent_path() / "bandplans";
+        if (std::filesystem::is_directory(plans, directoryError))
+            std::snprintf(app.bandPlanDir, sizeof(app.bandPlanDir), "%s", plans.generic_u8string().c_str());
+    }
+    reloadBandPlans(app);
+    std::filesystem::create_directories(std::filesystem::u8path(app.recordDir), directoryError);
+    if (directoryError) app.status = "Cannot create recordings folder: " + directoryError.message();
     app.decoders.voiceCallLog().scanDir(app.recordDir);
     // Start web server if previously enabled
     if (app.webServerEnabled)

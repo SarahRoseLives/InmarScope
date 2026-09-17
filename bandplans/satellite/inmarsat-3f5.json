@@ -1,0 +1,76 @@
+{
+  "name": "I3-F5 (surveyed channels; partial)",
+  "designator": "3F5",
+  "position": -54.0,
+  "regions": [
+    "Inmarsat",
+    "AORE"
+  ],
+  "countries": [],
+  "source": "https://raw.githubusercontent.com/alphafox02/inmarsat-sniffer/c5e767ec75b1511fdc44a0644f600d228144467d/satellites.c",
+  "source_sha256": "d468150f0fb83e90d756894285c68bb08329b5c53b1ba463c95ec45660fdb9be",
+  "license": "GPL-3.0-or-later",
+  "notes": "Surveyed channel centers, not complete allocations. Verify active frequencies locally. No geographic aliases inferred from the source.",
+  "bands": [
+    {
+      "lo": 1541.449999,
+      "hi": 1541.450001,
+      "label": "STDC EGC 1541.45 MHz (channel center)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1545.024999,
+      "hi": 1545.025001,
+      "label": "AERO 600 1545.03 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.029999,
+      "hi": 1545.030001,
+      "label": "AERO 600 1545.03 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.034999,
+      "hi": 1545.035001,
+      "label": "AERO 600 1545.04 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.039999,
+      "hi": 1545.040001,
+      "label": "AERO 600 1545.04 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.054999,
+      "hi": 1546.055001,
+      "label": "AERO 10500 1546.06 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.069999,
+      "hi": 1546.070001,
+      "label": "AERO 10500 1546.07 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.974999,
+      "hi": 1542.975001,
+      "label": "AERO 8400 1542.97 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.979999,
+      "hi": 1542.980001,
+      "label": "AERO 8400 1542.98 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1542.984999,
+      "hi": 1542.985001,
+      "label": "AERO 8400 1542.98 MHz (channel center)",
+      "color": "4287F5"
+    }
+  ]
+}

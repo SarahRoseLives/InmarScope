@@ -1,0 +1,300 @@
+{
+  "name": "Turkey",
+  "designator": "TR",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Turkey"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/turkey.json",
+  "source_sha256": "f7601026727b9be060b194de44aa82059ad0470215cb3d740462e175a7ff9319",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Turkey",
+    "country_name": "Turkey",
+    "country_code": "TR",
+    "author_name": "Yunus TA2PEA",
+    "author_url": "https://github.com/ycanerol"
+  },
+  "excluded_invalid_source_entries": [
+    {
+      "name": "75GHz",
+      "type": "amateur",
+      "start": 75500000000,
+      "end": 7600000000
+    }
+  ],
+  "bands": [
+    {
+      "lo": 0.1357,
+      "hi": 0.1378,
+      "label": "LW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "630m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.81,
+      "hi": 1.85,
+      "label": "160m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.8,
+      "label": "80m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.3515,
+      "hi": 5.3665,
+      "label": "60m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.2,
+      "label": "40m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.15,
+      "label": "30m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.35,
+      "label": "20m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.168,
+      "label": "17m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "15m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "12m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 26.565,
+      "hi": 27.405,
+      "label": "CB",
+      "color": "888888"
+    },
+    {
+      "lo": 27.75,
+      "hi": 28.0,
+      "label": "Pagers",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.0,
+      "hi": 29.7,
+      "label": "10m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 50.03,
+      "hi": 51.0,
+      "label": "6m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 87.5,
+      "hi": 108.0,
+      "label": "FM",
+      "color": "FF9800"
+    },
+    {
+      "lo": 108.0,
+      "hi": 117.975,
+      "label": "Airband VOR/ILS",
+      "color": "4287F5"
+    },
+    {
+      "lo": 117.975,
+      "hi": 137.0,
+      "label": "Airband Voice",
+      "color": "4287F5"
+    },
+    {
+      "lo": 144.0,
+      "hi": 146.0,
+      "label": "2m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 169.4,
+      "hi": 169.475,
+      "label": "Sayac Okuma",
+      "color": "888888"
+    },
+    {
+      "lo": 167.0,
+      "hi": 167.1,
+      "label": "Pagers",
+      "color": "888888"
+    },
+    {
+      "lo": 173.8825,
+      "hi": 174.0,
+      "label": "Public announcement systems",
+      "color": "888888"
+    },
+    {
+      "lo": 174.0,
+      "hi": 216.0,
+      "label": "DVB-T",
+      "color": "FF9800"
+    },
+    {
+      "lo": 216.0,
+      "hi": 233.0,
+      "label": "T-DAB",
+      "color": "FF9800"
+    },
+    {
+      "lo": 328.6,
+      "hi": 335.4,
+      "label": "ILS-Glide Path",
+      "color": "4287F5"
+    },
+    {
+      "lo": 380.0,
+      "hi": 385.0,
+      "label": "Public Safety/Emergency",
+      "color": "888888"
+    },
+    {
+      "lo": 390.0,
+      "hi": 395.0,
+      "label": "Public Safety/Emergency",
+      "color": "888888"
+    },
+    {
+      "lo": 430.2,
+      "hi": 430.7,
+      "label": "70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 431.55,
+      "hi": 431.825,
+      "label": "70cm-RepeaterRX",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 432.0,
+      "hi": 432.975,
+      "label": "70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 433.4,
+      "hi": 434.0,
+      "label": "70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 435.0,
+      "hi": 438.0,
+      "label": "70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 439.15,
+      "hi": 439.425,
+      "label": "70cm-RepeaterTX",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 445.25,
+      "hi": 445.4625,
+      "label": "Public announcement systems",
+      "color": "888888"
+    },
+    {
+      "lo": 446.00625,
+      "hi": 446.196875,
+      "label": "PMR446",
+      "color": "888888"
+    },
+    {
+      "lo": 865.0,
+      "hi": 868.0,
+      "label": "RFID",
+      "color": "888888"
+    },
+    {
+      "lo": 916.1,
+      "hi": 918.9,
+      "label": "RFID",
+      "color": "888888"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1300.0,
+      "label": "23cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1880.0,
+      "hi": 1900.0,
+      "label": "DECT",
+      "color": "888888"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5670.0,
+      "label": "5GHz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5820.0,
+      "hi": 5850.0,
+      "label": "5GHz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 104500.0,
+      "hi": 104520.0,
+      "label": "3cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24000.0,
+      "hi": 24050.0,
+      "label": "24GHz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 47000.0,
+      "hi": 47200.0,
+      "label": "47GHz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 134000.0,
+      "hi": 142000.0,
+      "label": "134GHz",
+      "color": "4CAF50"
+    }
+  ]
+}

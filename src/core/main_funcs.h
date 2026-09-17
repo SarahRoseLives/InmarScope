@@ -2,6 +2,7 @@
 // Definitions live in signal/processing.cpp, voice/voice_ops.cpp, gui/gui_panels.cpp,
 // session/session.cpp, and state/config.cpp.
 #pragma once
+void reloadBandPlans(struct App& app);
 
 #include "core/app.h"
 

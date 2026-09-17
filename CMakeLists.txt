@@ -190,7 +190,12 @@ add_executable(InmarScope
 )
 add_custom_command(TARGET InmarScope POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_SOURCE_DIR}/assets/flight-map" "$<TARGET_FILE_DIR:InmarScope>/flight-map")
+        "${CMAKE_SOURCE_DIR}/assets/flight-map" "$<TARGET_FILE_DIR:InmarScope>/flight-map"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/bandplans" "$<TARGET_FILE_DIR:InmarScope>/bandplans"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:InmarScope>/recordings"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/recordings/README.md" "$<TARGET_FILE_DIR:InmarScope>/recordings/README.md")
 # Microsoft Edge WebView2 for the embedded Flight Map browser (Windows only).
 if(WIN32)
     set(WEBVIEW2_ROOT ${CMAKE_SOURCE_DIR}/third_party/webview2/build/native)
@@ -328,6 +333,10 @@ endif()
 option(BUILD_SDRPLAY_TESTS "Build SDRplay fault-injection tests and probe" OFF)
 if(BUILD_SDRPLAY_TESTS AND ENABLE_SDRPLAY AND SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
     enable_testing()
+    add_executable(band_plan_selftest tools/band_plan_selftest.cpp src/decode/band_plan.cpp)
+    target_include_directories(band_plan_selftest PRIVATE src ${JANSSON_INCLUDE_DIR})
+    target_link_libraries(band_plan_selftest PRIVATE ${JANSSON_LIB})
+    add_test(NAME band_plan_selftest COMMAND band_plan_selftest "${CMAKE_SOURCE_DIR}/bandplans")
     add_executable(flight_map_selftest tools/flight_map_selftest.cpp src/web/flight_map_data.cpp)
     target_include_directories(flight_map_selftest PRIVATE src ${JANSSON_INCLUDE_DIR})
     target_link_libraries(flight_map_selftest PRIVATE ${JANSSON_LIB})

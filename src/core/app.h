@@ -220,6 +220,9 @@ struct App
     bool   showBandPlanB = false;
     std::vector<std::string> bandPlanNames;  // display names (shared)
     std::vector<std::string> bandPlanPaths;  // full file paths (shared)
+    std::vector<std::string> bandPlanErrors;
+    char bandPlanFile[512] = "";
+    char bandPlanFileB[512] = "";
     int    bandPlanIdx = 0;
     int    bandPlanIdxB = 0;
     BandPlan bandPlanLoaded;
