@@ -12,6 +12,15 @@ tiles.on('tileerror', () => {
   document.getElementById('tiles').textContent = 'Background tiles unavailable. Received aircraft positions still update.';
 });
 const markers = new Map();
+// Fixed-size, bundled SVG silhouettes remain readable at every map zoom.
+// Their orientation is decorative: the receiver snapshot has no heading field.
+function aircraftIcon(color) {
+  return L.divIcon({className: 'aircraft-icon', iconSize: [24, 24], iconAnchor: [12, 12],
+    tooltipAnchor: [0, -12], html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">' +
+      '<path fill="' + color + '" stroke="#123c57" stroke-width="1.2" stroke-linejoin="round" d="M12 1 C11 1 10.5 2 10.5 3.5 L10.5 8 L2 13 L2 15 L10.5 12.5 L10.5 18 L7 20.5 L7 22 L12 20.5 L17 22 L17 20.5 L13.5 18 L13.5 12.5 L22 15 L22 13 L13.5 8 L13.5 3.5 C13.5 2 13 1 12 1 Z"/></svg>'});
+}
+const decodedIcon = aircraftIcon('#27c5ff');
+const onlineIcon = aircraftIcon('#ffb347');
 function hasPosition(a) {
   return Number.isFinite(a.lat) && Number.isFinite(a.lon) && Math.abs(a.lat) <= 90 && Math.abs(a.lon) <= 180;
 }
@@ -28,13 +37,15 @@ window.updateAircraft = function (aircraft) {
       continue;
     }
     keep.add(a.id);
+    const icon = a.positionSource === 'ADSB.lol (online)' ? onlineIcon : decodedIcon;
     let marker = markers.get(a.id);
     if (!marker) {
-      marker = L.circleMarker([a.lat, a.lon], {radius: 6, color: '#123c57', weight: 2, fillColor: '#27c5ff', fillOpacity: 0.9}).addTo(map);
+      marker = L.marker([a.lat, a.lon], {icon, keyboard: false, autoPanOnFocus: false}).addTo(map);
       markers.set(a.id, marker);
     } else marker.setLatLng([a.lat, a.lon]);
+    if (marker.options.icon !== icon) marker.setIcon(icon);
     const age = Math.max(0, Math.floor(Date.now() / 1000 - (a.posTime || 0)));
-    marker.setStyle({fillOpacity: age > 900 ? 0.35 : 0.9, fillColor: a.positionSource === 'ADSB.lol (online)' ? '#ffb347' : '#27c5ff'});
+    marker.setOpacity(age > 900 ? 0.35 : 0.9);
     const text = document.createElement('span');
     text.textContent = label(a) + '\n' + a.lat.toFixed(4) + ', ' + a.lon.toFixed(4) + ' · ' + a.alt + ' ft\n' +
       (a.positionSource || 'Decoded ADS-C') + ' position: ' + Math.floor(age / 60) + ' min ago';

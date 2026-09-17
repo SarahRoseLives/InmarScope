@@ -39,7 +39,8 @@ folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
     them. Decode ADS-C positions and compare the markers with the Aircraft
     table. With **Online positions for received aircraft** enabled, identity-only
     aircraft may get orange ADSB.lol positions; decoded positions stay blue and
-    take priority. Only IDs in the receiver table may appear. With the option
+    take priority. Markers are small aircraft silhouettes; their fixed orientation
+    does not indicate heading. Old positions fade. Only IDs in the receiver table may appear. With the option
     off, identity-only aircraft remain in **Received without a known position**.
     Check the lookup status, disconnect the network, and confirm decoded markers
     still update. Check the option survives restart. Test A/B duplicates and

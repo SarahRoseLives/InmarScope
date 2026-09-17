@@ -3,3 +3,4 @@ body{display:flex;flex-direction:column}header{padding:10px;display:flex;gap:12p
 #counts{color:#b6c7d8}button{background:#314960;color:white;border:1px solid #607a91;border-radius:4px;padding:6px 10px;cursor:pointer}
 main{flex:1;min-height:120px;background:#203242}aside{padding:7px 10px;font-size:12px}details{margin-top:4px;max-height:100px;overflow:auto}
 .leaflet-tooltip{white-space:pre-line}.leaflet-container{font:12px system-ui,sans-serif}li{margin:3px 0}
+.aircraft-icon{background:transparent;border:0}.aircraft-icon svg{display:block}

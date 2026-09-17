@@ -52,7 +52,8 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),http=require('n
       const data=JSON.parse(fs.readFileSync(process.argv[2]||'build/flight-map-fixture.json','utf8'));
       await page.evaluate(d=>window.updateAircraft(d),data);
       assert.equal(await page.locator('.leaflet-interactive').count(),2);
-      const colors=await page.locator('.leaflet-interactive').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('fill')));
+      assert.equal(await page.locator('.aircraft-icon svg').count(),2);
+      const colors=await page.locator('.aircraft-icon path').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('fill')));
       assert.deepEqual(colors.sort(),['#27c5ff','#ffb347'].sort());
       assert.deepEqual(await view(),before);
       await page.locator('#fit').click();await page.waitForTimeout(500);

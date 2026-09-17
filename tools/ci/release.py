@@ -67,6 +67,8 @@ assets = sorted(directory.iterdir())
 assets.append(directory / "SHA256SUMS.txt")
 notes = Path("release-notes.md")
 notes.write_text(f"SDRplay testing release {tag}\n\n"
+    "Replaces map dots with small bundled SVG aircraft icons. Preserves source colors, stale-position fading, "
+    "received-aircraft filtering and the current map view. Icons are decorative; no heading is inferred.\n\n"
     "Adds waterfall band-plan and decoder labels, aligned to frequency as the spectrum zooms/pans "
     "and the panes resize. Shows channel frequency, baud/EGC, decoder ID and lock state; "
     "crowded labels collapse to markers with hover details. Allocation plans use thin range strips. "
