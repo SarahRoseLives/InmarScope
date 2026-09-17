@@ -11,6 +11,8 @@ struct SoapySDRStream { int reads=0; };
 static int devices=0,streams=0;
 static bool failOpen=false,failSetup=false,failActivate=false;
 static std::atomic<bool> failRead{false};
+static const char* models[] = {"RSPdx", "RSPduo", "RSP1", "RSP1A", "RSP1B", "RSP2", "RSP2pro", "RSPdx-R2"};
+static const char* serials[] = {"001", "002", "003", "004", "005", "006", "007", "008"};
 static char* copy(const char* s) {auto* p=(char*)malloc(strlen(s)+1);strcpy(p,s);return p;}
 static char** list(std::initializer_list<const char*> values,size_t* n) {
 *n=values.size();auto** p=(char**)calloc(*n,sizeof(char*));size_t i=0;for(auto v:values)p[i++]=copy(v);return p;}
@@ -18,7 +20,7 @@ static double* nums(std::initializer_list<double> values,size_t* n) {
 *n=values.size();auto* p=(double*)calloc(*n,sizeof(double));size_t i=0;for(auto v:values)p[i++]=v;return p;}
 
 char* SoapySDRDevice_getHardwareKey(const SoapySDRDevice* device) {
-    return copy(device->serial == "001" ? "RSPdx" : "RSPduo");
+    return copy(models[std::stoi(device->serial)-1]);
 }
 
 void SoapySDRArgInfoList_clear(SoapySDRArgInfo *info, const size_t length) {
@@ -45,8 +47,20 @@ int SoapySDRDevice_deactivateStream(SoapySDRDevice *device,
 }
 
 SoapySDRKwargs *SoapySDRDevice_enumerateStrArgs(const char *args, size_t *length) {
-    *length=3; auto* result=(SoapySDRKwargs*)calloc(3,sizeof(SoapySDRKwargs));
-for(int i=0;i<3;++i) {SoapySDRKwargs_set(&result[i],"serial",i<2?"001":"002");SoapySDRKwargs_set(&result[i],"label","Mock RSP");}return result;
+    REQUIRE(std::string(args)=="driver=sdrplay");
+    *length=12; auto* result=(SoapySDRKwargs*)calloc(*length,sizeof(SoapySDRKwargs));
+    for(size_t i=0;i<8;++i) {
+        SoapySDRKwargs_set(&result[i],"serial",serials[i]);
+        SoapySDRKwargs_set(&result[i],"label",models[i]);
+    }
+    SoapySDRKwargs_set(&result[1],"mode","ST");
+    const char* modes[]={"DT","MA","MA8","SL"};
+    for(size_t i=8;i<12;++i) {
+        SoapySDRKwargs_set(&result[i],"serial","002");
+        SoapySDRKwargs_set(&result[i],"label","RSPduo");
+        SoapySDRKwargs_set(&result[i],"mode",modes[i-8]);
+    }
+    return result;
 }
 
 SoapySDRArgInfo *SoapySDRDevice_getChannelSettingInfo(const SoapySDRDevice *device, const int direction, const size_t channel, size_t *length) {
@@ -114,7 +128,11 @@ double *SoapySDRDevice_listSampleRates(const SoapySDRDevice *device, const int d
 SoapySDRDevice *SoapySDRDevice_make(const SoapySDRKwargs *args) {
     if(failOpen)return nullptr; auto* d=new SoapySDRDevice;
 const char* a=SoapySDRKwargs_get(args,"antenna"); REQUIRE(!a || std::string(a).rfind("Tuner ",0)==0);
-d->serial=SoapySDRKwargs_get(args,"serial"); d->mode=SoapySDRKwargs_get(args,"mode");++devices;return d;
+d->serial=SoapySDRKwargs_get(args,"serial");
+const char* mode=SoapySDRKwargs_get(args,"mode");
+// Match the real driver's rejection of RSPduo-only arguments on other models.
+REQUIRE(d->serial=="002" ? mode!=nullptr : mode==nullptr && a==nullptr);
+d->mode=mode?mode:"";++devices;return d;
 }
 
 char *SoapySDRDevice_readChannelSetting(const SoapySDRDevice *device, const int direction, const size_t channel, const char *key) {
@@ -244,7 +262,14 @@ int main() {
     REQUIRE(!parseRspConfig(serializeRspConfig(a)+" trailing",round));
     auto bad=a;bad.rate=-1; REQUIRE(!parseRspConfig(serializeRspConfig(bad),round));
     SdrplaySource rx,rxB;std::string err;
-    REQUIRE(rx.listDevices().size()==2);
+    const auto found=rx.listDevices(); REQUIRE(found.size()==8);
+    for(size_t i=0;i<8;++i) {
+        REQUIRE(found[i].serial==serials[i] && found[i].name==models[i]);
+        REQUIRE(found[i].hasTunerModes==(i==1));
+        RspConfig model; model.serial=serials[i];
+        REQUIRE(rx.prepare(model,err)); REQUIRE(rx.apply(model,err)); rx.close();
+    }
+    bad=a;bad.serial="missing";REQUIRE(!rx.prepare(bad,err));REQUIRE(devices==0);
     failOpen=true;REQUIRE(!rx.prepare(a,err)); REQUIRE(devices==0);failOpen=false;
     bad=a;bad.mode="MA";REQUIRE(!rx.prepare(bad,err));REQUIRE(devices==0);
     REQUIRE(rx.prepare(a,err)); REQUIRE(rx.antennas().size()==3 && rx.controls().size()==2);
@@ -268,5 +293,5 @@ int main() {
     rx.close();REQUIRE(devices==0 && streams==0);failRead=false;
     b.mode="SL";REQUIRE(rxB.prepare(b,err));REQUIRE(rxB.apply(b,err));rxB.close();
     REQUIRE(devices==0 && streams==0);
-    std::cout << "PASS: config persistence, capabilities, validation, startup rollback, independent streams, overflow, disconnect, stop and slave PPM\n";
+    std::cout << "PASS: all eight RSP models, model-specific open arguments, discovery deduplication, config persistence, capabilities, validation, startup rollback, independent streams, overflow, disconnect, stop and slave PPM\n";
 }

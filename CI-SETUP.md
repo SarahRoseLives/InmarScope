@@ -26,9 +26,9 @@ manual workflow dispatches. All four platforms must pass before a tag publishes.
    in `src/version.h`, commit it, and tag the **same commit**. For example:
 
    ```sh
-   git tag -a v1.0.19-sdrplay.1 -m "SDRplay testing release"
+   git tag -a v1.0.19-sdrplay.2 -m "SDRplay model detection fix"
    git push origin master
-   git push origin v1.0.19-sdrplay.1
+   git push origin v1.0.19-sdrplay.2
    ```
 
    Choose a new version for later releases. The tag must equal `v` plus the
@@ -36,7 +36,7 @@ manual workflow dispatches. All four platforms must pass before a tag publishes.
 
 ## What a release contains
 
-- Windows ZIP with executable, runtime DLLs, font, Soapy compatibility driver,
+- Windows ZIP with executable, runtime DLLs, font, rebuilt SoapySDRPlay3 driver,
   SDRplay probe, documentation and build manifest.
 - Linux tar.gz with executable, probe, font, launcher and Ubuntu dependency
   installation script. This is a distro-linked build, not an AppImage.
@@ -62,10 +62,14 @@ the existing draft can be completed safely.
 
 Windows uses MSYS2 MINGW64 and an extracted, SHA-256-pinned PothosSDR SDK. Its
 Soapy ABI is compatible with the shipped plugin; mixing an unrelated MinGW
-Soapy plugin with an MSVC Soapy DLL is not supported. `windows-sdk.ps1` records
-the download URL and expected hash. Refresh both together when upgrading the
-SDK, then rerun the entire matrix. The compatibility plugin is old; see the
-SDRplay guide before testing RSP1B/RSPdx-R2.
+Soapy plugin with an MSVC Soapy DLL is not supported. `windows-sdk.ps1` builds
+SoapySDRPlay3 revision `48bd8b41072534018de1d74deb3dea5874d9e0e0` with Visual
+Studio 2022, against API 3.15 development files from the checksum-pinned SDR++
+SDK mirror. It extracts headers/import libraries only and does not install a
+vendor service on CI. The user's vendor API DLL remains an external dependency.
+The matching Visual C++ redistributable runtime is included in the package.
+The script records SDK download URLs/hashes and the plugin revision; update
+these deliberately and rerun the entire matrix when upgrading dependencies.
 
 Linux uses apt dependencies. macOS uses Homebrew and bundles its non-system
 runtime libraries. Hosted images and OS packages evolve; every tagged release

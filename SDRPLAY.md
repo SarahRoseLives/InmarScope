@@ -3,26 +3,27 @@
 This backend uses the SoapySDR C API and the **SoapySDRPlay3** driver. Its target
 device family is RSP1, RSP1A, RSP1B, RSP2/RSP2pro, RSPduo, RSPdx and RSPdx-R2.
 Actual device recognition and controls depend on the installed driver and
-SDRplay API version. Use current releases for the newer models. This is not an
+SDRplay API version. Use API 3.15 or newer for the full family. This is not an
 implementation of every proprietary SDRplay API entry point.
 
 ## Setup
 
-Install the [SDRplay API and service](https://www.sdrplay.com/api/) and a matching
+Install the [SDRplay API and service](https://www.sdrplay.com/api/), version 3.15
+or newer. Linux/macOS also need a current
 [SoapySDRPlay3](https://github.com/pothosware/SoapySDRPlay3) installation.
-On Windows, a SoapySDR distribution such as PothosSDR supplies the library and
-plugins, but an old bundled plugin may need updating for newer receivers.
 Installing a DLL alone does not install the SDRplay API service.
 
-The Windows release includes a matched Soapy DLL and compatibility plugin in
+The Windows release includes a matched Soapy DLL and rebuilt SoapySDRPlay3 plugin in
 `soapy/`. It uses the API DLL from `C:/Program Files/SDRplay/API/x64` installed by
 the vendor. For a nonstandard installation, set `SDRPLAY_API_PATH` to the full
-API DLL path. No proprietary API installer is bundled. The compatibility plugin
-is from PothosSDR 2021; RSP1B and RSPdx-R2 require a newer SoapySDRPlay3 plugin
-compatible with the bundled MSVC Soapy 0.8 ABI, or a complete matching Soapy
-installation selected with `SOAPY_SDR_ROOT` (and matching SoapySDR.dll).
+API DLL path. No proprietary API installer is bundled. Starting with
+1.0.19-sdrplay.2, the plugin is built from pinned upstream revision
+`48bd8b41072534018de1d74deb3dea5874d9e0e0` against API 3.15, including RSP1B
+and RSPdx-R2 support. Extract the complete new ZIP into a fresh folder rather
+than copying only InmarScope.exe over the previous release.
 
-Check the installation with `SoapySDRUtil --find="driver=sdrplay"` before opening
+Check the packaged installation with `sdrplay_probe.exe` on Windows (or
+`SoapySDRUtil --find="driver=sdrplay"` for a system installation) before opening
 InmarScope. Close other applications using the same receiver.
 
 Select **SDRplay**, click **Find SDRplay devices**, choose a serial number, then
@@ -32,6 +33,11 @@ Frequency can change while receiving. Other hardware controls are edited while
 stopped and applied on the next Start. Serial selection survives enumeration
 order changes. An unavailable serial fails explicitly instead of selecting a
 different device.
+
+Only connected, available devices appear in discovery; it is not a catalogue
+of every supported model. RSP2pro may be reported as RSP2 by the vendor API.
+RSPduo mode controls appear only for RSPduo devices. Other models are opened
+without RSPduo-only mode or tuner arguments.
 
 ## Controls
 

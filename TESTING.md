@@ -7,6 +7,9 @@ other SDR programs. Run `sdrplay_probe.exe` from a terminal in the extracted
 folder if discovery fails. See `SDRPLAY.md` for driver/model requirements.
 
 1. Launch InmarScope, select SDRplay, find devices and select the correct serial.
+   Each connected radio should appear once; RSPduo's alternate modes should not
+   duplicate it. Only an RSPduo should show the RSPduo mode selector. Test each
+   model available to you; RSP2pro can identify as RSP2.
 2. Load device controls. Check that the displayed antennas match your model.
 3. Select the connected antenna, a known signal and a supported sample rate.
    Start. Confirm spectrum/waterfall activity and decoding of a known signal.

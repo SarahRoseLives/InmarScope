@@ -43,9 +43,11 @@ void receiver(App& app, SdrplaySource& source, RspConfig& cfg, bool second) {
         }
         ImGui::EndCombo();
     }
-    if (app.rspSecond != 2) {
+    const auto selected = std::find_if(app.rspDevices.begin(), app.rspDevices.end(),
+        [&](const SdrDeviceInfo& d) { return d.serial == cfg.serial; });
+    if (app.rspSecond != 2 && selected != app.rspDevices.end() && selected->hasTunerModes) {
         if (stringCombo("RSPduo mode", cfg.mode, {"ST", "MA", "MA8", "SL"},
-                        {"Single tuner / other models", "Master (6 MHz clock)", "Master (8 MHz clock)", "Slave"})) {
+                        {"Single tuner", "Master (6 MHz clock)", "Master (8 MHz clock)", "Slave"})) {
             app.rspB.close(); app.rsp.close(); cfg.antenna.clear();
         }
     }
@@ -143,5 +145,5 @@ void drawSdrplayControls(App& app) {
     ImGui::EndDisabled();
     receiver(app, app.rsp, app.rspConfig, false);
     if (app.rspSecond) receiver(app, app.rspB, app.rspConfigB, true);
-    ImGui::TextWrapped("Model controls depend on the installed driver. Use a current SoapySDRPlay3 for RSP1B and RSPdx-R2. IQ recording captures receiver A only.");
+    ImGui::TextWrapped("Detects RSP1, RSP1A, RSP1B, RSP2 / RSP2pro, RSPduo, RSPdx and RSPdx-R2 through SDRplay API 3.15 or newer. IQ recording captures receiver A only.");
 }

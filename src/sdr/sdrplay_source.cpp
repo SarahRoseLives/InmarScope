@@ -109,7 +109,8 @@ std::vector<SdrDeviceInfo> SdrplaySource::listDevices() {
     for (size_t i = 0; i < count; ++i) {
         auto serial = str(SoapySDRKwargs_get(&devices[i], "serial"));
         if (std::none_of(result.begin(), result.end(), [&](const SdrDeviceInfo& d) { return d.serial == serial; }))
-            result.push_back({int(result.size()), str(SoapySDRKwargs_get(&devices[i], "label")), serial});
+            result.push_back({int(result.size()), str(SoapySDRKwargs_get(&devices[i], "label")), serial,
+                              !str(SoapySDRKwargs_get(&devices[i], "mode")).empty()});
     }
     SoapySDRKwargsList_clear(devices, count);
     if (result.empty()) fail("No SDRplay devices found. Install a current SoapySDRPlay3 driver and SDRplay API 3 service, start the service, and close other receiver applications.");
@@ -163,13 +164,26 @@ bool SdrplaySource::prepare(const RspConfig& config, std::string& err) {
     if (running_) { err = "Stop reception before selecting a device."; return false; }
     close(); fail("");
     if (config.serial.empty()) { err = "Select an SDRplay device first."; return false; }
+    // Only RSPduo discovery entries have a mode. Sending even "ST" to any
+    // other RSP makes SoapySDRPlay3 reject it before opening the hardware.
+    const auto available = listDevices();
+    const auto selected = std::find_if(available.begin(), available.end(),
+        [&](const SdrDeviceInfo& d) { return d.serial == config.serial; });
+    if (selected == available.end()) {
+        err = "Selected SDRplay is unavailable. Find devices again and check the API service.";
+        fail(err); return false;
+    }
+    if (!selected->hasTunerModes && config.mode != "ST") {
+        err = "Master/slave modes require an RSPduo. Select one receiver or two distinct devices.";
+        fail(err); return false;
+    }
     SoapySDRKwargs args{};
     SoapySDRKwargs_set(&args, "driver", "sdrplay");
     SoapySDRKwargs_set(&args, "serial", config.serial.c_str());
-    SoapySDRKwargs_set(&args, "mode", config.mode.c_str());
+    if (selected->hasTunerModes) SoapySDRKwargs_set(&args, "mode", config.mode.c_str());
     // The constructor's antenna argument selects an RSPduo tuner; other
     // models' input names must go through setAntenna after opening.
-    if (config.mode != "SL" && config.antenna.rfind("Tuner ", 0) == 0)
+    if (selected->hasTunerModes && config.mode != "SL" && config.antenna.rfind("Tuner ", 0) == 0)
         SoapySDRKwargs_set(&args, "antenna", config.antenna.c_str());
     device_ = SoapySDRDevice_make(&args);
     SoapySDRKwargs_clear(&args);
