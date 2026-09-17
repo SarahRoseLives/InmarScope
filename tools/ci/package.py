@@ -23,8 +23,6 @@ def windows_runtime(dest, sdk):
     compiler = Path(re.search(r"CMAKE_CXX_COMPILER:FILEPATH=(.+)", cache)[1].strip()).parent
     search = [ROOT / "build", compiler, sdk / "bin"]
     shutil.copytree(sdk / "lib/SoapySDR", dest / "soapy/lib/SoapySDR")
-    (dest / "soapy/bin").mkdir(parents=True)
-    shutil.copy2(sdk / "bin/sdrplay_api.dll", dest / "soapy/bin")
     shutil.copytree(sdk / "licenses", dest / "licenses/Soapy")
     todo = list(dest.rglob("*.exe")) + list(dest.rglob("*.dll"))
     seen = set()
@@ -36,6 +34,9 @@ def windows_runtime(dest, sdk):
         seen.add(binary)
         output = run(str(compiler / "objdump.exe"), "-p", str(binary))
         for name in re.findall(r"DLL Name:\s*(\S+)", output):
+            # Installed by the vendor API/service installer, not redistributed.
+            if name.lower() == "sdrplay_api.dll":
+                continue
             if (dest / name).exists():
                 continue
             source = next((d / name for d in search if (d / name).is_file()), None)

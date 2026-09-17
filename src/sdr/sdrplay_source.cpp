@@ -73,9 +73,15 @@ void initializeRuntime() {
             if (std::filesystem::is_directory(bundled)) defaultRoot = bundled.u8string();
         }
         if (!root || !*root) { _putenv_s("SOAPY_SDR_ROOT", defaultRoot.c_str()); root = std::getenv("SOAPY_SDR_ROOT"); }
-        auto api = std::filesystem::path(root) / "bin" / "sdrplay_api.dll";
-        // Keep the vendor API loaded for the lifetime of the plugin registry.
-        LoadLibraryExW(api.c_str(), nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+        std::vector<std::filesystem::path> apiPaths;
+        if (const char* overridePath = std::getenv("SDRPLAY_API_PATH")) apiPaths.emplace_back(overridePath);
+        if (const wchar_t* programs = _wgetenv(L"ProgramFiles"))
+            apiPaths.push_back(std::filesystem::path(programs) / "SDRplay/API/x64/sdrplay_api.dll");
+        apiPaths.push_back(std::filesystem::path(root) / "bin/sdrplay_api.dll");
+        // Prefer the API installed with the running service. Keep it loaded
+        // for the lifetime of the plugin registry; no vendor installer in CI.
+        for (const auto& api : apiPaths)
+            if (LoadLibraryExW(api.c_str(), nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)) break;
     });
 #endif
 }

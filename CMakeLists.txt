@@ -208,7 +208,8 @@ if(ENABLE_SDRPLAY AND SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
     target_compile_definitions(InmarScope PRIVATE HAS_SOAPYSDR=1)
     # PothosSDR also ships MSVC pthread headers. Exposing its entire include
     # tree shadows MinGW's pthread.h and breaks std::thread.
-    file(COPY "${SOAPY_INCLUDE_DIR}/SoapySDR" DESTINATION "${CMAKE_BINARY_DIR}/soapy-include")
+    get_filename_component(SOAPY_HEADER_ROOT "${SOAPY_INCLUDE_DIR}/SoapySDR" REALPATH)
+    file(COPY "${SOAPY_HEADER_ROOT}/" DESTINATION "${CMAKE_BINARY_DIR}/soapy-include/SoapySDR")
     target_include_directories(InmarScope PRIVATE "${CMAKE_BINARY_DIR}/soapy-include")
     target_link_libraries(InmarScope PRIVATE ${SOAPY_LIBRARY})
     if(WIN32)

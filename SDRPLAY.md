@@ -14,6 +14,14 @@ On Windows, a SoapySDR distribution such as PothosSDR supplies the library and
 plugins, but an old bundled plugin may need updating for newer receivers.
 Installing a DLL alone does not install the SDRplay API service.
 
+The Windows release includes a matched Soapy DLL and compatibility plugin in
+`soapy/`. It uses the API DLL from `C:/Program Files/SDRplay/API/x64` installed by
+the vendor. For a nonstandard installation, set `SDRPLAY_API_PATH` to the full
+API DLL path. No proprietary API installer is bundled. The compatibility plugin
+is from PothosSDR 2021; RSP1B and RSPdx-R2 require a newer SoapySDRPlay3 plugin
+compatible with the bundled MSVC Soapy 0.8 ABI, or a complete matching Soapy
+installation selected with `SOAPY_SDR_ROOT` (and matching SoapySDR.dll).
+
 Check the installation with `SoapySDRUtil --find="driver=sdrplay"` before opening
 InmarScope. Close other applications using the same receiver.
 
