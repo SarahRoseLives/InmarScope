@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tarfile
+import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -121,6 +122,27 @@ def main():
         launcher = dest / ("Start-InmarScope.command" if args.platform.startswith("macos") else "start-inmarscope.sh")
         launcher.write_text('#!/bin/sh\nset -eu\ncd "$(dirname "$0")"\nexec ./InmarScope "$@"\n')
         launcher.chmod(0o755)
+    executable = dest / ("InmarScope.exe" if windows else "InmarScope")
+    command = [str(executable), "--smoke-test"]
+    if args.platform.startswith("linux"):
+        command = ["xvfb-run", "-a", *command]
+        dependencies = run("ldd", str(executable))
+        if "not found" in dependencies:
+            raise RuntimeError(dependencies)
+    with tempfile.TemporaryDirectory() as temporary:
+        startup = None
+        if windows:
+            startup = subprocess.STARTUPINFO()
+            startup.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startup.wShowWindow = subprocess.SW_HIDE
+        result = subprocess.run(command, cwd=temporary, capture_output=True, text=True,
+                                errors="replace", timeout=60, startupinfo=startup)
+    status = "passed" if result.returncode == 0 else "unavailable-opengl" if result.returncode == 77 else "failed"
+    smoke = {"status": status, "exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
+    print("Packaged startup check:", json.dumps(smoke))
+    if status == "failed" or (status == "unavailable-opengl" and args.platform.startswith("linux")):
+        raise RuntimeError("Packaged startup check failed")
+    (dest / "SMOKE-RESULT.json").write_text(json.dumps(smoke, indent=2) + "\n")
     shutil.copy2(ROOT / "build/Testing/Temporary/LastTest.log", dest / "TEST-RESULTS.txt")
     info = {"version": version, "platform": args.platform, "commit": run("git", "rev-parse", "HEAD"),
             "run": os.environ.get("GITHUB_RUN_ID"), "hardware_tested": False,

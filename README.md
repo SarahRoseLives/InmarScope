@@ -8,6 +8,8 @@ Decodes Inmarsat Aero (Classic Aero, Aero-H/H+) and Inmarsat-C/EGC signals in re
 
 ## Download
 
+This fork's testing builds: **[GitHub Releases](https://github.com/blkph0x/InmarScope/releases)**.
+
 Windows builds can be found on official project page: **https://sarahsforge.dev/products/inmarscope**
 
 ## Features

@@ -256,7 +256,8 @@ target_link_libraries(InmarScope PRIVATE Threads::Threads)
 if(AIRSPY_FOUND)
     target_link_libraries(InmarScope PRIVATE ${AIRSPY_LIBRARIES})
 endif()
-target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS})
+target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS}
+    ${OGG_LIBRARY_DIRS} ${VORBIS_LIBRARY_DIRS} ${VORBISENC_LIBRARY_DIRS})
 
 if(WIN32)
     target_link_libraries(InmarScope PRIVATE opengl32 gdi32 comdlg32 ole32 winmm ws2_32 winhttp shell32)

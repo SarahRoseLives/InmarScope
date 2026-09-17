@@ -18,7 +18,8 @@ manual workflow dispatches. All four platforms must pass before a tag publishes.
    repository contents. Do not add a token to source files.
 4. Push a branch named `codex/test-ci` or open a pull request. Check all four
    matrix jobs in Actions. Every job must build, run `sdrplay_selftest`, create a
-   package, then launch the packaged GUI with `--smoke-test` and exit normally.
+   package, then launch the packaged executable with `--smoke-test`. Rendering
+   is checked where the hosted runner supplies a usable OpenGL context.
 5. Download `package-*` artifacts from that run to test without publishing.
    `diagnostics-*` artifacts contain the CMake cache, test log and build manifest.
 6. Merge the verified code into your default branch, set `INMARSCOPE_VERSION`
@@ -43,6 +44,14 @@ manual workflow dispatches. All four platforms must pass before a tag publishes.
   dylibs, relative library paths and ad-hoc signatures. These are not notarized.
 - `CI-SETUP.md`, `SDRPLAY.md`, `TESTING.md` and `SHA256SUMS.txt` as standalone assets.
 - GitHub also generates source ZIP/tar archives for the tag.
+
+Every package includes its startup result in `SMOKE-RESULT.json`. Some hosted
+Windows/macOS VMs have no usable OpenGL pixel format. Only this specific GLFW
+condition returns 77 and is recorded as `unavailable-opengl`, not a passed render
+test. Actual crashes, timeouts, missing libraries and other startup errors fail
+the build. Linux uses Xvfb/software graphics and must complete rendering. The
+release notes list the result for every platform; native rendering still needs
+testing on a real machine where the runner could not provide it.
 
 Every package includes its commit SHA, version, platform and per-file hashes in
 `BUILD-INFO.json`. The release job checks all four packages and their manifests,

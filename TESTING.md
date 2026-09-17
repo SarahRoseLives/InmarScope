@@ -32,4 +32,6 @@ error. Include a screenshot and the probe output if helpful. Do not include
 private received message content unless you intend to share it.
 
 Automated CI verifies compilation, mock backend tests, package manifests and
-GUI startup. It does not verify RF performance or real-device API behaviour.
+startup. `SMOKE-RESULT.json` records whether rendering passed or the hosted VM
+lacked a usable OpenGL context. Verify the GUI on your own machine in the latter
+case. CI does not verify RF performance or real-device API behaviour.

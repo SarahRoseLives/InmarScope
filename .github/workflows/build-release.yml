@@ -35,7 +35,7 @@ jobs:
           msystem: MINGW64
           update: true
           install: >-
-            mingw-w64-x86_64-toolchain mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-glfw mingw-w64-x86_64-rtl-sdr
             mingw-w64-x86_64-hackrf
@@ -77,24 +77,11 @@ jobs:
         shell: pwsh
         run: |
           python tools/ci/package.py --platform '${{ matrix.platform }}' --sdk vendor/pothos
-          $package = Get-ChildItem out -Directory | Select-Object -First 1
-          $p = Start-Process -FilePath "$($package.FullName)/InmarScope.exe" -ArgumentList '--smoke-test' -WorkingDirectory $package.FullName -WindowStyle Hidden -PassThru
-          if (!$p.WaitForExit(60000)) { Stop-Process -Id $p.Id; throw 'Startup timed out' }
-          if ($p.ExitCode -ne 0) { throw "Startup failed: $($p.ExitCode)" }
       - name: Package and check Unix
         if: runner.os != 'Windows'
         shell: bash
         run: |
           python3 tools/ci/package.py --platform '${{ matrix.platform }}'
-          package=$(find out -mindepth 1 -maxdepth 1 -type d | head -1)
-          cd "$package"
-          if [[ "$RUNNER_OS" == Linux ]]; then
-            ldd ./InmarScope | tee dependencies.txt
-            ! grep -q 'not found' dependencies.txt
-            timeout 60 xvfb-run -a ./InmarScope --smoke-test
-          else
-            ./InmarScope --smoke-test
-          fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: package-${{ matrix.platform }}

@@ -137,7 +137,12 @@ int main(int argc, char** argv)
     GLFWwindow* window = glfwCreateWindow(1400, 900, "InmarScope", nullptr, nullptr);
     if (!window)
     {
+        const int error = glfwGetError(nullptr);
         glfwTerminate();
+        // Hosted VMs may not expose a GPU. Distinguish that environment limit
+        // from crashes or other startup failures in the package smoke check.
+        if (smokeTest && (error == GLFW_FORMAT_UNAVAILABLE || error == GLFW_VERSION_UNAVAILABLE || error == GLFW_API_UNAVAILABLE))
+            return 77;
         return 1;
     }
 

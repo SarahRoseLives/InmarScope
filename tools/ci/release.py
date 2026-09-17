@@ -22,6 +22,7 @@ if tag != "v" + version:
     raise RuntimeError("Tag must match src/version.h")
 commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 directory = Path("release")
+smoke_summary = []
 for platform in ["windows-x64", "linux-x64", "macos-x64", "macos-arm64"]:
     name = f"InmarScope-{version}-{platform}"
     archive = directory / (name + (".zip" if platform.startswith("windows") else ".tar.gz"))
@@ -32,6 +33,10 @@ for platform in ["windows-x64", "linux-x64", "macos-x64", "macos-arm64"]:
         with tarfile.open(archive) as t:
             files = {m.name[len(name)+1:]: t.extractfile(m).read() for m in t if m.isfile()}
     info = json.loads(files["BUILD-INFO.json"])
+    smoke = json.loads(files["SMOKE-RESULT.json"])
+    if smoke["status"] not in ("passed", "unavailable-opengl"):
+        raise RuntimeError("Invalid startup test result")
+    smoke_summary.append(f"- {platform}: {smoke['status']}")
     if info["commit"] != commit or info["platform"] != platform or info["version"] != version:
         raise RuntimeError(f"Wrong build provenance: {archive}")
     for path, digest in info["files"].items():
@@ -50,13 +55,16 @@ assets.append(directory / "SHA256SUMS.txt")
 notes = Path("release-notes.md")
 notes.write_text(f"SDRplay testing release {tag}\n\n"
     "Includes upstream updates, antenna/model controls, two-device reception and RSPduo independent tuners.\n\n"
-    "All four platform builds, mock SDRplay tests and packaged GUI startup checks passed in GitHub Actions. "
+    "All four platform builds and mock SDRplay tests passed in GitHub Actions. "
+    "Packaged startup results are below; unavailable-opengl means the hosted VM has no usable graphics context, "
+    "so rendering remains a tester check on that platform. Crashes and other startup failures block publication. "
     "RF hardware testing is still required. See TESTING.md for the tester checklist.\n\n"
     "Windows: extract the ZIP and install the SDRplay API/service. The bundled compatibility driver is older; "
     "see SDRPLAY.md for newer models. Linux: Ubuntu 22.04+ x64, run install-dependencies.sh. "
     "macOS: choose Intel or Apple Silicon; binaries are ad-hoc signed, not Apple notarized. "
     "Linux/macOS SDRplay reception additionally needs SoapySDRPlay3 and the vendor API.\n\n"
-    "CI-SETUP.md explains reproducing this pipeline in another fork. SHA256SUMS.txt covers all assets.\n")
+    "CI-SETUP.md explains reproducing this pipeline in another fork. SHA256SUMS.txt covers all assets.\n\n"
+    + "\n".join(smoke_summary) + "\n")
 existing = subprocess.run(["gh", "release", "view", tag, "--json", "isDraft"], text=True, capture_output=True)
 if existing.returncode == 0:
     if not json.loads(existing.stdout)["isDraft"]:
