@@ -9,11 +9,21 @@ static void require(bool ok, const char* message) {
     if (!ok) throw std::runtime_error(message);
 }
 static void bounds(const WaterfallLabels& labels, ImVec2 size) {
+    for (const auto& heading : labels.bands) {
+        require(heading.x0 >= -.01f && heading.x1 <= size.x+.01f,"service range outside viewport");
+        if (heading.row < 0) continue;
+        require(heading.labelMin.x >= 0 && heading.labelMax.x <= size.x && heading.labelMin.y >= 0 &&
+                heading.labelMax.y <= labels.channelTop && heading.labelMax.y <= size.y,"service heading outside its tier");
+        for (const auto& other : labels.bands) {
+            if (&heading == &other || heading.row != other.row) continue;
+            require(heading.labelMin.x >= other.labelMax.x || heading.labelMax.x <= other.labelMin.x,"overlapping service headings");
+        }
+    }
     for (const auto& item : labels.items) {
         require(item.x0 >= -.01f && item.x1 <= size.x+.01f, "marker outside viewport");
         if (item.row < 0) continue;
         require(item.labelMin.x >= 0 && item.labelMax.x <= size.x &&
-                item.labelMin.y >= 0 && item.labelMax.y <= size.y, "label outside viewport");
+                item.labelMin.y >= labels.channelTop && item.labelMax.y <= size.y, "label outside channel tier");
         for (const auto& other : labels.items) {
             if (&item == &other || other.row != item.row) continue;
             require(item.labelMin.x >= other.labelMax.x || item.labelMax.x <= other.labelMin.x,
@@ -43,6 +53,9 @@ int main(int argc, char** argv) {
         require(labels.items[0].x0 == 0 && labels.items[1].x0 == 500 && labels.items[2].x0 == 1000,
                 "incorrect frequency projection");
         bounds(labels,size);
+        require(labels.bands.size() == 1 && labels.bands[0].text == "Aero data" && labels.bands[0].row >= 0,
+                "satellite service heading missing");
+        require(labels.bandFontSize > ImGui::GetFontSize(),"service label is not larger than channel text");
         labels = layoutWaterfallLabels(&plan, {}, 1544.5,1545.5,1543,1547,size);
         require(labels.items.size() == 1 && labels.items[0].x0 == 500, "zoom filtering/anchor failed");
         labels = layoutWaterfallLabels(&plan, {}, 1544.75,1545.75,1543,1547,size);
@@ -61,6 +74,9 @@ int main(int argc, char** argv) {
         labels = layoutWaterfallLabels(&allocation, {},1544,1546,1544.5,1545.5,size);
         require(labels.items.size() == 1 && labels.items[0].x0 == 250 && labels.items[0].x1 == 750,
                 "allocation range clipping failed");
+        labels = layoutWaterfallLabels(&allocation,{{1545,42,1200,true}},1544,1546,1544,1546,size);
+        require(labels.bands.size() == 1 && labels.items.size() == 2,"allocation and active channel hierarchy missing");
+        bounds(labels,size);
         require(layoutWaterfallLabels(&plan,{},0,0,0,1,size).items.empty(), "zero span accepted");
         require(layoutWaterfallLabels(&plan,{},NAN,1,0,1,size).items.empty(), "NaN view accepted");
         require(layoutWaterfallLabels(&plan,{},0,1,2,3,size).items.empty(), "disjoint capture accepted");
@@ -73,6 +89,18 @@ int main(int argc, char** argv) {
         require(argc == 2, "band plan directory required");
         std::vector<std::string> names, paths; scanBandPlans(argv[1],names,paths);
         require(paths.size() == 27, "expected all 27 plans");
+        auto national = loadBandPlan(std::string(argv[1])+"/national/australia.json");
+        require(national.valid,"Australian allocation fixture missing");
+        for (double center : {125.,145.}) {
+            auto allocationLabels=layoutWaterfallLabels(&national,{{center,7,1200,false}},
+                                                        center-1,center+1,center-1,center+1,size);
+            require(std::any_of(allocationLabels.bands.begin(),allocationLabels.bands.end(),[&](const auto& heading) {
+                return heading.row >= 0 && heading.text.find(center==125 ? "Air" : "Ham") != std::string::npos;
+            }),"Air/Amateur allocation heading hidden by decoder labels");
+            require(allocationLabels.items[0].active && allocationLabels.items[0].labelMin.y >= allocationLabels.channelTop,
+                    "active channel not below allocation heading");
+            bounds(allocationLabels,size);
+        }
         int layouts = 0;
         for (const auto& path : paths) {
             auto bundled = loadBandPlan(path); require(bundled.valid,"invalid bundled plan");

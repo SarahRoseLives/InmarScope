@@ -22,6 +22,8 @@ struct WaterfallLabel {
 struct WaterfallLabels {
     std::string title, fullTitle;
     float titleHeight = 0, rowHeight = 0, headerHeight = 0;
+    float bandFontSize = 0, bandHeight = 0, channelTop = 0;
+    std::vector<WaterfallLabel> bands; // large allocation/service headings
     std::vector<WaterfallLabel> items;
 };
 

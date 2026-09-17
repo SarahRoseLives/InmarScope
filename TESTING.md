@@ -83,6 +83,9 @@ change UI scale: text should remain inside the pane without overlapping. Hover
 crowded markers for full frequency/mode details. Active channels show their ID
 and green (locked) or amber (acquiring) text. Repeat on B with a different plan,
 and with a national allocation plan to check its clipped range strips.
+Check the larger Air/Amateur allocation names supplied by the national plan,
+or Aero data/Aero voice/STD-C headings supplied by the satellite plan, above
+the smaller channel labels. Only the selected plan should contribute headings.
 
 `waterfall_labels_selftest` checks all 27 plans across 2,025 combinations of
 frequency span, pane size and UI scale, plus endpoint projection, panning,

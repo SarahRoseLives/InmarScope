@@ -67,6 +67,9 @@ assets = sorted(directory.iterdir())
 assets.append(directory / "SHA256SUMS.txt")
 notes = Path("release-notes.md")
 notes.write_text(f"SDRplay testing release {tag}\n\n"
+    "Separates waterfall labels into larger band/service headings and smaller frequency/decoder labels underneath. "
+    "Uses only the selected plan: national allocation names (Air, Amateur, etc.) or satellite service groups. "
+    "Both tiers track zoom, pan and UI scale; service headings have their own space so channels cannot displace them.\n\n"
     "Replaces map dots with small bundled SVG aircraft icons. Preserves source colors, stale-position fading, "
     "received-aircraft filtering and the current map view. Icons are decorative; no heading is inferred.\n\n"
     "Adds waterfall band-plan and decoder labels, aligned to frequency as the spectrum zooms/pans "
