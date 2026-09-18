@@ -287,6 +287,21 @@ void startActive(App& app)
         app.rtltcp.setPpm((double)app.ppm);
         ok = app.rtltcp.start(0, cb, err);
     }
+#ifdef HAS_LIBIIO
+    else if (app.sourceMode == 7)
+    {
+        app.active = &app.pluto;
+        app.pluto.setUri(app.plutoUri);
+        app.pluto.setSampleRate(app.plutoSampleRateMHz * 1e6);
+        app.pluto.setBandwidth(app.plutoBandwidthMHz * 1e6);
+        app.pluto.setCenterFreq(app.centerFreqMHz * 1e6);
+        app.pluto.setRfPort(app.plutoRfPort == 1 ? "B_BALANCED" : "A_BALANCED");
+        app.pluto.setGain(app.plutoAgc ? -1.0 : (double)app.plutoGainDb);
+        app.pluto.setPpm((double)app.ppm);
+        app.pluto.setDcBlock(app.dcBlock);
+        ok = app.pluto.start(0, cb, err);
+    }
+#endif
 
     else if (app.sourceMode == 7)
     {
@@ -434,4 +449,3 @@ void startActive(App& app)
     else
         app.status = "Error: " + err;
 }
-

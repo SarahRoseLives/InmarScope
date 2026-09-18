@@ -50,6 +50,25 @@ if(AIRSPY_LIBRARIES)
     message(STATUS "Airspy link library found: ${AIRSPY_LIBRARIES}")
 endif()
 
+# libiio (native ADALM-Pluto / Pluto+ source, optional).
+if(PkgConfig_FOUND)
+    pkg_check_modules(LIBIIO QUIET libiio)
+endif()
+if(NOT LIBIIO_FOUND)
+    find_path(LIBIIO_INCLUDE_DIRS NAMES iio.h
+              HINTS $ENV{LIBIIO_ROOT}
+              PATH_SUFFIXES include)
+    find_library(LIBIIO_LIBRARIES NAMES iio libiio
+                 HINTS $ENV{LIBIIO_ROOT}
+                 PATH_SUFFIXES lib lib64 Windows-MinGW-W64)
+    if(LIBIIO_INCLUDE_DIRS AND LIBIIO_LIBRARIES)
+        set(LIBIIO_FOUND TRUE)
+    endif()
+endif()
+if(LIBIIO_FOUND)
+    message(STATUS "libiio found: enabling Pluto+/AD936x source")
+endif()
+
 set(IMGUI_DIR   ${CMAKE_SOURCE_DIR}/third_party/imgui)
 option(ENABLE_SDRPLAY "Enable SDRplay via the SoapySDR C API" ON)
 option(REQUIRE_SDRPLAY "Fail configuration if the SDRplay backend cannot be built" OFF)
@@ -239,6 +258,11 @@ if(AIRSPY_FOUND)
     target_compile_definitions(InmarScope PRIVATE HAS_AIRSPY=1)
     target_include_directories(InmarScope PRIVATE ${AIRSPY_INCLUDE_DIRS})
 endif()
+if(LIBIIO_FOUND)
+    target_sources(InmarScope PRIVATE src/sdr/pluto_source.cpp)
+    target_compile_definitions(InmarScope PRIVATE HAS_LIBIIO=1)
+    target_include_directories(InmarScope PRIVATE ${LIBIIO_INCLUDE_DIRS})
+endif()
 find_library(ZSTD_LIBRARIES NAMES zstd libzstd REQUIRED)
 find_library(ZLIB_LIB NAMES z libz zlib REQUIRED)
 find_library(SQLITE3_LIB NAMES sqlite3 libsqlite3 REQUIRED)
@@ -267,6 +291,10 @@ find_package(Threads REQUIRED)
 target_link_libraries(InmarScope PRIVATE Threads::Threads)
 if(AIRSPY_FOUND)
     target_link_libraries(InmarScope PRIVATE ${AIRSPY_LIBRARIES})
+endif()
+if(LIBIIO_FOUND)
+    target_link_libraries(InmarScope PRIVATE ${LIBIIO_LIBRARIES})
+    target_link_directories(InmarScope PRIVATE ${LIBIIO_LIBRARY_DIRS})
 endif()
 target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS}
     ${OGG_LIBRARY_DIRS} ${VORBIS_LIBRARY_DIRS} ${VORBISENC_LIBRARY_DIRS})
@@ -322,6 +350,39 @@ if(WIN32)
             message(WARNING "Runtime DLL not found: ${MINGW_BIN}/${dll}")
         endif()
     endforeach()
+    if(LIBIIO_FOUND)
+        find_file(LIBIIO_RUNTIME_DLL NAMES libiio.dll iio.dll
+                  HINTS $ENV{LIBIIO_ROOT} ${LIBIIO_LIBRARY_DIRS} ${MINGW_BIN}
+                  PATH_SUFFIXES bin lib Windows-MinGW-W64)
+        if(LIBIIO_RUNTIME_DLL)
+            add_custom_command(TARGET InmarScope POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${LIBIIO_RUNTIME_DLL}" "$<TARGET_FILE_DIR:InmarScope>"
+                COMMENT "Copying libiio runtime")
+        else()
+            message(WARNING "libiio runtime DLL not found; place it next to InmarScope.exe")
+        endif()
+        # The official libiio MinGW archive also needs libserialport and names
+        # its bundled libxml2 dependency differently from the DLL import name.
+        find_file(LIBIIO_SERIALPORT_DLL NAMES libserialport-0.dll
+                  HINTS $ENV{LIBIIO_ROOT}
+                  PATH_SUFFIXES bin Windows-MinGW-W64)
+        if(LIBIIO_SERIALPORT_DLL)
+            add_custom_command(TARGET InmarScope POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${LIBIIO_SERIALPORT_DLL}" "$<TARGET_FILE_DIR:InmarScope>"
+                COMMENT "Copying libiio serial backend")
+        endif()
+        find_file(LIBIIO_XML2_DLL NAMES libxml2.dll libxml2-2.dll
+                  HINTS $ENV{LIBIIO_ROOT}
+                  PATH_SUFFIXES bin Windows-MinGW-W64)
+        if(LIBIIO_XML2_DLL)
+            add_custom_command(TARGET InmarScope POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${LIBIIO_XML2_DLL}" "$<TARGET_FILE_DIR:InmarScope>/libxml2.dll"
+                COMMENT "Copying libiio XML backend")
+        endif()
+    endif()
     # WebView2Loader.dll is not in the MINGW bin dir — copy from vendored SDK.
     add_custom_command(TARGET InmarScope POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different

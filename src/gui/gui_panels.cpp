@@ -159,17 +159,40 @@ void drawControls(App& app)
     bool running = app.active->running();
 
     ImGui::BeginDisabled(running);
-    const char* modes[] = {"RTL-SDR", "WAV file", "SDR++ Server", "HackRF", "Dual RTL", "Airspy", "RTL-TCP", "SDRplay"};
-    if (app.sourceMode < 0 || app.sourceMode > 7) app.sourceMode = 0;
-    if (ImGui::BeginCombo(_L("Source"), modes[app.sourceMode])) {
-        for (int mode = 0; mode < 8; ++mode) {
-#ifndef HAS_AIRSPY
-            if (mode == 5) continue;
+    struct SourceChoice { const char* label; int mode; };
+    const SourceChoice modes[] = {
+        {"RTL-SDR", 0}, {"WAV file", 1}, {"SDR++ Server", 2},
+        {"HackRF", 3}, {"Dual RTL", 4},
+#ifdef HAS_AIRSPY
+        {"Airspy", 5},
 #endif
-            if (ImGui::Selectable(modes[mode], app.sourceMode == mode)) {
+        {"RTL-TCP", 6}, {"SDRplay", 7},
+#ifdef HAS_LIBIIO
+        {"Pluto+ / AD936x", 8}
+#endif
+    };
+    const char* sourcePreview = "Unavailable source";
+    bool sourceAvailable = false;
+    for (const auto& mode : modes)
+    {
+        if (mode.mode == app.sourceMode)
+        {
+            sourcePreview = mode.label;
+            sourceAvailable = true;
+        }
+    }
+    if (ImGui::BeginCombo(_L("Source"), sourcePreview))
+    {
+        for (const auto& mode : modes)
+        {
+            bool selected = mode.mode == app.sourceMode;
+            if (ImGui::Selectable(mode.label, selected)) {
                 app.rspB.close(); app.rsp.close();
-                app.sourceMode = mode; app.devices.clear(); app.deviceIndex = 0;
+                app.sourceMode = mode.mode;
+                app.devices.clear(); app.deviceIndex = 0;
             }
+            if (selected)
+                ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
     }
@@ -179,7 +202,8 @@ void drawControls(App& app)
 
     if (!running)
     {
-        bool canStart = (app.sourceMode == 1) ? (app.wavPath[0] != '\0') : true;
+        bool canStart = sourceAvailable &&
+                        ((app.sourceMode == 1) ? (app.wavPath[0] != '\0') : true);
         ImGui::BeginDisabled(!canStart);
         if (ImGui::Button(_L("Start"), ImVec2(120, 0)))
             startActive(app);
@@ -566,9 +590,57 @@ void drawControls(App& app)
         }
     }
 #endif
+#ifdef HAS_LIBIIO
+    else if (app.sourceMode == 8)
+    {
+        // ---- ADALM-Pluto / Pluto+ (native libiio) ----
+        ImGui::BeginDisabled(running);
+        ImGui::InputText("IIO URI", app.plutoUri, sizeof(app.plutoUri));
+        ImGui::EndDisabled();
+        ImGui::TextDisabled("Examples: ip:192.168.2.1 or usb:1.2.3");
+
+        if (ImGui::InputDouble("Center (MHz)", &app.centerFreqMHz, 0.1, 1.0, "%.4f"))
+        {
+            app.viewA.resetView = true;
+            if (running)
+                app.pluto.setCenterFreq(app.centerFreqMHz * 1e6);
+        }
+        if (ImGui::InputDouble("Sample rate (MHz)", &app.plutoSampleRateMHz,
+                               0.1, 1.0, "%.3f"))
+        {
+            app.plutoSampleRateMHz = std::clamp(app.plutoSampleRateMHz, 0.521, 61.44);
+            app.viewA.resetView = true;
+            if (running)
+                app.pluto.setSampleRate(app.plutoSampleRateMHz * 1e6);
+        }
+        if (ImGui::InputDouble("RF bandwidth (MHz)", &app.plutoBandwidthMHz,
+                               0.1, 1.0, "%.3f"))
+        {
+            app.plutoBandwidthMHz = std::clamp(app.plutoBandwidthMHz, 0.2, 56.0);
+            if (running)
+                app.pluto.setBandwidth(app.plutoBandwidthMHz * 1e6);
+        }
+
+        const char* rfPorts[] = {"RX1 (A_BALANCED)", "RX2 (B_BALANCED)"};
+        if (ImGui::Combo("RF input", &app.plutoRfPort, rfPorts, 2) && running)
+            app.pluto.setRfPort(app.plutoRfPort == 1 ? "B_BALANCED" : "A_BALANCED");
+
+        if (ImGui::Checkbox("Slow-attack AGC", &app.plutoAgc) && running)
+            app.pluto.setGain(app.plutoAgc ? -1.0 : (double)app.plutoGainDb);
+        if (!app.plutoAgc)
+        {
+            if (ImGui::SliderFloat("RX gain (dB)", &app.plutoGainDb, -3.0f, 73.0f, "%.1f") && running)
+                app.pluto.setGain((double)app.plutoGainDb);
+        }
+        if (drawPpmAdjust("PPM", &app.ppm) && running)
+            app.pluto.setPpm((double)app.ppm);
+        if (ImGui::Checkbox(_L("DC block"), &app.dcBlock) && running)
+            app.pluto.setDcBlock(app.dcBlock);
+    }
+#endif
     if (app.sourceMode == 6)
-{
-// ---- RTL-TCP (network) ----
+    {
+        // ---- RTL-TCP (network) ----
         ImGui::SetNextItemWidth(-60.0f);
         ImGui::InputText("Host", app.rtlTcpHost, sizeof(app.rtlTcpHost));
         ImGui::InputInt("Port", &app.rtlTcpPort);

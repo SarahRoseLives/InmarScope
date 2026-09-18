@@ -9,6 +9,9 @@
 #ifdef HAS_AIRSPY
 #include "sdr/airspy_source.h"
 #endif
+#ifdef HAS_LIBIIO
+#include "sdr/pluto_source.h"
+#endif
 #include "sdr/wav_file_source.h"
 #include "sdr/sdrpp_server_source.h"
 #include "sdr/rtl_tcp_source.h"
@@ -74,8 +77,14 @@ struct App
 #ifdef HAS_AIRSPY
     AirspySource    airspy;
 #endif
+#ifdef HAS_LIBIIO
+    PlutoSource     pluto;
+#endif
     SdrSource*      active = &sdr;
-    int  sourceMode = 0; // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL, 5=Airspy, 6=RTL-TCP, 7=SDRplay
+    // Values are stable because they are persisted in inmarscope.ini.
+    // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL,
+    // 5=Airspy, 6=RTL-TCP, 7=SDRplay, 8=Pluto+/AD936x.
+    int  sourceMode = 0;
     char wavPath[512] = "";
     bool wavLoop = true;
     char serverHost[128] = "localhost";
@@ -85,6 +94,16 @@ struct App
     double serverSampleRateMHz = 2.0;
     char rtlTcpHost[128] = "127.0.0.1";
     int  rtlTcpPort = 1234;
+
+    // ADALM-Pluto / Pluto+ (libiio)
+#ifdef HAS_LIBIIO
+    char   plutoUri[128] = "ip:192.168.2.1";
+    double plutoSampleRateMHz = 2.4;
+    double plutoBandwidthMHz = 2.0;
+    bool   plutoAgc = false;
+    float  plutoGainDb = 40.0f;
+    int    plutoRfPort = 0; // 0=A_BALANCED, 1=B_BALANCED
+#endif
 
     // HackRF
     double hackSampleRateMHz = 10.0;
