@@ -84,6 +84,9 @@ double bandPlanCaptureRate(const App& app, bool second)
 #ifdef HAS_AIRSPY
         else if (app.sourceMode == 5) rate = kAirspyRates[std::clamp(app.airspySampleRateIdx, 0, kAirspyNumRates-1)];
 #endif
+#ifdef HAS_LIBIIO
+        else if (app.sourceMode == 8) rate = app.plutoSampleRateMHz * 1e6;
+#endif
         else if (app.sourceMode == 2) rate = app.serverSampleRateMHz * 1e6;
         else rate = kRates[std::clamp(second ? app.sampleRateIdxB : app.sampleRateIdx, 0, kNumRates-1)];
     }
@@ -288,7 +291,7 @@ void startActive(App& app)
         ok = app.rtltcp.start(0, cb, err);
     }
 #ifdef HAS_LIBIIO
-    else if (app.sourceMode == 7)
+    else if (app.sourceMode == 8)
     {
         app.active = &app.pluto;
         app.pluto.setUri(app.plutoUri);
