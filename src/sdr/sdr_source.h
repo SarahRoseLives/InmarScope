@@ -11,6 +11,7 @@ struct SdrDeviceInfo
     int index = 0;
     std::string name;
     std::string serial;
+    bool hasTunerModes = false; // SDRplay RSPduo enumeration exposes a mode key.
 };
 
 // Called from the SDR read thread with interleaved float IQ (I,Q pairs),

@@ -1,0 +1,293 @@
+{
+  "name": "Belgium",
+  "designator": "BE",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Belgium"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/belgium.json",
+  "source_sha256": "f095b9003529168183af33d1fbf53c79e43baa8e0dd83ae036f44a78f98082c5",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Belgium",
+    "country_name": "Belgium",
+    "country_code": "BE",
+    "author_name": "Bastien Cabay - ON4BCY",
+    "author_url": "https://qrz.com/db/ON4BCY"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 0.1357,
+      "hi": 0.1378,
+      "label": "2200m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "630m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.501,
+      "hi": 0.504,
+      "label": "600m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.5265,
+      "hi": 1.6065,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1.81,
+      "hi": 2.0,
+      "label": "160m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.8,
+      "label": "80m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.3515,
+      "hi": 5.3665,
+      "label": "60m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.95,
+      "hi": 6.2,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.2,
+      "label": "40m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.2,
+      "hi": 7.3,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 9.5,
+      "hi": 9.9,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.15,
+      "label": "30m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 11.65,
+      "hi": 12.05,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 13.6,
+      "hi": 13.8,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.35,
+      "label": "20m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 15.1,
+      "hi": 15.6,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 17.55,
+      "hi": 17.9,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.168,
+      "label": "17m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "15m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.45,
+      "hi": 21.85,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "12m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 25.67,
+      "hi": 26.1,
+      "label": "AM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 26.96,
+      "hi": 27.41,
+      "label": "11m - Citizen Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.0,
+      "hi": 29.7,
+      "label": "10m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 40.66,
+      "hi": 40.69,
+      "label": "8m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 50.0,
+      "hi": 52.0,
+      "label": "6m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 69.945,
+      "hi": 69.955,
+      "label": "4m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 70.19,
+      "hi": 70.4125,
+      "label": "4m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 87.5,
+      "hi": 108.0,
+      "label": "FM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 137.0,
+      "hi": 138.0,
+      "label": "Space Exploration / Meteorology Sat. / S-PCS",
+      "color": "D76B37"
+    },
+    {
+      "lo": 144.0,
+      "hi": 146.0,
+      "label": "2m - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 174.0,
+      "hi": 223.0,
+      "label": "T-DAB Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 430.0,
+      "hi": 440.0,
+      "label": "70cm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 446.0,
+      "hi": 446.2,
+      "label": "PMR446",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 470.0,
+      "hi": 790.0,
+      "label": "DVB-T - Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1300.0,
+      "label": "23cm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2300.0,
+      "hi": 2450.0,
+      "label": "13cm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5850.0,
+      "label": "6cm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10000.0,
+      "hi": 10500.0,
+      "label": "3cm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24000.0,
+      "hi": 24250.0,
+      "label": "1.25cm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 47000.0,
+      "hi": 47200.0,
+      "label": "6mm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 75500.0,
+      "hi": 81000.0,
+      "label": "4mm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 122250.0,
+      "hi": 123000.0,
+      "label": "2.5mm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 142000.0,
+      "hi": 149000.0,
+      "label": "2mm - Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 241000.0,
+      "hi": 250000.0,
+      "label": "1mm - Amateur",
+      "color": "4CAF50"
+    }
+  ]
+}

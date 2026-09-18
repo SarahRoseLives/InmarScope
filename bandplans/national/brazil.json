@@ -1,0 +1,659 @@
+{
+  "name": "Brazilian Ham Bands",
+  "designator": "BR",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Brazil"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/brazil.json",
+  "source_sha256": "04094933dd67f6e24b56a0c2765a8f941bdfc3a9fc97f44e19fa6a1fc44c1c9e",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Brazilian Ham Bands",
+    "country_name": "Brazil",
+    "country_code": "BR",
+    "author_name": "Rafael Beraldo",
+    "author_url": "https://github.com/rberaldo/"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 0.1357,
+      "hi": 0.1378,
+      "label": "2200m Ham Band CW, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "635m Ham Band CW, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.8,
+      "hi": 1.81,
+      "label": "|160m Ham Band CW, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.81,
+      "hi": 1.839,
+      "label": "CW",
+      "color": "888888"
+    },
+    {
+      "lo": 1.839,
+      "hi": 1.84,
+      "label": "CW, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.84,
+      "hi": 1.843,
+      "label": "CW, SSB, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 1.843,
+      "hi": 1.85,
+      "label": "CW, SSB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.85,
+      "hi": 2.0,
+      "label": "CW, SSB, AM, DV, Digital 160 Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.57,
+      "label": "|80m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.57,
+      "hi": 3.59,
+      "label": "CW, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 3.59,
+      "hi": 3.6,
+      "label": "CW, SSD, AM, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.6,
+      "hi": 3.775,
+      "label": "CW, SSD, AM, DV, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 3.775,
+      "hi": 3.875,
+      "label": "CW, SSD, DV, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.775,
+      "hi": 3.875,
+      "label": "CW, SSD, DV, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 3.875,
+      "hi": 4.0,
+      "label": "CW, SSD, AM, DV, Digital, 80m Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.3515,
+      "hi": 5.354,
+      "label": "|60m Ham Band CW, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.354,
+      "hi": 5.366,
+      "label": "CW, SSB, DV, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 5.366,
+      "hi": 5.3665,
+      "label": "CW, Digital 60m Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.04,
+      "label": "|40m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.04,
+      "hi": 7.047,
+      "label": "CW, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 7.047,
+      "hi": 7.05,
+      "label": "CW, SSB, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.05,
+      "hi": 7.1,
+      "label": "CW, SSB, DV, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 7.1,
+      "hi": 7.3,
+      "label": "CW, SSB, AM, DV, Digital 40m Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.13,
+      "label": "|30m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10.13,
+      "hi": 10.15,
+      "label": "CW, Digital 30m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.07,
+      "label": "|20m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.07,
+      "hi": 14.099,
+      "label": "CW, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 14.099,
+      "hi": 14.101,
+      "label": "CW IBP",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.101,
+      "hi": 14.282,
+      "label": "CW, SSB, DV, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 14.285,
+      "hi": 14.35,
+      "label": "CW, SSB, AM, DV, Digital 20m Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.095,
+      "label": "|17m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.095,
+      "hi": 18.109,
+      "label": "CW, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 18.109,
+      "hi": 18.111,
+      "label": "CW IBP",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.111,
+      "hi": 18.168,
+      "label": "CW, SSB, DV, Digital 17m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.07,
+      "label": "|15m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.07,
+      "hi": 21.149,
+      "label": "CW, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 21.149,
+      "hi": 21.151,
+      "label": "CW, IBP",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.151,
+      "hi": 21.38,
+      "label": "CW, SSB, DV, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 21.38,
+      "hi": 21.45,
+      "label": "CW, SSB, AM, DV, Digital 15m Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.915,
+      "label": "|12m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.915,
+      "hi": 24.929,
+      "label": "CW, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 24.929,
+      "hi": 24.931,
+      "label": "CW IBP",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.931,
+      "hi": 24.99,
+      "label": "CW, SSB, DV, Digital 12m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 28.0,
+      "hi": 28.07,
+      "label": "|10m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.07,
+      "hi": 28.19,
+      "label": "CW, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 28.19,
+      "hi": 28.199,
+      "label": "CW - Pilot Emissions",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.199,
+      "hi": 28.201,
+      "label": "CW IBP",
+      "color": "888888"
+    },
+    {
+      "lo": 28.201,
+      "hi": 28.225,
+      "label": "CW - Pilot Emissions",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.225,
+      "hi": 28.3,
+      "label": "CW, Digital - Pilot Emissions",
+      "color": "888888"
+    },
+    {
+      "lo": 28.3,
+      "hi": 29.0,
+      "label": "CW, SSB, DV, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.0,
+      "hi": 29.3,
+      "label": "All Modes",
+      "color": "888888"
+    },
+    {
+      "lo": 29.3,
+      "hi": 29.51,
+      "label": "All Modes - Satellites",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.51,
+      "hi": 29.52,
+      "label": "All Modes",
+      "color": "888888"
+    },
+    {
+      "lo": 29.52,
+      "hi": 29.59,
+      "label": "FM, DV - Repeater input",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.59,
+      "hi": 29.62,
+      "label": "CW, FM, DV - FM calling freq: 29.600 kHz",
+      "color": "888888"
+    },
+    {
+      "lo": 29.62,
+      "hi": 29.7,
+      "label": "FM, DV - Repeater output 10m Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 50.0,
+      "hi": 54.0,
+      "label": "6m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.0,
+      "hi": 144.025,
+      "label": "|2m Ham Band All Modes - Satellites",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.025,
+      "hi": 144.11,
+      "label": "CW - EME",
+      "color": "888888"
+    },
+    {
+      "lo": 144.11,
+      "hi": 144.15,
+      "label": "CW, Digital - EME",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.15,
+      "hi": 144.18,
+      "label": "CW, SSB, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 144.18,
+      "hi": 144.275,
+      "label": "CW, SSB - Calling freq: 144.2 MHz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.275,
+      "hi": 144.3,
+      "label": "CW - Pilot Emissions",
+      "color": "888888"
+    },
+    {
+      "lo": 144.3,
+      "hi": 144.36,
+      "label": "CW, SSB - Calling freq: 144.2 MHz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.36,
+      "hi": 144.4,
+      "label": "CW, SSB, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 144.4,
+      "hi": 144.6,
+      "label": "All Modes",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.6,
+      "hi": 144.9,
+      "label": "FM, DV - Repeater input",
+      "color": "888888"
+    },
+    {
+      "lo": 144.9,
+      "hi": 145.0,
+      "label": "CW, FM, DV, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.0,
+      "hi": 145.2,
+      "label": "All Modes, IVG",
+      "color": "888888"
+    },
+    {
+      "lo": 145.2,
+      "hi": 145.5,
+      "label": "FM, DV - Repeater output",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.5,
+      "hi": 145.565,
+      "label": "All Modes",
+      "color": "888888"
+    },
+    {
+      "lo": 145.565,
+      "hi": 145.575,
+      "label": "APRS",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.575,
+      "hi": 145.79,
+      "label": "All Modes",
+      "color": "888888"
+    },
+    {
+      "lo": 145.79,
+      "hi": 145.8,
+      "label": "Guard Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.8,
+      "hi": 146.0,
+      "label": "All Modes - Satellites",
+      "color": "888888"
+    },
+    {
+      "lo": 146.0,
+      "hi": 146.39,
+      "label": "FM, DV - Repeater input",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 146.39,
+      "hi": 146.6,
+      "label": "CW, FM, DV - Calling freq: 146.52 MHz",
+      "color": "888888"
+    },
+    {
+      "lo": 146.6,
+      "hi": 146.99,
+      "label": "FM, DV - Repeater output",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 146.99,
+      "hi": 147.4,
+      "label": "FM, DV - Repeater input",
+      "color": "888888"
+    },
+    {
+      "lo": 147.4,
+      "hi": 147.59,
+      "label": "CW, FM, DV",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 147.59,
+      "hi": 148.0,
+      "label": "FM, DV - Repeater output 2m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 220.0,
+      "hi": 225.0,
+      "label": "1.3m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 430.0,
+      "hi": 432.0,
+      "label": "|70cm Ham Band All Modes",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 432.0,
+      "hi": 432.025,
+      "label": "CW - EME",
+      "color": "888888"
+    },
+    {
+      "lo": 432.025,
+      "hi": 432.1,
+      "label": "CW, Digital - EME",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 432.1,
+      "hi": 432.3,
+      "label": "CW, SSB - Calling freq: 432.1 MHz",
+      "color": "888888"
+    },
+    {
+      "lo": 432.3,
+      "hi": 432.4,
+      "label": "CW - Pilot Emissions",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 432.4,
+      "hi": 432.42,
+      "label": "CW, Digital - Pilot Emissions",
+      "color": "888888"
+    },
+    {
+      "lo": 432.42,
+      "hi": 433.0,
+      "label": "CW, SSB, Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 433.0,
+      "hi": 433.05,
+      "label": "CW, Digital",
+      "color": "888888"
+    },
+    {
+      "lo": 433.05,
+      "hi": 434.0,
+      "label": "All Modes",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 434.0,
+      "hi": 435.0,
+      "label": "Fm, DV - Repeater input",
+      "color": "888888"
+    },
+    {
+      "lo": 435.0,
+      "hi": 438.0,
+      "label": "All Modes - Satellites",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 438.0,
+      "hi": 439.0,
+      "label": "All Modes",
+      "color": "888888"
+    },
+    {
+      "lo": 439.0,
+      "hi": 440.0,
+      "label": "FM, DV - Repeater output 70cm Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 902.0,
+      "hi": 928.0,
+      "label": "33cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1300.0,
+      "label": "23cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2330.0,
+      "hi": 2450.0,
+      "label": "13cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3400.0,
+      "hi": 3500.0,
+      "label": "9cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5925.0,
+      "label": "5cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10000.0,
+      "hi": 10500.0,
+      "label": "3cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24000.0,
+      "hi": 24250.0,
+      "label": "1.2cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 47000.0,
+      "hi": 47200.0,
+      "label": "6mm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 122250.0,
+      "hi": 123000.0,
+      "label": "2.5mm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 134000.0,
+      "hi": 141000.0,
+      "label": "2mm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 241000.0,
+      "hi": 250000.0,
+      "label": "1mm Ham Band",
+      "color": "4CAF50"
+    }
+  ]
+}

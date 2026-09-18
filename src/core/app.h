@@ -15,6 +15,7 @@
 #include "sdr/wav_file_source.h"
 #include "sdr/sdrpp_server_source.h"
 #include "sdr/rtl_tcp_source.h"
+#include "sdr/sdrplay_source.h"
 #include "sdr/iq_recorder.h"
 #include "audio/audio_player.h"
 #include "web/web_server.h"
@@ -46,6 +47,8 @@ struct SpectrumView
     float frameDbMin = 0.0f, frameDbMax = -120.0f;
     double viewXminMHz = 0.0, viewXmaxMHz = 0.0;
     bool   resetView = true;
+    std::chrono::steady_clock::time_point lastBrowseRetune;
+    double lastBrowseCenterMHz = 0.0;
     float  specLeftInset = 0.0f, specRightInset = 0.0f;
     bool   fftSkip = false; // set by draw functions when panel is visible, read by processFft next frame
 };
@@ -67,6 +70,10 @@ struct App
     SdrppServerSource server;
     HackRfSource    hack;
     RtlTcpSource    rtltcp;
+    SdrplaySource   rsp, rspB;
+    RspConfig      rspConfig, rspConfigB;
+    int            rspSecond = 0; // 0=single, 1=second device, 2=RSPduo master/slave
+    std::vector<SdrDeviceInfo> rspDevices;
 #ifdef HAS_AIRSPY
     AirspySource    airspy;
 #endif
@@ -76,7 +83,7 @@ struct App
     SdrSource*      active = &sdr;
     // Values are stable because they are persisted in inmarscope.ini.
     // 0=RTL, 1=WAV, 2=SDR++ Server, 3=HackRF, 4=Dual RTL,
-    // 5=Airspy, 6=RTL-TCP, 7=Pluto+/AD936x.
+    // 5=Airspy, 6=RTL-TCP, 7=SDRplay, 8=Pluto+/AD936x.
     int  sourceMode = 0;
     char wavPath[512] = "";
     bool wavLoop = true;
@@ -124,6 +131,7 @@ struct App
     DecoderManager   decoders;
     DecoderManager   decodersB;
     RtlSdrSource     sdrB;
+    SdrSource*      activeB = &sdrB;
 
     // Dual-SDR
     bool   dualMode = false;
@@ -222,8 +230,6 @@ struct App
     std::string status = "Idle";
 
     bool   bandBrowse = true;
-    std::chrono::steady_clock::time_point lastRetune;
-    double lastRetuneCtr = 0.0;
     float  browseEdgePct = 24.5f;
     float  browseThrottleMs = 20.0f;
     float  browseMinMovePct = 0.10f;
@@ -233,8 +239,14 @@ struct App
     bool   showBandPlanB = false;
     std::vector<std::string> bandPlanNames;  // display names (shared)
     std::vector<std::string> bandPlanPaths;  // full file paths (shared)
+    std::vector<std::string> bandPlanErrors;
+    char bandPlanFile[512] = "";
+    char bandPlanFileB[512] = "";
     int    bandPlanIdx = 0;
     int    bandPlanIdxB = 0;
+    int    bandPlanGroup = 0, bandPlanGroupB = 0;
+    int    bandPlanChannel = -1, bandPlanChannelB = -1;
+    bool   decodeBandPlan = true, decodeBandPlanB = true;
     BandPlan bandPlanLoaded;
     BandPlan bandPlanLoadedB;
     char   bandPlanDir[256] = "bandplans";

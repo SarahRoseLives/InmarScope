@@ -59,22 +59,9 @@ void retuneActive(App& app, double centerMHz)
     double hz = centerMHz * 1e6;
     app.centerFreqMHz = centerMHz;
     app.viewA.resetView = true;
-    if (app.sourceMode == 0)
-        app.sdr.setCenterFreq(hz);
-    else if (app.sourceMode == 2)
-        app.server.setCenterFreq(hz);
-    else if (app.sourceMode == 3)
-        app.hack.setCenterFreq(hz);
-#ifdef HAS_AIRSPY
-    else if (app.sourceMode == 5)
-        app.airspy.setCenterFreq(hz);
-#endif
-    else if (app.sourceMode == 6)
-        app.rtltcp.setCenterFreq(hz);
-#ifdef HAS_LIBIIO
-    else if (app.sourceMode == 7)
-        app.pluto.setCenterFreq(hz);
-#endif
+    app.active->setCenterFreq(hz);
+    hz = app.active->centerFreq();
+    app.centerFreqMHz = hz / 1e6;
     app.decoders.removeAll();
     app.decoders.configure(app.active->sampleRate(), hz);
     // Rebuild the frequency axis now (processFft already ran this frame with the
@@ -95,22 +82,9 @@ void retunePreserving(App& app, double centerMHz)
 
     double hz = centerMHz * 1e6;
     app.centerFreqMHz = centerMHz;
-    if (app.sourceMode == 0 || app.sourceMode == 4)
-        app.sdr.setCenterFreq(hz);
-    else if (app.sourceMode == 2)
-        app.server.setCenterFreq(hz);
-    else if (app.sourceMode == 3)
-        app.hack.setCenterFreq(hz);
-#ifdef HAS_AIRSPY
-    else if (app.sourceMode == 5)
-        app.airspy.setCenterFreq(hz);
-#endif
-    else if (app.sourceMode == 6)
-        app.rtltcp.setCenterFreq(hz);
-#ifdef HAS_LIBIIO
-    else if (app.sourceMode == 7)
-        app.pluto.setCenterFreq(hz);
-#endif
+    app.active->setCenterFreq(hz);
+    hz = app.active->centerFreq();
+    app.centerFreqMHz = hz / 1e6;
     app.decoders.removeAll();
     app.decoders.configure(app.active->sampleRate(), hz);
     for (auto& k : keep)
@@ -141,15 +115,15 @@ void updateVoiceFollow(App& app)
             if (voiceAesBlacklisted(app, pick->aesId))
                 return; // blacklisted country — don't record, don't monitor
             double rx = pick->rxMHz;
-            double fsBMHz = app.sdrB.sampleRate() / 1e6;
+            double fsBMHz = app.activeB->sampleRate() / 1e6;
             double offB = std::min(0.2, 0.25 * fsBMHz);
             double bctr = rx - offB;
-            app.sdrB.setCenterFreq(bctr * 1e6);
+            app.activeB->setCenterFreq(bctr * 1e6);
             app.decodersB.removeAll();
-            app.decodersB.configure(app.sdrB.sampleRate(), bctr * 1e6);
+            app.decodersB.configure(app.activeB->sampleRate(), bctr * 1e6);
             app.viewB.resetView = true;
             if (app.viewB.curN > 0)
-                updateFreqAxis(app.viewB, bctr * 1e6, app.sdrB.sampleRate(), app.viewB.curN);
+                updateFreqAxis(app.viewB, bctr * 1e6, app.activeB->sampleRate(), app.viewB.curN);
             app.followChannelId = app.decodersB.addDecoder(rx * 1e6, 8400, pick->aesId);
             if (app.followChannelId < 0) return;
             app.decodersB.setVoiceMonitor(app.followChannelId);

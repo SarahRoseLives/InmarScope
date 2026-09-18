@@ -2,6 +2,7 @@
 // Definitions live in signal/processing.cpp, voice/voice_ops.cpp, gui/gui_panels.cpp,
 // session/session.cpp, and state/config.cpp.
 #pragma once
+void reloadBandPlans(struct App& app);
 
 #include "core/app.h"
 
@@ -23,6 +24,10 @@ void updateCallHunter(App&);
 // session/session.cpp
 void updateFeed(App&);
 void startActive(App&);
+void tuneBandPlan(App&, bool second, double centerMHz,
+                  const std::vector<std::pair<double, int>>* channels = nullptr);
+double bandPlanCaptureRate(const App&, bool second);
+bool activateBandPlan(App&, bool second);
 
 // gui/gui_panels.cpp
 void drawDockHost(App&);

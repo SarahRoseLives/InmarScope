@@ -1,0 +1,1980 @@
+{
+  "name": "Netherlands",
+  "designator": "NL",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Netherlands"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/netherlands.json",
+  "source_sha256": "0ae9ae402378c84196c6afe094af8555a1168ad0d8047a3ce8e524b816274f39",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Netherlands",
+    "country_name": "Netherlands",
+    "country_code": "NL",
+    "author_name": "Davide Rovelli",
+    "author_url": "http://daviderud.altervista.org"
+  },
+  "excluded_invalid_source_entries": [
+    {
+      "name": "Digital network (fixed)",
+      "type": "utility",
+      "start": 22674750000,
+      "end": 2283350000
+    },
+    {
+      "name": "LPR, SRD and SRR",
+      "type": "utility",
+      "start": 25109000000,
+      "end": 2544500000
+    }
+  ],
+  "bands": [
+    {
+      "lo": 0.0,
+      "hi": 0.0083,
+      "label": "Unallocated",
+      "color": "888888"
+    },
+    {
+      "lo": 0.0083,
+      "hi": 0.009,
+      "label": "Weather (LDS)",
+      "color": "888888"
+    },
+    {
+      "lo": 0.009,
+      "hi": 0.0113,
+      "label": "Radionavigation / Weather (LDS)",
+      "color": "888888"
+    },
+    {
+      "lo": 0.0113,
+      "hi": 0.014,
+      "label": "Radionavigation",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.014,
+      "hi": 0.01995,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.01995,
+      "hi": 0.02005,
+      "label": "20KHz Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 0.02005,
+      "hi": 0.07685,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.07685,
+      "hi": 0.07815,
+      "label": "DCF77 (DE)",
+      "color": "888888"
+    },
+    {
+      "lo": 0.07815,
+      "hi": 0.1236,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.1236,
+      "hi": 0.1357,
+      "label": "RFID (LF)",
+      "color": "888888"
+    },
+    {
+      "lo": 0.1357,
+      "hi": 0.136,
+      "label": "|2200m Ham Band  Tests, Transatlantic Window",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.136,
+      "hi": 0.1374,
+      "label": "2200m Telegraphy",
+      "color": "888888"
+    },
+    {
+      "lo": 0.1374,
+      "hi": 0.1376,
+      "label": "Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.1376,
+      "hi": 0.1378,
+      "label": "Slow Telegraphy   2200m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 0.1378,
+      "hi": 0.1485,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.1485,
+      "hi": 0.255,
+      "label": "Long Wave",
+      "color": "FF9800"
+    },
+    {
+      "lo": 0.255,
+      "hi": 0.2835,
+      "label": "Long Wave / Aeronautical Radionavigation",
+      "color": "FF9800"
+    },
+    {
+      "lo": 0.2835,
+      "hi": 0.472,
+      "label": "Aeronautical Radionavigation / Maritime",
+      "color": "4287F5"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.475,
+      "label": "635m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.475,
+      "hi": 0.479,
+      "label": "635m Ham Band CW, Digimodes",
+      "color": "888888"
+    },
+    {
+      "lo": 0.479,
+      "hi": 0.5265,
+      "label": "Aeronautical Radionavigation / Maritime",
+      "color": "4287F5"
+    },
+    {
+      "lo": 0.5265,
+      "hi": 1.6065,
+      "label": "Medium Wave",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1.6065,
+      "hi": 1.625,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 1.625,
+      "hi": 1.635,
+      "label": "Radiolocation Beacons",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 1.635,
+      "hi": 1.8,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 1.8,
+      "hi": 1.81,
+      "label": "Radiolocation Beacons",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 1.81,
+      "hi": 1.88,
+      "label": "160m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.88,
+      "hi": 2.025,
+      "label": "Aeronautical Mobile Service",
+      "color": "4287F5"
+    },
+    {
+      "lo": 2.025,
+      "hi": 2.045,
+      "label": "Aeronautical Mobile Service / Weather aux.",
+      "color": "4287F5"
+    },
+    {
+      "lo": 2.045,
+      "hi": 2.16,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 2.16,
+      "hi": 2.17,
+      "label": "Radiolocation Beacons",
+      "color": "4287F5"
+    },
+    {
+      "lo": 2.17,
+      "hi": 2.1735,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 2.1735,
+      "hi": 2.1905,
+      "label": "Distress and Calling for Maritime and Aeronautical",
+      "color": "4287F5"
+    },
+    {
+      "lo": 2.1905,
+      "hi": 2.194,
+      "label": "Maritime Mobile",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 2.194,
+      "hi": 2.3,
+      "label": "Aeronautical Mobile",
+      "color": "4287F5"
+    },
+    {
+      "lo": 2.3,
+      "hi": 2.498,
+      "label": "Shortwave (Tropical Band 120m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2.498,
+      "hi": 2.501,
+      "label": "Standard Frequency and Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 2.501,
+      "hi": 2.502,
+      "label": "Standard Frequency and Time Signal / Spatial research",
+      "color": "888888"
+    },
+    {
+      "lo": 2.502,
+      "hi": 2.625,
+      "label": "Aeronautical Mobile Service",
+      "color": "4287F5"
+    },
+    {
+      "lo": 2.625,
+      "hi": 2.65,
+      "label": "Maritime Mobile Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 2.65,
+      "hi": 2.85,
+      "label": "Aeronautical Mobile Service",
+      "color": "4287F5"
+    },
+    {
+      "lo": 2.85,
+      "hi": 3.155,
+      "label": "Transoceanic Flights (Aeronautical Mobile)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.155,
+      "hi": 3.2,
+      "label": "Maritime Mobile",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 3.2,
+      "hi": 3.4,
+      "label": "Shortwave (Tropical Band 90m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.4,
+      "hi": 3.5,
+      "label": "Aeronautical",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.57,
+      "label": "|80m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.57,
+      "hi": 3.6,
+      "label": "RTTY/Data DX",
+      "color": "888888"
+    },
+    {
+      "lo": 3.6,
+      "hi": 3.79,
+      "label": "80m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.79,
+      "hi": 3.8,
+      "label": "DX window  80m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 3.8,
+      "hi": 3.95,
+      "label": "Aeronautical Mobile Service",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.95,
+      "hi": 4.0,
+      "label": "Shortwave (75m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 4.0,
+      "hi": 4.75,
+      "label": "Maritime",
+      "color": "888888"
+    },
+    {
+      "lo": 4.75,
+      "hi": 4.995,
+      "label": "Shortwave (Tropical Band 60m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 4.995,
+      "hi": 5.003,
+      "label": "Standard Frequency and Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 5.003,
+      "hi": 5.005,
+      "label": "Standard Frequency and Time Signal / Spatial research",
+      "color": "888888"
+    },
+    {
+      "lo": 5.005,
+      "hi": 5.06,
+      "label": "Shortwave (Tropical Band 60m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.06,
+      "hi": 5.3305,
+      "label": "Maritime Mobile/ Private Land Mobile",
+      "color": "4287F5"
+    },
+    {
+      "lo": 5.3305,
+      "hi": 5.3334,
+      "label": "60m Ham Band Ch. 1 (Not NL)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.3334,
+      "hi": 5.3465,
+      "label": "60m Ham Band (Not NL)",
+      "color": "888888"
+    },
+    {
+      "lo": 5.3465,
+      "hi": 5.3494,
+      "label": "Ch. 2 (60m) (Not NL)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.3494,
+      "hi": 5.3515,
+      "label": "60m Ham Band (Not NL)",
+      "color": "888888"
+    },
+    {
+      "lo": 5.3515,
+      "hi": 5.354,
+      "label": "60m Ham Band CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.354,
+      "hi": 5.366,
+      "label": "60m HAM Alle modes (USB)",
+      "color": "888888"
+    },
+    {
+      "lo": 5.366,
+      "hi": 5.3665,
+      "label": "60m HAM Weak NB modes",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.3665,
+      "hi": 5.3715,
+      "label": "60m Ham Band (Not NL)",
+      "color": "888888"
+    },
+    {
+      "lo": 5.3715,
+      "hi": 5.3744,
+      "label": "Ch. 4 (60m) (Not NL)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.3744,
+      "hi": 5.4035,
+      "label": "60m Ham Band (Not NL)",
+      "color": "888888"
+    },
+    {
+      "lo": 5.4035,
+      "hi": 5.4064,
+      "label": "Ch. 5 60m Ham Band (Not NL)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.4064,
+      "hi": 5.9,
+      "label": "Aeronautical/ Maritime",
+      "color": "4287F5"
+    },
+    {
+      "lo": 5.9,
+      "hi": 6.2,
+      "label": "Shortwave (49m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 6.2,
+      "hi": 6.21475,
+      "label": "(Ship TX) Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 6.21375,
+      "hi": 6.21625,
+      "label": "Distress",
+      "color": "4287F5"
+    },
+    {
+      "lo": 6.21625,
+      "hi": 6.3425,
+      "label": "(Ship TX) Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 6.3425,
+      "hi": 6.765,
+      "label": "(Transoceanic Flights) Aeronautical and (Ship/Shore) Maritime",
+      "color": "4287F5"
+    },
+    {
+      "lo": 6.765,
+      "hi": 6.795,
+      "label": "ISM Band (50m)",
+      "color": "888888"
+    },
+    {
+      "lo": 6.795,
+      "hi": 7.0,
+      "label": "Long Distance Communications",
+      "color": "4287F5"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.08,
+      "label": "|40m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.08,
+      "hi": 7.169,
+      "label": "RTTY/Data",
+      "color": "888888"
+    },
+    {
+      "lo": 7.169,
+      "hi": 7.173,
+      "label": "SSTV",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.173,
+      "hi": 7.2,
+      "label": "40m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 7.2,
+      "hi": 7.45,
+      "label": "Shortwave (41m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 7.45,
+      "hi": 7.6335,
+      "label": "Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 7.6335,
+      "hi": 7.6365,
+      "label": "MARS",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 7.6365,
+      "hi": 7.85,
+      "label": "Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 7.85,
+      "hi": 8.28975,
+      "label": "(Ship/Shore) Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 8.28975,
+      "hi": 8.29225,
+      "label": "Distress",
+      "color": "888888"
+    },
+    {
+      "lo": 8.29225,
+      "hi": 8.68,
+      "label": "(Ship/Shore) Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 8.68,
+      "hi": 9.108,
+      "label": "(Transoceanic Flights) Aeronautical and (Ship/Shore) Maritime",
+      "color": "888888"
+    },
+    {
+      "lo": 9.108,
+      "hi": 9.4,
+      "label": "Maritime Mobile/ Private Land Mobile",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 9.4,
+      "hi": 9.9,
+      "label": "Shortwave (31m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 9.9,
+      "hi": 9.995,
+      "label": "Private Land Mobile",
+      "color": "888888"
+    },
+    {
+      "lo": 9.995,
+      "hi": 10.003,
+      "label": "Standard Frequency and Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 10.003,
+      "hi": 10.005,
+      "label": "Standard Frequency and Time Signal / Spatial research",
+      "color": "888888"
+    },
+    {
+      "lo": 10.005,
+      "hi": 10.1,
+      "label": "Aeronautical",
+      "color": "4287F5"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.13,
+      "label": "|30m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10.13,
+      "hi": 10.14,
+      "label": "RTTY",
+      "color": "888888"
+    },
+    {
+      "lo": 10.14,
+      "hi": 10.15,
+      "label": "Packet 30m Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10.15,
+      "hi": 11.407,
+      "label": "Aeronautical",
+      "color": "4287F5"
+    },
+    {
+      "lo": 11.407,
+      "hi": 11.41,
+      "label": "MARS",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 11.41,
+      "hi": 11.6,
+      "label": "Aeronautical",
+      "color": "4287F5"
+    },
+    {
+      "lo": 11.6,
+      "hi": 12.1,
+      "label": "Shortwave (25m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 12.1,
+      "hi": 12.28875,
+      "label": "(Ship/Shore) Maritime",
+      "color": "4287F5"
+    },
+    {
+      "lo": 12.28875,
+      "hi": 12.29125,
+      "label": "Distress",
+      "color": "4287F5"
+    },
+    {
+      "lo": 12.29125,
+      "hi": 12.7879,
+      "label": "(Ship/Shore) Maritime",
+      "color": "4287F5"
+    },
+    {
+      "lo": 12.7919,
+      "hi": 13.36,
+      "label": "(Transoceanic Flights) Aeronautical and (Ship/Shore) Maritime",
+      "color": "4287F5"
+    },
+    {
+      "lo": 13.36,
+      "hi": 13.41,
+      "label": "Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 13.41,
+      "hi": 13.553,
+      "label": "(Ship/Shore) Maritime",
+      "color": "4287F5"
+    },
+    {
+      "lo": 13.553,
+      "hi": 13.567,
+      "label": "22m (HiFER) Band and 22m ISM",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 13.567,
+      "hi": 13.57,
+      "label": "22m ISM Band",
+      "color": "888888"
+    },
+    {
+      "lo": 13.57,
+      "hi": 13.87,
+      "label": "Shortwave (22m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 13.87,
+      "hi": 14.0,
+      "label": "Fixed and Aero mobile",
+      "color": "888888"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.07,
+      "label": "|20m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.07,
+      "hi": 14.095,
+      "label": "RTTY",
+      "color": "888888"
+    },
+    {
+      "lo": 14.095,
+      "hi": 14.0995,
+      "label": "Packet",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.0995,
+      "hi": 14.1005,
+      "label": "NCDXF Beacons",
+      "color": "888888"
+    },
+    {
+      "lo": 14.1005,
+      "hi": 14.112,
+      "label": "Packet",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.112,
+      "hi": 14.228,
+      "label": "20m Ham Band",
+      "color": "888888"
+    },
+    {
+      "lo": 14.228,
+      "hi": 14.232,
+      "label": "SSTV",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.232,
+      "hi": 14.284,
+      "label": "20m Ham Band",
+      "color": "888888"
+    },
+    {
+      "lo": 14.284,
+      "hi": 14.288,
+      "label": "AM calling frequency",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.288,
+      "hi": 14.35,
+      "label": "20m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 14.35,
+      "hi": 14.995,
+      "label": "Private Land Mobile",
+      "color": "888888"
+    },
+    {
+      "lo": 14.995,
+      "hi": 15.005,
+      "label": "Standard Frequency and Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 15.005,
+      "hi": 15.1,
+      "label": "(Transoceanic Flights) Aeronautical Mobile",
+      "color": "4287F5"
+    },
+    {
+      "lo": 15.1,
+      "hi": 15.8,
+      "label": "Shortwave (19m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 15.8,
+      "hi": 17.48,
+      "label": "(Ship/Shore) Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 17.48,
+      "hi": 17.9,
+      "label": "Shortwave (16m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 17.9,
+      "hi": 18.068,
+      "label": "(Transoceanic Flights) Aeronautical",
+      "color": "4287F5"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.168,
+      "label": "17m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.168,
+      "hi": 18.9,
+      "label": "(Ship/Shore) Maritime/ Fixed Service",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 18.9,
+      "hi": 19.02,
+      "label": "Shortwave (15m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 19.02,
+      "hi": 19.995,
+      "label": "(Ship/Shore) Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 19.995,
+      "hi": 20.005,
+      "label": "Standard Frequency and Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 20.005,
+      "hi": 21.0,
+      "label": "Private Land Mobile",
+      "color": "888888"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "15m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.45,
+      "hi": 21.85,
+      "label": "Shortwave (13m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 21.85,
+      "hi": 22.0,
+      "label": "Aeronautical Mobile",
+      "color": "4287F5"
+    },
+    {
+      "lo": 22.0,
+      "hi": 24.89,
+      "label": "(Ship/Shore) Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "12m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.99,
+      "hi": 24.995,
+      "label": "Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 24.995,
+      "hi": 25.005,
+      "label": "Standard Frequency and Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 25.005,
+      "hi": 25.55,
+      "label": "Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 25.55,
+      "hi": 25.67,
+      "label": "Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 25.67,
+      "hi": 26.1,
+      "label": "Shortwave (11m) Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 26.1,
+      "hi": 26.957,
+      "label": "Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 26.957,
+      "hi": 27.283,
+      "label": "10m ISM",
+      "color": "888888"
+    },
+    {
+      "lo": 27.283,
+      "hi": 27.41,
+      "label": "Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 27.41,
+      "hi": 28.0,
+      "label": "Meteorological Aids",
+      "color": "888888"
+    },
+    {
+      "lo": 28.0,
+      "hi": 28.07,
+      "label": "|10m Ham Band  CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.07,
+      "hi": 28.12,
+      "label": "NB modes digimodes",
+      "color": "888888"
+    },
+    {
+      "lo": 28.12,
+      "hi": 28.15,
+      "label": "NB modes digimodes stations (unatt.)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.15,
+      "hi": 28.19,
+      "label": "NB Modes",
+      "color": "888888"
+    },
+    {
+      "lo": 28.19,
+      "hi": 28.199,
+      "label": "IBP, regional time shared beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.199,
+      "hi": 28.201,
+      "label": "IBP, worldwide time shared beacons",
+      "color": "888888"
+    },
+    {
+      "lo": 28.201,
+      "hi": 28.225,
+      "label": "IBP, continuous duty beacons",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.225,
+      "hi": 28.3,
+      "label": "All modes beacons",
+      "color": "888888"
+    },
+    {
+      "lo": 28.3,
+      "hi": 28.32,
+      "label": "All modes - digimodes stations (unatt.)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.32,
+      "hi": 29.1,
+      "label": "All modes",
+      "color": "888888"
+    },
+    {
+      "lo": 29.1,
+      "hi": 29.2,
+      "label": "All modes - FM simplex – 10 kHz channel",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.2,
+      "hi": 29.3,
+      "label": "All modes - digimodes stations (unatt.)",
+      "color": "888888"
+    },
+    {
+      "lo": 29.3,
+      "hi": 29.51,
+      "label": "Satellite downlink",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.51,
+      "hi": 29.52,
+      "label": "Guard channel",
+      "color": "888888"
+    },
+    {
+      "lo": 29.52,
+      "hi": 29.6,
+      "label": "All modes - FM repeater input (RH1 - RH8)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.6,
+      "hi": 29.61,
+      "label": "All modes - FM calling channel",
+      "color": "888888"
+    },
+    {
+      "lo": 29.61,
+      "hi": 29.62,
+      "label": "All modes - FM simplex repeater (parrot - input and output)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 29.62,
+      "hi": 29.7,
+      "label": "All modes - FM repeater outputs (RH1 – RH8) 10m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 29.7,
+      "hi": 40.66,
+      "label": "Military, microphones, radiocommands, PMR, medical implants",
+      "color": "888888"
+    },
+    {
+      "lo": 40.66,
+      "hi": 40.7,
+      "label": "8m ISM",
+      "color": "888888"
+    },
+    {
+      "lo": 40.7,
+      "hi": 50.0,
+      "label": "Fixed Mobile/ Maritime",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 50.0,
+      "hi": 52.0,
+      "label": "6m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 52.0,
+      "hi": 70.0,
+      "label": "Land Military / PMR",
+      "color": "888888"
+    },
+    {
+      "lo": 70.0,
+      "hi": 70.5,
+      "label": "4m Ham Band (not NL)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 70.5,
+      "hi": 73.0,
+      "label": "Miltary, PMR/PAMR",
+      "color": "888888"
+    },
+    {
+      "lo": 73.0,
+      "hi": 74.6,
+      "label": "Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 74.6,
+      "hi": 75.2,
+      "label": "Radionavigation",
+      "color": "4287F5"
+    },
+    {
+      "lo": 75.2,
+      "hi": 87.5,
+      "label": "Miltary, PMR/PAMR",
+      "color": "888888"
+    },
+    {
+      "lo": 87.5,
+      "hi": 108.0,
+      "label": "FM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 108.0,
+      "hi": 118.0,
+      "label": "Air Band VOR/ILS",
+      "color": "4287F5"
+    },
+    {
+      "lo": 118.0,
+      "hi": 121.49,
+      "label": "Air Band Voice",
+      "color": "4287F5"
+    },
+    {
+      "lo": 121.49,
+      "hi": 121.51,
+      "label": "Civilian Aircraft Distress/ Emergency",
+      "color": "4287F5"
+    },
+    {
+      "lo": 121.51,
+      "hi": 131.545,
+      "label": "Air Band Voice",
+      "color": "4287F5"
+    },
+    {
+      "lo": 131.545,
+      "hi": 131.555,
+      "label": "ACARS",
+      "color": "4287F5"
+    },
+    {
+      "lo": 131.555,
+      "hi": 137.0,
+      "label": "Aviation",
+      "color": "4287F5"
+    },
+    {
+      "lo": 137.0,
+      "hi": 138.0,
+      "label": "Satellite",
+      "color": "888888"
+    },
+    {
+      "lo": 138.0,
+      "hi": 144.0,
+      "label": "Aeronautical Military Systems",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 144.0,
+      "hi": 144.035,
+      "label": "|2m Ham Band EME",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.035,
+      "hi": 144.15,
+      "label": "CW",
+      "color": "888888"
+    },
+    {
+      "lo": 144.15,
+      "hi": 144.4,
+      "label": "SSB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.4,
+      "hi": 144.48,
+      "label": "Beacons",
+      "color": "888888"
+    },
+    {
+      "lo": 144.48,
+      "hi": 144.5,
+      "label": "ISS Voice Uplink + Beacons",
+      "color": "D76B37"
+    },
+    {
+      "lo": 144.5,
+      "hi": 144.8,
+      "label": "All modes",
+      "color": "888888"
+    },
+    {
+      "lo": 144.8,
+      "hi": 144.99,
+      "label": "Digital comm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 144.99,
+      "hi": 145.57,
+      "label": "Voice",
+      "color": "888888"
+    },
+    {
+      "lo": 145.57,
+      "hi": 145.8,
+      "label": "Repeaters Voice",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 145.79,
+      "hi": 145.81,
+      "label": "ISS Voice/ SSTV Downlink",
+      "color": "D76B37"
+    },
+    {
+      "lo": 145.81,
+      "hi": 146.0,
+      "label": "Satellite in 2m Ham Band|",
+      "color": "888888"
+    },
+    {
+      "lo": 146.0,
+      "hi": 148.0,
+      "label": "2m Band (Not NL)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 148.0,
+      "hi": 155.9875,
+      "label": "Fixed Mobile",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 155.9875,
+      "hi": 174.0,
+      "label": "Fixed Mobile/ Marine",
+      "color": "888888"
+    },
+    {
+      "lo": 174.0,
+      "hi": 230.0,
+      "label": "DAB+ radio",
+      "color": "FF9800"
+    },
+    {
+      "lo": 230.0,
+      "hi": 242.95,
+      "label": "Defence Systems",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 242.95,
+      "hi": 243.05,
+      "label": "EPIRBs",
+      "color": "888888"
+    },
+    {
+      "lo": 243.05,
+      "hi": 322.0,
+      "label": "Defence Systems",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 322.0,
+      "hi": 328.6,
+      "label": "Radio Astronomy / Defence",
+      "color": "888888"
+    },
+    {
+      "lo": 328.6,
+      "hi": 335.4,
+      "label": "ILS Glide path",
+      "color": "4287F5"
+    },
+    {
+      "lo": 335.4,
+      "hi": 399.9,
+      "label": "Defence Systems, PMR/PMAR/PPDR",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 399.9,
+      "hi": 400.05,
+      "label": "MSS Earth stations",
+      "color": "D76B37"
+    },
+    {
+      "lo": 400.05,
+      "hi": 400.15,
+      "label": "Standard Frequency and Time Signal-Satellite Service",
+      "color": "D76B37"
+    },
+    {
+      "lo": 400.15,
+      "hi": 401.0,
+      "label": "(NVNG)/ Mobile Satellite Service (MSS)",
+      "color": "D76B37"
+    },
+    {
+      "lo": 401.0,
+      "hi": 403.0,
+      "label": "Earth Exploration Satellite",
+      "color": "888888"
+    },
+    {
+      "lo": 403.0,
+      "hi": 406.0,
+      "label": "Meteorological and Medical Aids",
+      "color": "888888"
+    },
+    {
+      "lo": 406.0,
+      "hi": 406.1,
+      "label": "Distress Beacons (S and RSAT| NOAAs 15, 18, 19)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 406.1,
+      "hi": 410.0,
+      "label": "Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 410.0,
+      "hi": 430.0,
+      "label": "Land Maritime Military",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 430.0,
+      "hi": 433.05,
+      "label": "|70cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 433.05,
+      "hi": 434.79,
+      "label": "Shared 70cm Ham and 70cm ISM",
+      "color": "888888"
+    },
+    {
+      "lo": 434.79,
+      "hi": 438.0,
+      "label": "Satellite in 70cm Ham Band",
+      "color": "D76B37"
+    },
+    {
+      "lo": 438.0,
+      "hi": 440.0,
+      "label": "70cm Ham Band|",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 440.0,
+      "hi": 446.0125,
+      "label": "Land Maritime Military",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 446.0,
+      "hi": 446.2,
+      "label": "PMR446",
+      "color": "888888"
+    },
+    {
+      "lo": 446.1875,
+      "hi": 450.0,
+      "label": "Land Maritime Military",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 450.0,
+      "hi": 465.9865,
+      "label": "Land Mobile, Paging, PMR/PAMR",
+      "color": "888888"
+    },
+    {
+      "lo": 465.9865,
+      "hi": 465.9885,
+      "label": "Metops' DCP configuration control",
+      "color": "D76B37"
+    },
+    {
+      "lo": 465.9885,
+      "hi": 470.0,
+      "label": "Land Mobile, Paging, PMR/PAMR",
+      "color": "888888"
+    },
+    {
+      "lo": 470.0,
+      "hi": 608.0,
+      "label": "DVB-T Television UHF",
+      "color": "FF9800"
+    },
+    {
+      "lo": 608.0,
+      "hi": 614.0,
+      "label": "Radio Astronomy (Ch.37)",
+      "color": "888888"
+    },
+    {
+      "lo": 614.0,
+      "hi": 790.0,
+      "label": "DVB-T Television UHF",
+      "color": "FF9800"
+    },
+    {
+      "lo": 790.0,
+      "hi": 862.0,
+      "label": "Mobile Communications",
+      "color": "888888"
+    },
+    {
+      "lo": 862.0,
+      "hi": 870.0,
+      "label": "ISM Europe",
+      "color": "888888"
+    },
+    {
+      "lo": 870.0,
+      "hi": 876.0,
+      "label": "Mobile Communications",
+      "color": "888888"
+    },
+    {
+      "lo": 876.0,
+      "hi": 880.0,
+      "label": "GSM-R (Train)",
+      "color": "888888"
+    },
+    {
+      "lo": 880.0,
+      "hi": 915.0,
+      "label": "GSM",
+      "color": "888888"
+    },
+    {
+      "lo": 915.0,
+      "hi": 921.0,
+      "label": "Mobile radiolocation",
+      "color": "888888"
+    },
+    {
+      "lo": 921.0,
+      "hi": 925.0,
+      "label": "GSM-R (Train)",
+      "color": "888888"
+    },
+    {
+      "lo": 925.0,
+      "hi": 960.0,
+      "label": "GSM",
+      "color": "888888"
+    },
+    {
+      "lo": 960.0,
+      "hi": 1164.0,
+      "label": "Aviation",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1164.0,
+      "hi": 1240.0,
+      "label": "Satellite",
+      "color": "888888"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1300.0,
+      "label": "23cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1300.0,
+      "hi": 1400.0,
+      "label": "Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 1400.0,
+      "hi": 1420.40475,
+      "label": "Earth Exploration-Satellite/ Radio Astronomy",
+      "color": "D76B37"
+    },
+    {
+      "lo": 1420.40475,
+      "hi": 1420.40675,
+      "label": "Hygrogen Line",
+      "color": "888888"
+    },
+    {
+      "lo": 1420.40675,
+      "hi": 1427.0,
+      "label": "Earth Exploration-Satellite/ Radio Astronomy",
+      "color": "D76B37"
+    },
+    {
+      "lo": 1427.0,
+      "hi": 1452.0,
+      "label": "Fixed Mobile",
+      "color": "888888"
+    },
+    {
+      "lo": 1452.0,
+      "hi": 1492.0,
+      "label": "T-DAB",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1492.0,
+      "hi": 1525.0,
+      "label": "Fixed and Military",
+      "color": "888888"
+    },
+    {
+      "lo": 1525.0,
+      "hi": 1660.5,
+      "label": "Satellite",
+      "color": "D76B37"
+    },
+    {
+      "lo": 1660.5,
+      "hi": 1668.4,
+      "label": "Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 1668.4,
+      "hi": 1670.0,
+      "label": "Meteorological Aids and Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 1670.0,
+      "hi": 1675.0,
+      "label": "Government Use Meteorological-Satellite",
+      "color": "D76B37"
+    },
+    {
+      "lo": 1675.0,
+      "hi": 1696.5,
+      "label": "Meteorological Satellite",
+      "color": "888888"
+    },
+    {
+      "lo": 1696.5,
+      "hi": 1710.0,
+      "label": "Meteorological Satellite",
+      "color": "D76B37"
+    },
+    {
+      "lo": 1710.0,
+      "hi": 1785.0,
+      "label": "GSM",
+      "color": "888888"
+    },
+    {
+      "lo": 1785.0,
+      "hi": 1805.0,
+      "label": "Fixed Mobile",
+      "color": "888888"
+    },
+    {
+      "lo": 1805.0,
+      "hi": 1880.0,
+      "label": "GSM",
+      "color": "888888"
+    },
+    {
+      "lo": 1880.0,
+      "hi": 1900.0,
+      "label": "DECT",
+      "color": "888888"
+    },
+    {
+      "lo": 1900.0,
+      "hi": 1980.0,
+      "label": "Mobile",
+      "color": "888888"
+    },
+    {
+      "lo": 1980.0,
+      "hi": 2010.0,
+      "label": "Earth-to-Space and Space-to-Space Communications",
+      "color": "888888"
+    },
+    {
+      "lo": 2010.0,
+      "hi": 2025.0,
+      "label": "Mobile",
+      "color": "888888"
+    },
+    {
+      "lo": 2025.0,
+      "hi": 2110.0,
+      "label": "Earth-to-Space and Space-to-Space Communications",
+      "color": "888888"
+    },
+    {
+      "lo": 2110.0,
+      "hi": 2120.0,
+      "label": "Earth-to-Space (Deep space)",
+      "color": "888888"
+    },
+    {
+      "lo": 2290.0,
+      "hi": 2300.0,
+      "label": "Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 2320.0,
+      "hi": 2345.0,
+      "label": "13 cm Ham Band",
+      "color": "888888"
+    },
+    {
+      "lo": 2345.0,
+      "hi": 2393.75,
+      "label": "13cm Ham Band Analog and Digital",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2393.75,
+      "hi": 2394.75,
+      "label": "Experimental",
+      "color": "888888"
+    },
+    {
+      "lo": 2394.75,
+      "hi": 2400.0,
+      "label": "Analog and Digital 13cm HAM Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2400.0,
+      "hi": 2500.0,
+      "label": "ISM Band (13cm)",
+      "color": "888888"
+    },
+    {
+      "lo": 2500.0,
+      "hi": 2544.5,
+      "label": "IMT",
+      "color": "888888"
+    },
+    {
+      "lo": 2690.0,
+      "hi": 2700.0,
+      "label": "Radioastronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 2700.0,
+      "hi": 2900.0,
+      "label": "Radar meteo",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 2900.0,
+      "hi": 3400.0,
+      "label": "Maritime Radar",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 3400.0,
+      "hi": 3475.0,
+      "label": "Radio Ham 9 cm band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3475.0,
+      "hi": 4200.0,
+      "label": "Digital Networks",
+      "color": "888888"
+    },
+    {
+      "lo": 4200.0,
+      "hi": 4400.0,
+      "label": "Altimeters",
+      "color": "4287F5"
+    },
+    {
+      "lo": 5150.0,
+      "hi": 5250.0,
+      "label": "Feeder link",
+      "color": "D76B37"
+    },
+    {
+      "lo": 5250.0,
+      "hi": 5650.0,
+      "label": "Digital networks and 802.11",
+      "color": "888888"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5850.0,
+      "label": "Radio Ham 6 cm band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5925.0,
+      "hi": 7750.0,
+      "label": "Digital Networks and LPR",
+      "color": "888888"
+    },
+    {
+      "lo": 7750.0,
+      "hi": 7975.0,
+      "label": "LPR",
+      "color": "888888"
+    },
+    {
+      "lo": 7975.0,
+      "hi": 8215.0,
+      "label": "Remote sensing",
+      "color": "888888"
+    },
+    {
+      "lo": 8215.0,
+      "hi": 8650.0,
+      "label": "TLPR and SRD",
+      "color": "888888"
+    },
+    {
+      "lo": 8650.0,
+      "hi": 8850.0,
+      "label": "Radar Doppler",
+      "color": "4287F5"
+    },
+    {
+      "lo": 8850.0,
+      "hi": 9000.0,
+      "label": "Maritime Radar",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 9000.0,
+      "hi": 9500.0,
+      "label": "Radar and transponder SART",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 9500.0,
+      "hi": 10000.0,
+      "label": "TLPR and SRD",
+      "color": "888888"
+    },
+    {
+      "lo": 10000.0,
+      "hi": 10500.0,
+      "label": "Radio Ham 3 cm band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10500.0,
+      "hi": 10680.0,
+      "label": "Point to point TV networks",
+      "color": "888888"
+    },
+    {
+      "lo": 10680.0,
+      "hi": 11700.0,
+      "label": "Digital network (fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 11700.0,
+      "hi": 12500.0,
+      "label": "TV satellite",
+      "color": "D76B37"
+    },
+    {
+      "lo": 12500.0,
+      "hi": 13250.0,
+      "label": "Digital network (fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 14000.0,
+      "hi": 14500.0,
+      "label": "Satellite Uplink",
+      "color": "D76B37"
+    },
+    {
+      "lo": 14500.0,
+      "hi": 14620.0,
+      "label": "Digital network (fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 15230.0,
+      "hi": 15350.0,
+      "label": "Digital network (fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 17100.0,
+      "hi": 19300.0,
+      "label": "Digital network (poit to point)",
+      "color": "888888"
+    },
+    {
+      "lo": 19300.0,
+      "hi": 19700.0,
+      "label": "Feeder link",
+      "color": "D76B37"
+    },
+    {
+      "lo": 19700.0,
+      "hi": 20200.0,
+      "label": "HEST, LEST, ESIM, ESOMP",
+      "color": "D76B37"
+    },
+    {
+      "lo": 22000.0,
+      "hi": 22330.0,
+      "label": "Digital network (fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 22926.75,
+      "hi": 23150.0,
+      "label": "Digital network (fixed), SAP/SAB",
+      "color": "888888"
+    },
+    {
+      "lo": 23150.0,
+      "hi": 23338.0,
+      "label": "Digital network (fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 24000.0,
+      "hi": 24450.0,
+      "label": "ISM, SRD and LPR",
+      "color": "888888"
+    },
+    {
+      "lo": 24450.0,
+      "hi": 25109.0,
+      "label": "Digital network (point to point, multipoint)",
+      "color": "888888"
+    },
+    {
+      "lo": 2544.5,
+      "hi": 2611.7,
+      "label": "Network (point to point, multipoint)",
+      "color": "888888"
+    },
+    {
+      "lo": 2611.7,
+      "hi": 2650.0,
+      "label": "LPR, SRD and SRR",
+      "color": "888888"
+    },
+    {
+      "lo": 26500.0,
+      "hi": 27500.0,
+      "label": "Terrestrial electric utility",
+      "color": "888888"
+    },
+    {
+      "lo": 27500.0,
+      "hi": 29100.0,
+      "label": "Network (point to point, multipoint)",
+      "color": "888888"
+    },
+    {
+      "lo": 29100.0,
+      "hi": 29500.0,
+      "label": "Network (point to point, multipoint)",
+      "color": "888888"
+    },
+    {
+      "lo": 31000.0,
+      "hi": 31300.0,
+      "label": "Network (point to point, multipoint)",
+      "color": "888888"
+    },
+    {
+      "lo": 31983.0,
+      "hi": 32599.0,
+      "label": "Network (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 32795.0,
+      "hi": 33400.0,
+      "label": "Network (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 37338.0,
+      "hi": 38300.0,
+      "label": "Network (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 38590.0,
+      "hi": 39500.0,
+      "label": "Network (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 40500.0,
+      "hi": 43500.0,
+      "label": "FWS systems (fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 47000.0,
+      "hi": 47200.0,
+      "label": "Radio Ham 6 mm band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 51400.0,
+      "hi": 52600.0,
+      "label": "Network (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 55780.0,
+      "hi": 61000.0,
+      "label": "Network (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 61000.0,
+      "hi": 64000.0,
+      "label": "ISM",
+      "color": "888888"
+    },
+    {
+      "lo": 64000.0,
+      "hi": 66000.0,
+      "label": "Network (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 71000.0,
+      "hi": 74000.0,
+      "label": "Links (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 74000.0,
+      "hi": 76500.0,
+      "label": "LPR, SRD, SRR, TLPR, vehichle radar",
+      "color": "888888"
+    },
+    {
+      "lo": 76500.0,
+      "hi": 81500.0,
+      "label": "Radio Ham 4 mm band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 84000.0,
+      "hi": 86000.0,
+      "label": "Links (high density, fixed)",
+      "color": "888888"
+    },
+    {
+      "lo": 120200.0,
+      "hi": 122250.0,
+      "label": "ISM",
+      "color": "888888"
+    },
+    {
+      "lo": 122250.0,
+      "hi": 123000.0,
+      "label": "Radio Ham 2.5 mm band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 134000.0,
+      "hi": 141000.0,
+      "label": "Radio Ham 2 mm band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 241000.0,
+      "hi": 250000.0,
+      "label": "Radio Ham 1 mm band",
+      "color": "4CAF50"
+    }
+  ]
+}

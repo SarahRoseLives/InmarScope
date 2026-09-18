@@ -1,8 +1,13 @@
 /build/
+/out/
+/vendor/
+__pycache__/
 /reference/
 *.o
 *.obj
 *.exe
 *.ini
 *.wav
+/recordings/*
+!/recordings/README.md
 imgui.ini

@@ -1,0 +1,155 @@
+{
+  "name": "Austria",
+  "designator": "AT",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Austria"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/austria.json",
+  "source_sha256": "03eb088568685e0a350f21b8dc93840acc8d6ad001ba554c5f297627326b5205",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Austria",
+    "country_name": "Austria",
+    "country_code": "AT",
+    "author_name": "Michael Mangeng",
+    "author_url": "https://vis.at"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 0.1357,
+      "hi": 0.1378,
+      "label": "LW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "630m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.81,
+      "hi": 1.95,
+      "label": "160m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.8,
+      "label": "80m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.3513,
+      "hi": 5.3665,
+      "label": "60m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.2,
+      "label": "40m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.15,
+      "label": "30m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.35,
+      "label": "20m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.168,
+      "label": "17m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "15m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "12m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 26.965,
+      "hi": 27.405,
+      "label": "CB",
+      "color": "888888"
+    },
+    {
+      "lo": 28.0,
+      "hi": 29.7,
+      "label": "10m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 50.0,
+      "hi": 52.0,
+      "label": "6m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 87.5,
+      "hi": 108.0,
+      "label": "FM",
+      "color": "FF9800"
+    },
+    {
+      "lo": 144.0,
+      "hi": 146.0,
+      "label": "2m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 149.025,
+      "hi": 149.115625,
+      "label": "Freenet",
+      "color": "888888"
+    },
+    {
+      "lo": 430.0,
+      "hi": 440.0,
+      "label": "70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 446.00625,
+      "hi": 446.196875,
+      "label": "PMR446",
+      "color": "888888"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1300.0,
+      "label": "23cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2304.0,
+      "hi": 2310.0,
+      "label": "13cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2320.0,
+      "hi": 2322.0,
+      "label": "13cm",
+      "color": "4CAF50"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+name: Build, test and release
+on:
+  push:
+    branches: [master, 'codex/**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: windows-x64
+          - os: ubuntu-22.04
+            platform: linux-x64
+          - os: macos-15-intel
+            platform: macos-x64
+          - os: macos-15
+            platform: macos-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Windows toolchain
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-glfw mingw-w64-x86_64-rtl-sdr
+            mingw-w64-x86_64-hackrf
+            mingw-w64-x86_64-zstd mingw-w64-x86_64-libogg
+            mingw-w64-x86_64-libvorbis mingw-w64-x86_64-sqlite3
+            mingw-w64-x86_64-libxml2 mingw-w64-x86_64-jansson
+      - name: Windows Soapy SDK (verified download)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/ci/windows-sdk.ps1
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config libglfw3-dev libgl1-mesa-dev librtlsdr-dev libhackrf-dev libairspy-dev libusb-1.0-0-dev libzstd-dev zlib1g-dev libogg-dev libvorbis-dev libsqlite3-dev libxml2-dev libjansson-dev libsoapysdr-dev xvfb
+      - name: macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install cmake ninja pkg-config glfw librtlsdr hackrf airspy zstd libogg libvorbis sqlite libxml2 jansson soapysdr
+      - name: Configure and build Windows
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SDRPLAY_TESTS=ON -DREQUIRE_SDRPLAY=ON -DSOAPY_INCLUDE_DIR="$PWD/vendor/pothos/include" -DSOAPY_LIBRARY="$PWD/vendor/pothos/lib/SoapySDR.lib"
+          cmake --build build --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Configure and build Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == macOS ]]; then
+            export CMAKE_PREFIX_PATH="$(brew --prefix):$(brew --prefix libxml2):$(brew --prefix sqlite)"
+            export PKG_CONFIG_PATH="$(brew --prefix libxml2)/lib/pkgconfig:$(brew --prefix sqlite)/lib/pkgconfig"
+          fi
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SDRPLAY_TESTS=ON -DREQUIRE_SDRPLAY=ON
+          cmake --build build --parallel 3
+          ctest --test-dir build --output-on-failure --no-tests=error
+      - name: Received-aircraft map regression tests
+        run: node tools/flight_map_selftest.js build/flight-map-fixture.json && node tools/flight_map_wheel_selftest.js
+      - name: Package and check Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python tools/ci/package.py --platform '${{ matrix.platform }}' --sdk vendor/pothos
+      - name: Package and check Unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          python3 tools/ci/package.py --platform '${{ matrix.platform }}'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-${{ matrix.platform }}
+          path: |
+            out/*.zip
+            out/*.tar.gz
+          if-no-files-found: error
+      - name: Preserve build diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: diagnostics-${{ matrix.platform }}
+          path: |
+            build/Testing/Temporary/LastTest.log
+            build/CMakeCache.txt
+            out/*/BUILD-INFO.json
+          if-no-files-found: ignore
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: package-*
+          merge-multiple: true
+          path: release
+      - name: Validate and publish complete release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: python3 tools/ci/release.py

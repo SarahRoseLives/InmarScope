@@ -273,3 +273,47 @@ Run it from the project root (so it finds the bundled font under
 - **RTL-SDR / HackRF permissions.** Install the vendors' udev rules (e.g.
   `/etc/udev/rules.d/`) or run as a user in the `plugdev` group so the device is
   accessible without root.
+
+# SDRplay builds and tests
+
+SDRplay is optional at build time (`ENABLE_SDRPLAY=ON`, the default). It uses
+SoapySDR's **C** API, so Windows builds can link an MSVC-built SoapySDR distribution
+from MinGW. CMake searches the normal install prefixes and
+`C:/Program Files/PothosSDR`. For another installation, configure explicitly:
+
+```bash
+cmake -S . -B build -G Ninja \
+  -DSOAPY_INCLUDE_DIR="C:/path/to/Soapy/include" \
+  -DSOAPY_LIBRARY="C:/path/to/Soapy/lib/SoapySDR.lib"
+cmake --build build
+```
+
+On Linux install SoapySDR development headers/library (for example
+`libsoapysdr-dev` on Debian/Ubuntu), the current SoapySDRPlay3 driver, and the
+vendor SDRplay API/service. See [SoapySDRPlay3 build instructions](https://github.com/pothosware/SoapySDRPlay3)
+and [SDRplay API](https://www.sdrplay.com/api/). CMake discovers SoapySDR in the
+normal system prefixes. No vendor headers are copied into this repository.
+
+Windows copies SoapySDR.dll beside InmarScope.exe. **Keep the matching plugin
+installation and SDRplay API service installed on the destination machine.**
+The compiled installation root is used to locate plugins. Override it with
+`SOAPY_SDR_ROOT` if the destination uses a different location; Soapy also supports
+`SOAPY_SDR_PLUGIN_PATH` for additional plugin paths. Its SDRplay plugin must match
+the Soapy DLL's ABI/toolchain, not InmarScope's compiler. The build isolates the
+Soapy headers to avoid pulling Pothos's MSVC pthread headers into MinGW.
+
+For a build without this dependency use `-DENABLE_SDRPLAY=OFF`; other receivers
+still work and the SDRplay page explains the missing dependency. Source IDs do
+not change when optional Airspy/Soapy libraries are absent.
+
+```bash
+cmake -S . -B build -DBUILD_SDRPLAY_TESTS=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
+./build/sdrplay_probe     # .exe on Windows; returns 1 if no devices/API available
+```
+
+The self-test runs without a radio and injects driver failures. The probe uses
+the real driver, enumerates only, and requires a working vendor API service.
+See [SDRPLAY.md](SDRPLAY.md) for features, multi-receiver setup and hardware
+validation still needed.

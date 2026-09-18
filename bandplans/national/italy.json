@@ -1,0 +1,1206 @@
+{
+  "name": "Italy",
+  "designator": "IT",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Italy"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/italy.json",
+  "source_sha256": "35bbe122e2a90996be29a3c306c48742182e680b80c1049d1fd26d703fd2c612",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Italy",
+    "country_name": "Italy",
+    "country_code": "IT",
+    "author_name": "Jacopo (RAD750)",
+    "author_url": "https://www.a-centauri.com"
+  },
+  "excluded_invalid_source_entries": [
+    {
+      "name": "GSM-R",
+      "type": "cellular",
+      "start": 9210000000,
+      "end": 925000000
+    },
+    {
+      "name": "Radiolocalizzazione GNSS",
+      "type": "utility",
+      "start": 1164000000,
+      "end": 124000000
+    },
+    {
+      "name": "Wind profiler",
+      "type": "military",
+      "start": 1270000000,
+      "end": 129800000
+    },
+    {
+      "name": "Radiolocalizzazione",
+      "type": "military",
+      "start": 1298000000,
+      "end": 130000000
+    },
+    {
+      "name": "MSS 2 GHz",
+      "type": "satellite",
+      "start": 1980000000,
+      "end": 201000000
+    },
+    {
+      "name": "Reti fisse numeriche",
+      "type": "comms",
+      "start": 22674750000,
+      "end": 2283350000
+    },
+    {
+      "name": "LPR, SRD e SRR",
+      "type": "utility",
+      "start": 25109000000,
+      "end": 2544500000
+    }
+  ],
+  "bands": [
+    {
+      "lo": 0.0083,
+      "hi": 0.0113,
+      "label": "Ausili metereologici",
+      "color": "888888"
+    },
+    {
+      "lo": 0.0113,
+      "hi": 0.1485,
+      "label": "Radionavigazione",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.1355,
+      "hi": 0.1378,
+      "label": "Radioamatori 137kHz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.1485,
+      "hi": 0.2835,
+      "label": "Radiodiffusione OL",
+      "color": "FF9800"
+    },
+    {
+      "lo": 0.2835,
+      "hi": 0.405,
+      "label": "Radiofari e NDB",
+      "color": "4287F5"
+    },
+    {
+      "lo": 0.405,
+      "hi": 0.415,
+      "label": "Radiogoniometria",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.435,
+      "hi": 0.52,
+      "label": "Mobile marittimo, NAVTEX",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "Radioamatori 472kHz",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.52,
+      "hi": 1.6065,
+      "label": "Radiodiffusione OM",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1.6065,
+      "hi": 1.83,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 1.83,
+      "hi": 1.85,
+      "label": "Radioamatori 160m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.85,
+      "hi": 2.3,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 2.3,
+      "hi": 2.5,
+      "label": "Radiodiffusione OC 120m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 2.501,
+      "hi": 2.502,
+      "label": "Segnali orari",
+      "color": "888888"
+    },
+    {
+      "lo": 2.502,
+      "hi": 2.85,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 2.85,
+      "hi": 3.155,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.155,
+      "hi": 3.2,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 3.2,
+      "hi": 3.4,
+      "label": "Radiodiffusione OC 90m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.4,
+      "hi": 3.5,
+      "label": "Mobile aviazione",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.6,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.8,
+      "label": "Radioamatori 80m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.9,
+      "hi": 4.0,
+      "label": "Radiodiffusione OC 75m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 4.065,
+      "hi": 4.44,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.65,
+      "hi": 4.75,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 4.75,
+      "hi": 4.995,
+      "label": "Radiodiffusione OC 60m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.005,
+      "hi": 5.06,
+      "label": "Radiodiffusione OC 60m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.3515,
+      "hi": 5.3665,
+      "label": "Radioamatori 60m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.45,
+      "hi": 5.73,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 5.9,
+      "hi": 6.2,
+      "label": "Radiodiffusione OC 49m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 6.2,
+      "hi": 6.525,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 6.525,
+      "hi": 6.765,
+      "label": "ISM, reti fisse pubbliche",
+      "color": "888888"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.2,
+      "label": "Radioamatori 40m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.2,
+      "hi": 7.45,
+      "label": "Radiodiffusione OC 41m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 8.195,
+      "hi": 8.815,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 8.815,
+      "hi": 9.04,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 9.4,
+      "hi": 9.9,
+      "label": "Radiodiffusione OC 31m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10.005,
+      "hi": 10.1,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.15,
+      "label": "Radioamatori 30m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 11.175,
+      "hi": 11.4,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 11.6,
+      "hi": 12.1,
+      "label": "Radiodiffusione OC 25m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 12.23,
+      "hi": 13.2,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 13.2,
+      "hi": 13.36,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 13.57,
+      "hi": 13.87,
+      "label": "Radiodiffusione OC 21m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.35,
+      "label": "Radioamatori 20m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 14.99,
+      "hi": 15.01,
+      "label": "Segnali orari",
+      "color": "888888"
+    },
+    {
+      "lo": 15.01,
+      "hi": 15.1,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 15.1,
+      "hi": 15.8,
+      "label": "Radiodiffusione OC 19m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 16.36,
+      "hi": 17.41,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 17.48,
+      "hi": 17.9,
+      "label": "Radiodiffusione OC 16m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 17.9,
+      "hi": 18.03,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 18.069,
+      "hi": 18.168,
+      "label": "Radioamatori 17m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.78,
+      "hi": 18.9,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 18.9,
+      "hi": 19.02,
+      "label": "Radiodiffusione OC 15m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 19.68,
+      "hi": 19.8,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 19.99,
+      "hi": 20.01,
+      "label": "Segnali orari",
+      "color": "888888"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "Radioamatori 15m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.45,
+      "hi": 21.85,
+      "label": "Radiodiffusione OC 13m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 21.925,
+      "hi": 22.0,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 22.0,
+      "hi": 22.855,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 23.2,
+      "hi": 23.35,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "Radioamatori 12m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24.99,
+      "hi": 25.01,
+      "label": "Segnali orari",
+      "color": "888888"
+    },
+    {
+      "lo": 25.07,
+      "hi": 25.21,
+      "label": "Mobile marittimo",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 25.55,
+      "hi": 25.67,
+      "label": "Radioastronomia",
+      "color": "888888"
+    },
+    {
+      "lo": 25.67,
+      "hi": 26.1,
+      "label": "Radiodiffusione OC 11m",
+      "color": "FF9800"
+    },
+    {
+      "lo": 26.1,
+      "hi": 26.175,
+      "label": "Mobile marittimo",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 26.175,
+      "hi": 27.23,
+      "label": "CB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.0,
+      "hi": 29.7,
+      "label": "Radioamatori 10m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 45.0,
+      "hi": 47.0,
+      "label": "Wind profiler",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 50.0,
+      "hi": 51.0,
+      "label": "Radioamatori 6m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 52.5,
+      "hi": 68.0,
+      "label": "Wind profiler",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 68.0,
+      "hi": 74.8,
+      "label": "Soccorso alpino",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 74.8,
+      "hi": 75.2,
+      "label": "Radiofari 75MHz",
+      "color": "4287F5"
+    },
+    {
+      "lo": 87.5,
+      "hi": 108.0,
+      "label": "Radiodiffusione FM",
+      "color": "FF9800"
+    },
+    {
+      "lo": 108.0,
+      "hi": 117.975,
+      "label": "VOR/ILS",
+      "color": "4287F5"
+    },
+    {
+      "lo": 117.975,
+      "hi": 137.0,
+      "label": "Mobile aeronautico",
+      "color": "4287F5"
+    },
+    {
+      "lo": 137.0,
+      "hi": 138.0,
+      "label": "Satelliti polari",
+      "color": "D76B37"
+    },
+    {
+      "lo": 144.0,
+      "hi": 146.0,
+      "label": "Radioamatori 2m",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 148.0,
+      "hi": 150.05,
+      "label": "Telefonia satellitare",
+      "color": "D76B37"
+    },
+    {
+      "lo": 156.0,
+      "hi": 162.025,
+      "label": "Marittimo VHF",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 174.0,
+      "hi": 223.0,
+      "label": "TV banda III e DAB",
+      "color": "FF9800"
+    },
+    {
+      "lo": 225.0,
+      "hi": 240.0,
+      "label": "Mobile aeronautico militare",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 240.0,
+      "hi": 270.0,
+      "label": "Satelliti militari",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 270.0,
+      "hi": 399.9,
+      "label": "Mobile aeronautico militare",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 399.9,
+      "hi": 400.05,
+      "label": "Telefonia satellitare",
+      "color": "D76B37"
+    },
+    {
+      "lo": 400.05,
+      "hi": 400.15,
+      "label": "Segnali orari via satellite",
+      "color": "D76B37"
+    },
+    {
+      "lo": 400.15,
+      "hi": 406.0,
+      "label": "Radiosonde",
+      "color": "D76B37"
+    },
+    {
+      "lo": 406.0,
+      "hi": 406.1,
+      "label": "EPIRB e PLB",
+      "color": "D76B37"
+    },
+    {
+      "lo": 406.1,
+      "hi": 410.0,
+      "label": "Satelliti militari",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 410.0,
+      "hi": 420.0,
+      "label": "Fisso militare",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 420.0,
+      "hi": 430.0,
+      "label": "Mobile militare",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 430.0,
+      "hi": 434.0,
+      "label": "Radioamatori 70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 434.0,
+      "hi": 435.0,
+      "label": "Fisso militare",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 435.0,
+      "hi": 438.0,
+      "label": "Radioamatori 70cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 438.0,
+      "hi": 446.0,
+      "label": "Mobile o fisso privato",
+      "color": "888888"
+    },
+    {
+      "lo": 446.0,
+      "hi": 446.2,
+      "label": "PMR446",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 446.2,
+      "hi": 470.0,
+      "label": "Mobile o fisso privato",
+      "color": "888888"
+    },
+    {
+      "lo": 470.0,
+      "hi": 791.0,
+      "label": "TV UHF",
+      "color": "FF9800"
+    },
+    {
+      "lo": 791.0,
+      "hi": 862.0,
+      "label": "LTE",
+      "color": "FF9800"
+    },
+    {
+      "lo": 862.0,
+      "hi": 876.0,
+      "label": "ISM e RFID",
+      "color": "888888"
+    },
+    {
+      "lo": 876.0,
+      "hi": 880.0,
+      "label": "GSM-R",
+      "color": "888888"
+    },
+    {
+      "lo": 880.0,
+      "hi": 915.0,
+      "label": "GSM",
+      "color": "888888"
+    },
+    {
+      "lo": 925.0,
+      "hi": 960.0,
+      "label": "GSM",
+      "color": "888888"
+    },
+    {
+      "lo": 960.0,
+      "hi": 1164.0,
+      "label": "ADS-B, DME, TACAN",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1245.0,
+      "label": "Radioamatori 23cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1267.0,
+      "hi": 1298.0,
+      "label": "Radioamatori 23cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1300.0,
+      "hi": 1400.0,
+      "label": "Wind profiler",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 1400.0,
+      "hi": 1427.0,
+      "label": "Radioastronomia",
+      "color": "888888"
+    },
+    {
+      "lo": 1427.0,
+      "hi": 1525.0,
+      "label": "Reti per segnali audio",
+      "color": "888888"
+    },
+    {
+      "lo": 1525.0,
+      "hi": 1559.0,
+      "label": "Telefonia satellitare",
+      "color": "D76B37"
+    },
+    {
+      "lo": 1559.0,
+      "hi": 1626.0,
+      "label": "Radionavigazione GNSS",
+      "color": "D76B37"
+    },
+    {
+      "lo": 1626.0,
+      "hi": 1660.0,
+      "label": "Telefonia satellitare",
+      "color": "D76B37"
+    },
+    {
+      "lo": 1660.0,
+      "hi": 1710.0,
+      "label": "Satelliti militari",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 1710.0,
+      "hi": 1715.0,
+      "label": "MCA, MCV",
+      "color": "888888"
+    },
+    {
+      "lo": 1715.0,
+      "hi": 1785.0,
+      "label": "GSM, IMT, MCA, MCV",
+      "color": "888888"
+    },
+    {
+      "lo": 1785.0,
+      "hi": 1805.0,
+      "label": "Radiomicrofoni",
+      "color": "888888"
+    },
+    {
+      "lo": 1805.0,
+      "hi": 1880.0,
+      "label": "GSM, IMT, MCA, MCV",
+      "color": "888888"
+    },
+    {
+      "lo": 1880.0,
+      "hi": 1900.0,
+      "label": "DECT",
+      "color": "888888"
+    },
+    {
+      "lo": 1880.0,
+      "hi": 1900.0,
+      "label": "GSM, IMT, MCA, MCV",
+      "color": "888888"
+    },
+    {
+      "lo": 1900.0,
+      "hi": 1980.0,
+      "label": "IMT, MCA, MCV",
+      "color": "888888"
+    },
+    {
+      "lo": 2010.0,
+      "hi": 2025.0,
+      "label": "SAP/SAB, IMT, PMSE",
+      "color": "888888"
+    },
+    {
+      "lo": 2025.0,
+      "hi": 2110.0,
+      "label": "Satelliti",
+      "color": "D76B37"
+    },
+    {
+      "lo": 2110.0,
+      "hi": 2120.0,
+      "label": "Radioastronomia",
+      "color": "888888"
+    },
+    {
+      "lo": 2120.0,
+      "hi": 2170.0,
+      "label": "IMT, MCA, MCV",
+      "color": "888888"
+    },
+    {
+      "lo": 2170.0,
+      "hi": 2200.0,
+      "label": "MSS 2 GHz",
+      "color": "D76B37"
+    },
+    {
+      "lo": 2200.0,
+      "hi": 2290.0,
+      "label": "Telemetria",
+      "color": "888888"
+    },
+    {
+      "lo": 2290.0,
+      "hi": 2300.0,
+      "label": "SAP/SAB",
+      "color": "888888"
+    },
+    {
+      "lo": 2300.0,
+      "hi": 2450.0,
+      "label": "Radioamatori 13cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2400.0,
+      "hi": 2500.0,
+      "label": "ISM, SAP/SAB, 802.11",
+      "color": "888888"
+    },
+    {
+      "lo": 2500.0,
+      "hi": 2544.5,
+      "label": "IMT",
+      "color": "888888"
+    },
+    {
+      "lo": 2690.0,
+      "hi": 2700.0,
+      "label": "Radioastronomia",
+      "color": "888888"
+    },
+    {
+      "lo": 2700.0,
+      "hi": 2900.0,
+      "label": "Radar meteo",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 2900.0,
+      "hi": 3400.0,
+      "label": "Radar marittimi",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 3475.0,
+      "hi": 4200.0,
+      "label": "Reti numeriche",
+      "color": "888888"
+    },
+    {
+      "lo": 4200.0,
+      "hi": 4400.0,
+      "label": "Radioaltimetri",
+      "color": "4287F5"
+    },
+    {
+      "lo": 5150.0,
+      "hi": 5250.0,
+      "label": "Feeder link",
+      "color": "D76B37"
+    },
+    {
+      "lo": 5250.0,
+      "hi": 5650.0,
+      "label": "Reti numeriche e 802.11",
+      "color": "888888"
+    },
+    {
+      "lo": 5650.0,
+      "hi": 5670.0,
+      "label": "Radioamatori 5cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5760.0,
+      "hi": 5770.0,
+      "label": "Radioamatori 5cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5830.0,
+      "hi": 5850.0,
+      "label": "Radioamatori 5cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5925.0,
+      "hi": 7750.0,
+      "label": "Reti numeriche e LPR",
+      "color": "888888"
+    },
+    {
+      "lo": 7750.0,
+      "hi": 7975.0,
+      "label": "LPR",
+      "color": "888888"
+    },
+    {
+      "lo": 7975.0,
+      "hi": 8215.0,
+      "label": "Telerilevamento",
+      "color": "888888"
+    },
+    {
+      "lo": 8215.0,
+      "hi": 8650.0,
+      "label": "TLPR e SRD",
+      "color": "888888"
+    },
+    {
+      "lo": 8650.0,
+      "hi": 8850.0,
+      "label": "Radar Doppler",
+      "color": "888888"
+    },
+    {
+      "lo": 8850.0,
+      "hi": 9000.0,
+      "label": "Radar marittimi",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 9000.0,
+      "hi": 9500.0,
+      "label": "Radar e transponder SART",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 9500.0,
+      "hi": 10000.0,
+      "label": "TLPR e SRD",
+      "color": "888888"
+    },
+    {
+      "lo": 10300.0,
+      "hi": 10500.0,
+      "label": "Radioamatori 3cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10500.0,
+      "hi": 10680.0,
+      "label": "Reti punto-punto televisive",
+      "color": "888888"
+    },
+    {
+      "lo": 10680.0,
+      "hi": 11700.0,
+      "label": "Reti fisse numeriche",
+      "color": "888888"
+    },
+    {
+      "lo": 11700.0,
+      "hi": 12500.0,
+      "label": "Satelliti televisivi",
+      "color": "D76B37"
+    },
+    {
+      "lo": 12500.0,
+      "hi": 13250.0,
+      "label": "Reti fisse numeriche",
+      "color": "888888"
+    },
+    {
+      "lo": 14000.0,
+      "hi": 14500.0,
+      "label": "Uplink satellitari",
+      "color": "D76B37"
+    },
+    {
+      "lo": 14500.0,
+      "hi": 14620.0,
+      "label": "Rete fisse numeriche",
+      "color": "888888"
+    },
+    {
+      "lo": 15230.0,
+      "hi": 15350.0,
+      "label": "Rete fisse numeriche",
+      "color": "888888"
+    },
+    {
+      "lo": 17100.0,
+      "hi": 19300.0,
+      "label": "Reti numeriche punto-punto",
+      "color": "888888"
+    },
+    {
+      "lo": 19300.0,
+      "hi": 19700.0,
+      "label": "Feeder link",
+      "color": "D76B37"
+    },
+    {
+      "lo": 19700.0,
+      "hi": 20200.0,
+      "label": "HEST, LEST, ESIM, ESOMP",
+      "color": "D76B37"
+    },
+    {
+      "lo": 22000.0,
+      "hi": 22330.0,
+      "label": "Reti fisse numeriche",
+      "color": "888888"
+    },
+    {
+      "lo": 22926.75,
+      "hi": 23150.0,
+      "label": "Reti fisse numeriche, SAP/SAB",
+      "color": "888888"
+    },
+    {
+      "lo": 23150.0,
+      "hi": 23338.0,
+      "label": "Reti fisse numeriche",
+      "color": "888888"
+    },
+    {
+      "lo": 24000.0,
+      "hi": 24050.0,
+      "label": "Radioamatori 1,5cm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 24050.0,
+      "hi": 24450.0,
+      "label": "ISM, SRD e LPR",
+      "color": "888888"
+    },
+    {
+      "lo": 24450.0,
+      "hi": 25109.0,
+      "label": "Reti punto-punto e punto-multipunto",
+      "color": "888888"
+    },
+    {
+      "lo": 2544.5,
+      "hi": 2611.7,
+      "label": "Reti punto-punto e punto-multipunto",
+      "color": "888888"
+    },
+    {
+      "lo": 2611.7,
+      "hi": 2650.0,
+      "label": "LPR, SRD e SRR",
+      "color": "888888"
+    },
+    {
+      "lo": 26500.0,
+      "hi": 27500.0,
+      "label": "Comunicazioni elettroniche terrestri",
+      "color": "888888"
+    },
+    {
+      "lo": 27500.0,
+      "hi": 29100.0,
+      "label": "Reti punto-punto e punto-multipunto",
+      "color": "888888"
+    },
+    {
+      "lo": 29100.0,
+      "hi": 29500.0,
+      "label": "Reti punto-punto e punto-multipunto",
+      "color": "888888"
+    },
+    {
+      "lo": 31000.0,
+      "hi": 31300.0,
+      "label": "Reti punto-punto e punto-multipunto",
+      "color": "888888"
+    },
+    {
+      "lo": 31983.0,
+      "hi": 32599.0,
+      "label": "Reti fisse numeriche ad alta densità",
+      "color": "888888"
+    },
+    {
+      "lo": 32795.0,
+      "hi": 33400.0,
+      "label": "Reti fisse numeriche ad alta densità",
+      "color": "888888"
+    },
+    {
+      "lo": 37338.0,
+      "hi": 38300.0,
+      "label": "Reti fisse numeriche ad alta densità",
+      "color": "888888"
+    },
+    {
+      "lo": 38590.0,
+      "hi": 39500.0,
+      "label": "Reti fisse numeriche ad alta densità",
+      "color": "888888"
+    },
+    {
+      "lo": 40500.0,
+      "hi": 43500.0,
+      "label": "Sistemi fissi via radio FWS",
+      "color": "888888"
+    },
+    {
+      "lo": 47000.0,
+      "hi": 47200.0,
+      "label": "Radioamatori 7mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 51400.0,
+      "hi": 52600.0,
+      "label": "Reti fisse numeriche ad alta densità",
+      "color": "888888"
+    },
+    {
+      "lo": 55780.0,
+      "hi": 61000.0,
+      "label": "Reti fisse numeriche ad alta densità",
+      "color": "888888"
+    },
+    {
+      "lo": 61000.0,
+      "hi": 64000.0,
+      "label": "ISM",
+      "color": "888888"
+    },
+    {
+      "lo": 64000.0,
+      "hi": 66000.0,
+      "label": "Reti fisse numeriche ad alta densità",
+      "color": "888888"
+    },
+    {
+      "lo": 71000.0,
+      "hi": 74000.0,
+      "label": "Collegamenti fissi ad alta capacità",
+      "color": "888888"
+    },
+    {
+      "lo": 74000.0,
+      "hi": 76500.0,
+      "label": "LPR, SRD, SRR, TLPR, radar veicoli",
+      "color": "888888"
+    },
+    {
+      "lo": 75500.0,
+      "hi": 81500.0,
+      "label": "Radioamatori 4mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 84000.0,
+      "hi": 86000.0,
+      "label": "Collegamenti fissi ad alta capacità",
+      "color": "888888"
+    },
+    {
+      "lo": 120200.0,
+      "hi": 122250.0,
+      "label": "ISM",
+      "color": "888888"
+    },
+    {
+      "lo": 122500.0,
+      "hi": 123000.0,
+      "label": "Radioamatori 2,4mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 134000.0,
+      "hi": 141000.0,
+      "label": "Radioamatori 2,23mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 142000.0,
+      "hi": 144000.0,
+      "label": "Radioamatori 2,1mm",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 241000.0,
+      "hi": 250000.0,
+      "label": "Radioamatori 1mm",
+      "color": "4CAF50"
+    }
+  ]
+}
