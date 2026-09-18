@@ -1,0 +1,563 @@
+{
+  "name": "Republic of Korea",
+  "designator": "KR",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Republic of Korea"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/republic-of-korea.json",
+  "source_sha256": "858af6df123918b21840ba0502d74ec87339621ee2dd2500bf5699a589736bae",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "Republic of Korea",
+    "country_name": "Republic of Korea",
+    "country_code": "KR",
+    "author_name": "SeoyeonBae",
+    "author_url": "https://github.com/bsy0317"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 0.0083,
+      "hi": 0.014,
+      "label": "Radio Navigation",
+      "color": "4287F5"
+    },
+    {
+      "lo": 0.014,
+      "hi": 0.01995,
+      "label": "Coastal Telegraph",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.01995,
+      "hi": 0.02025,
+      "label": "Standard Frequency Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 0.02025,
+      "hi": 0.07,
+      "label": "Coastal Telegraph",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.07,
+      "hi": 0.16,
+      "label": "Radio Navigation",
+      "color": "888888"
+    },
+    {
+      "lo": 0.16,
+      "hi": 0.285,
+      "label": "Aviation Radio Navigation",
+      "color": "4287F5"
+    },
+    {
+      "lo": 0.285,
+      "hi": 0.325,
+      "label": "Aviation Maritime Radiobeacon",
+      "color": "4287F5"
+    },
+    {
+      "lo": 0.325,
+      "hi": 0.472,
+      "label": "Aviation Radio Navigation",
+      "color": "4287F5"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "Amateur",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.479,
+      "hi": 0.505,
+      "label": "International Distress Safety Call",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.505,
+      "hi": 0.5265,
+      "label": "Maritime Telegraph",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 0.5265,
+      "hi": 1.6065,
+      "label": "Standard Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1.6065,
+      "hi": 1.8,
+      "label": "Radiobuoy",
+      "color": "888888"
+    },
+    {
+      "lo": 1.8,
+      "hi": 1.825,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1.825,
+      "hi": 2.0,
+      "label": "Radiobuoy Control LORAN",
+      "color": "888888"
+    },
+    {
+      "lo": 2.0,
+      "hi": 2.065,
+      "label": "Radiobuoy",
+      "color": "888888"
+    },
+    {
+      "lo": 2.065,
+      "hi": 2.107,
+      "label": "Distress Call",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 2.1735,
+      "hi": 2.1905,
+      "label": "International Distress Search and Rescue",
+      "color": "C75151"
+    },
+    {
+      "lo": 2.194,
+      "hi": 2.495,
+      "label": "Road Management",
+      "color": "888888"
+    },
+    {
+      "lo": 2.495,
+      "hi": 2.505,
+      "label": "Standard Frequency Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 2.505,
+      "hi": 2.85,
+      "label": "Ship Station Telephone",
+      "color": "888888"
+    },
+    {
+      "lo": 2.85,
+      "hi": 3.025,
+      "label": "Aviation Mobile R",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.025,
+      "hi": 3.155,
+      "label": "Aviation Mobile OR",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.4,
+      "hi": 3.5,
+      "label": "Aviation Mobile R",
+      "color": "4287F5"
+    },
+    {
+      "lo": 3.5,
+      "hi": 3.55,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.55,
+      "hi": 3.79,
+      "label": "Experimental Station",
+      "color": "888888"
+    },
+    {
+      "lo": 3.79,
+      "hi": 3.8,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 3.9,
+      "hi": 3.95,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.995,
+      "hi": 4.005,
+      "label": "Standard Frequency Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 4.005,
+      "hi": 4.063,
+      "label": "Ship Station Telephone",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.063,
+      "hi": 4.065,
+      "label": "Oceanographic Data",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.065,
+      "hi": 4.146,
+      "label": "Ship Station Duplex Telephone",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.146,
+      "hi": 4.152,
+      "label": "Ship Station Simplex Telephone",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.152,
+      "hi": 4.172,
+      "label": "Ship Station Wideband Telegraph Fax",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.172,
+      "hi": 4.18175,
+      "label": "Ship Station Narrowband",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.18675,
+      "hi": 4.20225,
+      "label": "Ship Station A1A Morse Code Communication",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 4.438,
+      "hi": 4.488,
+      "label": "Radiolocation",
+      "color": "888888"
+    },
+    {
+      "lo": 4.488,
+      "hi": 4.65,
+      "label": "Calling Response",
+      "color": "888888"
+    },
+    {
+      "lo": 4.65,
+      "hi": 4.85,
+      "label": "Aviation Mobile R",
+      "color": "4287F5"
+    },
+    {
+      "lo": 4.995,
+      "hi": 5.005,
+      "label": "Standard Frequency Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 5.48,
+      "hi": 5.73,
+      "label": "Search Rescue",
+      "color": "4287F5"
+    },
+    {
+      "lo": 5.9,
+      "hi": 5.95,
+      "label": "Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.95,
+      "hi": 6.2,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.1,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.1,
+      "hi": 7.2,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.2,
+      "hi": 7.45,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 7.995,
+      "hi": 8.005,
+      "label": "Standard Frequency Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 9.4,
+      "hi": 9.5,
+      "label": "Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 9.5,
+      "hi": 9.9,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 9.995,
+      "hi": 10.005,
+      "label": "Standard Frequency Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.15,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10.15,
+      "hi": 11.6,
+      "label": "Aviation Mobile",
+      "color": "4287F5"
+    },
+    {
+      "lo": 11.6,
+      "hi": 11.65,
+      "label": "Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 11.65,
+      "hi": 12.05,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 12.05,
+      "hi": 12.1,
+      "label": "Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 13.26,
+      "hi": 13.36,
+      "label": "Aviation Mobile",
+      "color": "4287F5"
+    },
+    {
+      "lo": 13.36,
+      "hi": 13.41,
+      "label": "Radio Astronomy",
+      "color": "888888"
+    },
+    {
+      "lo": 13.57,
+      "hi": 13.6,
+      "label": "Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 13.6,
+      "hi": 13.8,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 13.8,
+      "hi": 13.87,
+      "label": "Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.35,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 15.01,
+      "hi": 15.1,
+      "label": "Aviation Mobile",
+      "color": "4287F5"
+    },
+    {
+      "lo": 15.1,
+      "hi": 15.6,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 15.6,
+      "hi": 15.8,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 15.8,
+      "hi": 15.995,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 15.995,
+      "hi": 16.005,
+      "label": "Standard Frequency Time Signal",
+      "color": "888888"
+    },
+    {
+      "lo": 18.9,
+      "hi": 19.02,
+      "label": "Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.45,
+      "hi": 21.85,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 25.67,
+      "hi": 26.1,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 28.0,
+      "hi": 29.7,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 50.0,
+      "hi": 54.0,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 54.0,
+      "hi": 72.0,
+      "label": "TV Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 72.0,
+      "hi": 74.8,
+      "label": "Flood Warning",
+      "color": "FF9800"
+    },
+    {
+      "lo": 76.0,
+      "hi": 88.0,
+      "label": "TV Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 88.0,
+      "hi": 100.0,
+      "label": "FM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 100.0,
+      "hi": 108.0,
+      "label": "FM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 108.0,
+      "hi": 117.975,
+      "label": "ILS Localizer VOR",
+      "color": "888888"
+    },
+    {
+      "lo": 144.0,
+      "hi": 146.0,
+      "label": "Amateur Station",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 146.0,
+      "hi": 148.0,
+      "label": "General Communication",
+      "color": "888888"
+    },
+    {
+      "lo": 162.0375,
+      "hi": 174.0,
+      "label": "Low Power Device",
+      "color": "888888"
+    },
+    {
+      "lo": 174.0,
+      "hi": 216.0,
+      "label": "TV Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 216.0,
+      "hi": 230.0,
+      "label": "Low Power Device",
+      "color": "888888"
+    },
+    {
+      "lo": 273.0,
+      "hi": 322.0,
+      "label": "Low Power Device",
+      "color": "888888"
+    },
+    {
+      "lo": 420.0,
+      "hi": 470.0,
+      "label": "Personal Radio",
+      "color": "888888"
+    },
+    {
+      "lo": 698.0,
+      "hi": 806.0,
+      "label": "Public Network",
+      "color": "FF9800"
+    },
+    {
+      "lo": 942.0,
+      "hi": 960.0,
+      "label": "Low Power Device",
+      "color": "888888"
+    },
+    {
+      "lo": 15250.0,
+      "hi": 16605.0,
+      "label": "Satellite Mobile Communication",
+      "color": "888888"
+    },
+    {
+      "lo": 25000.0,
+      "hi": 37000.0,
+      "label": "Mobile Communication",
+      "color": "C75151"
+    }
+  ]
+}

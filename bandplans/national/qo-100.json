@@ -1,0 +1,81 @@
+{
+  "name": "QO-100",
+  "designator": "--",
+  "regions": [
+    "Satellite"
+  ],
+  "countries": [],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/qo-100.json",
+  "source_sha256": "fd1072c15b1bbcc10dd80bffd3246994c8b926154f2839dd750faa6e64bddd4d",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "QO-100",
+    "country_name": "Worldwide",
+    "country_code": "--",
+    "author_name": "Ryzerth",
+    "author_url": "https://github.com/AlexandreRouma"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 10489.5,
+      "hi": 10489.505,
+      "label": "Beacon",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10489.505,
+      "hi": 10489.54,
+      "label": "CW",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10489.54,
+      "hi": 10489.58,
+      "label": "NB Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10489.58,
+      "hi": 10489.65,
+      "label": "Digi",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10489.65,
+      "hi": 10489.745,
+      "label": "SSB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10489.745,
+      "hi": 10489.755,
+      "label": "Beacon",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10489.755,
+      "hi": 10489.85,
+      "label": "SSB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10489.85,
+      "hi": 10489.87,
+      "label": "Emergency",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10489.87,
+      "hi": 10489.99,
+      "label": "Mixed/Contest",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 10489.99,
+      "hi": 10490.0,
+      "label": "Beacon",
+      "color": "FF9800"
+    }
+  ]
+}

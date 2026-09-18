@@ -51,7 +51,23 @@ if(AIRSPY_LIBRARIES)
 endif()
 
 set(IMGUI_DIR   ${CMAKE_SOURCE_DIR}/third_party/imgui)
+option(ENABLE_SDRPLAY "Enable SDRplay via the SoapySDR C API" ON)
+option(REQUIRE_SDRPLAY "Fail configuration if the SDRplay backend cannot be built" OFF)
+if(ENABLE_SDRPLAY)
+    find_path(SOAPY_INCLUDE_DIR SoapySDR/Device.h
+        HINTS "C:/Program Files/PothosSDR/include")
+    find_library(SOAPY_LIBRARY NAMES SoapySDR
+        HINTS "C:/Program Files/PothosSDR/lib")
+    if(SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
+        message(STATUS "SDRplay enabled via SoapySDR: ${SOAPY_LIBRARY}")
+    else()
+        message(STATUS "SoapySDR not found; SDRplay will show installation instructions")
+    endif()
+endif()
 set(IMPLOT_DIR  ${CMAKE_SOURCE_DIR}/third_party/implot)
+if(REQUIRE_SDRPLAY AND (NOT ENABLE_SDRPLAY OR NOT SOAPY_INCLUDE_DIR OR NOT SOAPY_LIBRARY))
+    message(FATAL_ERROR "Release builds require the SoapySDR headers and library")
+endif()
 
 # ---------------------------------------------------------------------------
 # Dear ImGui + ImPlot (vendored) compiled as a static lib
@@ -142,6 +158,8 @@ add_executable(InmarScope
     src/session/session.cpp
     src/state/config.cpp
     src/sdr/rtl_sdr_source.cpp
+    src/sdr/sdrplay_source.cpp
+    src/gui/sdrplay_controls.cpp
     src/sdr/hackrf_source.cpp
     src/sdr/rtl_tcp_source.cpp
     
@@ -149,6 +167,7 @@ add_executable(InmarScope
     src/sdr/sdrpp_server_source.cpp
     src/sdr/iq_recorder.cpp
     src/gui/waterfall.cpp
+    src/gui/waterfall_labels.cpp
     src/decode/decoder.cpp
     src/decode/decoder_manager.cpp
     src/decode/acars_apps.cpp
@@ -168,7 +187,16 @@ add_executable(InmarScope
     src/output/message_feed.cpp
     src/update/version_check.cpp
     src/web/flight_map_webview.cpp
+    src/web/flight_map_data.cpp
 )
+add_custom_command(TARGET InmarScope POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/assets/flight-map" "$<TARGET_FILE_DIR:InmarScope>/flight-map"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/bandplans" "$<TARGET_FILE_DIR:InmarScope>/bandplans"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:InmarScope>/recordings"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/recordings/README.md" "$<TARGET_FILE_DIR:InmarScope>/recordings/README.md")
 # Microsoft Edge WebView2 for the embedded Flight Map browser (Windows only).
 if(WIN32)
     set(WEBVIEW2_ROOT ${CMAKE_SOURCE_DIR}/third_party/webview2/build/native)
@@ -186,6 +214,26 @@ if(WIN32)
     target_include_directories(InmarScope PRIVATE ${WEBVIEW2_ROOT}/include)
 endif()
 target_compile_definitions(InmarScope PRIVATE _USE_MATH_DEFINES)
+if(ENABLE_SDRPLAY AND SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
+    target_compile_definitions(InmarScope PRIVATE HAS_SOAPYSDR=1)
+    # PothosSDR also ships MSVC pthread headers. Exposing its entire include
+    # tree shadows MinGW's pthread.h and breaks std::thread.
+    get_filename_component(SOAPY_HEADER_ROOT "${SOAPY_INCLUDE_DIR}/SoapySDR" REALPATH)
+    file(COPY "${SOAPY_HEADER_ROOT}/" DESTINATION "${CMAKE_BINARY_DIR}/soapy-include/SoapySDR")
+    target_include_directories(InmarScope PRIVATE "${CMAKE_BINARY_DIR}/soapy-include")
+    target_link_libraries(InmarScope PRIVATE ${SOAPY_LIBRARY})
+    if(WIN32)
+        get_filename_component(SOAPY_LIB_DIR "${SOAPY_LIBRARY}" DIRECTORY)
+        get_filename_component(SOAPY_ROOT_HINT "${SOAPY_LIB_DIR}/.." ABSOLUTE)
+        target_compile_definitions(InmarScope PRIVATE SOAPY_ROOT_HINT="${SOAPY_ROOT_HINT}")
+        find_file(SOAPY_RUNTIME NAMES SoapySDR.dll libSoapySDR.dll
+            HINTS "${SOAPY_LIB_DIR}/../bin")
+        if(SOAPY_RUNTIME)
+            add_custom_command(TARGET InmarScope POST_BUILD COMMAND ${CMAKE_COMMAND}
+                -E copy_if_different "${SOAPY_RUNTIME}" "$<TARGET_FILE_DIR:InmarScope>")
+        endif()
+    endif()
+endif()
 if(AIRSPY_FOUND)
     target_sources(InmarScope PRIVATE src/sdr/airspy_source.cpp)
     target_compile_definitions(InmarScope PRIVATE HAS_AIRSPY=1)
@@ -196,6 +244,8 @@ find_library(ZLIB_LIB NAMES z libz zlib REQUIRED)
 find_library(SQLITE3_LIB NAMES sqlite3 libsqlite3 REQUIRED)
 find_library(XML2_LIB NAMES xml2 libxml2 REQUIRED)
 find_library(JANSSON_LIB NAMES jansson libjansson REQUIRED)
+find_path(JANSSON_INCLUDE_DIR NAMES jansson.h REQUIRED)
+target_include_directories(InmarScope PRIVATE ${JANSSON_INCLUDE_DIR})
 
 # libogg + libvorbis for OGG Vorbis voice recording.
 if(PkgConfig_FOUND)
@@ -218,7 +268,8 @@ target_link_libraries(InmarScope PRIVATE Threads::Threads)
 if(AIRSPY_FOUND)
     target_link_libraries(InmarScope PRIVATE ${AIRSPY_LIBRARIES})
 endif()
-target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS})
+target_link_directories(InmarScope PRIVATE ${RTLSDR_LIBRARY_DIRS}
+    ${OGG_LIBRARY_DIRS} ${VORBIS_LIBRARY_DIRS} ${VORBISENC_LIBRARY_DIRS})
 
 if(WIN32)
     target_link_libraries(InmarScope PRIVATE opengl32 gdi32 comdlg32 ole32 winmm ws2_32 winhttp shell32)
@@ -277,4 +328,53 @@ if(WIN32)
                 "${WEBVIEW2_ROOT}/x64/WebView2Loader.dll"
                 "$<TARGET_FILE_DIR:InmarScope>"
         COMMENT "Copying WebView2Loader.dll")
+endif()
+
+# Opt-in hardware-independent SDRplay regression tests and real-driver probe.
+option(BUILD_SDRPLAY_TESTS "Build SDRplay fault-injection tests and probe" OFF)
+if(BUILD_SDRPLAY_TESTS AND ENABLE_SDRPLAY AND SOAPY_INCLUDE_DIR AND SOAPY_LIBRARY)
+    enable_testing()
+    # Exercise the actual startup and plot code with a WAV source, without RF hardware.
+    get_target_property(SPECTRUM_TEST_SOURCES InmarScope SOURCES)
+    list(FILTER SPECTRUM_TEST_SOURCES EXCLUDE REGEX "(src/main\\.cpp|app\\.rc)$")
+    add_executable(spectrum_view_selftest tools/spectrum_view_selftest.cpp ${SPECTRUM_TEST_SOURCES})
+    target_include_directories(spectrum_view_selftest PRIVATE $<TARGET_PROPERTY:InmarScope,INCLUDE_DIRECTORIES>)
+    target_compile_definitions(spectrum_view_selftest PRIVATE $<TARGET_PROPERTY:InmarScope,COMPILE_DEFINITIONS>)
+    target_link_directories(spectrum_view_selftest PRIVATE $<TARGET_PROPERTY:InmarScope,LINK_DIRECTORIES>)
+    target_link_libraries(spectrum_view_selftest PRIVATE $<TARGET_PROPERTY:InmarScope,LINK_LIBRARIES>)
+    add_test(NAME spectrum_view_selftest COMMAND spectrum_view_selftest "${CMAKE_SOURCE_DIR}/bandplans")
+    add_executable(band_plan_selftest tools/band_plan_selftest.cpp src/decode/band_plan.cpp)
+    target_include_directories(band_plan_selftest PRIVATE src ${JANSSON_INCLUDE_DIR})
+    target_link_libraries(band_plan_selftest PRIVATE ${JANSSON_LIB})
+    add_test(NAME band_plan_selftest COMMAND band_plan_selftest "${CMAKE_SOURCE_DIR}/bandplans")
+    add_executable(waterfall_labels_selftest tools/waterfall_labels_selftest.cpp src/gui/waterfall_labels.cpp src/decode/band_plan.cpp)
+    target_include_directories(waterfall_labels_selftest PRIVATE src ${JANSSON_INCLUDE_DIR})
+    target_link_libraries(waterfall_labels_selftest PRIVATE imgui ${JANSSON_LIB})
+    add_test(NAME waterfall_labels_selftest COMMAND waterfall_labels_selftest "${CMAKE_SOURCE_DIR}/bandplans")
+    add_executable(voice_recording_selftest tools/voice_recording_selftest.cpp src/voice/wav_writer.cpp)
+    target_include_directories(voice_recording_selftest PRIVATE src ${OGG_INCLUDE_DIRS} ${VORBIS_INCLUDE_DIRS} ${VORBISENC_INCLUDE_DIRS})
+    target_link_directories(voice_recording_selftest PRIVATE ${OGG_LIBRARY_DIRS} ${VORBIS_LIBRARY_DIRS} ${VORBISENC_LIBRARY_DIRS})
+    target_link_libraries(voice_recording_selftest PRIVATE ${VORBISENC_LIBRARIES} ${VORBIS_LIBRARIES} ${OGG_LIBRARIES})
+    add_test(NAME voice_recording_selftest COMMAND voice_recording_selftest)
+    add_executable(flight_map_selftest tools/flight_map_selftest.cpp src/web/flight_map_data.cpp src/decode/acars_apps.cpp)
+    target_include_directories(flight_map_selftest PRIVATE src ${JANSSON_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/third_party/libacars)
+    target_link_libraries(flight_map_selftest PRIVATE acars_static ${ZLIB_LIB} ${XML2_LIB} ${JANSSON_LIB})
+    if(WIN32)
+        add_executable(flight_map_bridge_test tools/flight_map_bridge_test.cpp src/web/flight_map_webview.cpp src/web/flight_map_data.cpp src/util/log.cpp)
+        target_include_directories(flight_map_bridge_test PRIVATE src ${JANSSON_INCLUDE_DIR} ${WEBVIEW2_ROOT}/include)
+        target_link_libraries(flight_map_bridge_test PRIVATE ${JANSSON_LIB} ${WEBVIEW2_LIB} winhttp ole32 user32)
+    endif()
+    add_test(NAME flight_map_selftest COMMAND flight_map_selftest)
+    add_executable(sdrplay_selftest tools/sdrplay_selftest.cpp src/sdr/sdrplay_source.cpp)
+    target_include_directories(sdrplay_selftest PRIVATE src "${CMAKE_BINARY_DIR}/soapy-include")
+    target_compile_definitions(sdrplay_selftest PRIVATE HAS_SOAPYSDR=1 SOAPY_SDR_DLL_EXPORTS=1)
+    target_link_libraries(sdrplay_selftest PRIVATE Threads::Threads)
+    add_test(NAME sdrplay_selftest COMMAND sdrplay_selftest)
+    add_executable(sdrplay_probe tools/sdrplay_probe.cpp src/sdr/sdrplay_source.cpp)
+    target_include_directories(sdrplay_probe PRIVATE src "${CMAKE_BINARY_DIR}/soapy-include")
+    target_compile_definitions(sdrplay_probe PRIVATE HAS_SOAPYSDR=1)
+    if(WIN32)
+        target_compile_definitions(sdrplay_probe PRIVATE SOAPY_ROOT_HINT="${SOAPY_ROOT_HINT}")
+    endif()
+    target_link_libraries(sdrplay_probe PRIVATE ${SOAPY_LIBRARY} Threads::Threads)
 endif()

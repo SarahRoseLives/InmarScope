@@ -1,16 +1,5 @@
-// User-editable band plan file format.
-// Each .bandplan file describes the frequency allocations for one satellite.
-// The UI auto-discovers files placed in the bandplans/ folder next to the EXE.
-//
-// Format:
-//   # Comments and blank lines are ignored.
-//   header: Name, Designator, OrbitalPosition
-//   lowMHz  highMHz  label  colorRRGGBB
-//
-// Example:
-//   header: I4-F3 AOR-W, 4F3, -98.0
-//   1537.650 1537.750 STD-C EGC            ff3333
-//   1542.900 1543.050 Aero Voice (C-ch)    3388ff
+// JSON band plans: name/designator, optional regions/countries, and bands in MHz.
+// See bandplans/README.md for the schema. Nested region/country folders are scanned.
 #pragma once
 #include <cstdint>
 #include <string>
@@ -22,23 +11,40 @@ struct BandPlanEntry
     double hiMHz;
     std::string label;
     uint32_t color; // RGBA8 (A=0xFF)
+    double frequencyMHz = 0.0; // explicit channel center; zero = allocation only
+    std::string service;
+    int baud = 0; // Aero baud; 1 = Inmarsat-C/EGC; 0 = no decoder preset
 };
 
 struct BandPlan
 {
     std::string name;
     std::string designator;
+    std::string notes;
     double position = 0.0;      // orbital degrees (negative = west)
     std::string filePath;
     std::vector<BandPlanEntry> entries;
+    std::vector<std::string> regions, countries;
+    std::string error;
     bool valid = false;
 };
 
-// Parse a .bandplan file.  Returns a BandPlan with valid==false on error.
+// Parse a JSON file.  Returns a BandPlan with valid==false on error.
 BandPlan loadBandPlan(const std::string& path);
 
-// Scan a directory for *.bandplan files and return their display names.
+// Recursively scan JSON plans and return stable, sorted display names.
 // Each entry is "designator  —  Name" for use in a combo box.
 // The companion vector 'paths' receives the full file path for each entry.
 void scanBandPlans(const char* dir, std::vector<std::string>& names,
-                   std::vector<std::string>& paths);
+                   std::vector<std::string>& paths,
+                   std::vector<std::string>* errors = nullptr);
+std::string bandPlanLabel(const BandPlan& plan);
+
+struct BandPlanGroup {
+    std::string service;
+    double loMHz, hiMHz, centerMHz;
+    std::vector<size_t> channels;
+};
+// Partition channel services into windows that fit the receiver's sample rate.
+// Broad allocations never become channel/tuning presets.
+std::vector<BandPlanGroup> bandPlanGroups(const BandPlan& plan, double sampleRateHz);

@@ -38,6 +38,9 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
 #define WD(f) buf->appendf(#f "=%.10g\n", (double)app.f)
 #define WS(f) buf->appendf(#f "=%s\n", app.f)
     WI(sourceMode); WI(deviceIndex); WI(sampleRateIdx); WI(newBaud); WI(fftSizeIdx);
+    WI(rspSecond);
+    buf->appendf("rspA=%s\n", serializeRspConfig(app.rspConfig).c_str());
+    buf->appendf("rspB=%s\n", serializeRspConfig(app.rspConfigB).c_str());
     WI(audioDevice); WI(voiceMuted); WI(cpuReduce);
     WI(autoAddLes); WI(maxLesAutoDecoders);
     WI(logToDb); WI(maxDbAgeDays);
@@ -66,6 +69,10 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(acPosOnly);
     WI(showEmptyMsgs);
     WI(showBandPlan); WI(bandPlanIdx); WI(showBandPlanB); WI(bandPlanIdxB); WS(bandPlanDir);
+    WS(bandPlanFile); WS(bandPlanFileB);
+    WI(bandPlanGroup); WI(bandPlanGroupB);
+    WI(bandPlanChannel); WI(bandPlanChannelB); WI(decodeBandPlan); WI(decodeBandPlanB);
+    WI(flightMapWv.onlinePositions);
     WI(outFile); WS(outFilePath); WI(outUdp); WS(outUdpHost); WI(outUdpPort);
     WI(outFormat); WS(outStation); WI(outSbs); WI(outSbsPort);
     WI(layoutVersion);
@@ -100,6 +107,9 @@ void cfgReadLine(App& app, const char* line)
     std::memcpy(key, line, klen);
     key[klen] = 0;
     const char* val = eq + 1;
+    if (!std::strcmp(key, "rspA")) { parseRspConfig(val, app.rspConfig); return; }
+    if (!std::strcmp(key, "rspB")) { parseRspConfig(val, app.rspConfigB); return; }
+    if (!std::strcmp(key, "rspSecond")) { app.rspSecond = std::clamp(std::atoi(val), 0, 2); return; }
 #define RI(f) if (!std::strcmp(key, #f)) { app.f = std::atoi(val); return; }
 #define RB(f) if (!std::strcmp(key, #f)) { app.f = (std::atoi(val) != 0); return; }
 #define RF(f) if (!std::strcmp(key, #f)) { app.f = (float)std::atof(val); return; }
@@ -148,6 +158,10 @@ void cfgReadLine(App& app, const char* line)
     RB(acPosOnly);
     RB(showEmptyMsgs);
     RB(showBandPlan); RI(bandPlanIdx); RB(showBandPlanB); RI(bandPlanIdxB); RS(bandPlanDir);
+    RS(bandPlanFile); RS(bandPlanFileB);
+    RI(bandPlanGroup); RI(bandPlanGroupB);
+    RI(bandPlanChannel); RI(bandPlanChannelB); RB(decodeBandPlan); RB(decodeBandPlanB);
+    RB(flightMapWv.onlinePositions);
     RB(outFile); RS(outFilePath); RB(outUdp); RS(outUdpHost); RI(outUdpPort);
     RI(outFormat); RS(outStation); RB(outSbs); RI(outSbsPort);
     RI(layoutVersion);

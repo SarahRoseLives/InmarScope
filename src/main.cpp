@@ -31,6 +31,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <filesystem>
 
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -111,8 +112,9 @@ static void glfw_error_callback(int error, const char* description)
 #include "core/app.h"
 #include "core/main_funcs.h"
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    const bool smokeTest = argc == 2 && std::strcmp(argv[1], "--smoke-test") == 0;
 #if defined(_WIN32)
     // WebView2 requires STA — init before GLFW so the UI thread IS the STA thread.
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
@@ -121,14 +123,27 @@ int main(int, char**)
     if (!glfwInit())
         return 1;
 
+#if defined(__APPLE__)
+    const char* glsl_version = "#version 150";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+#else
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+#endif
 
     GLFWwindow* window = glfwCreateWindow(1400, 900, "InmarScope", nullptr, nullptr);
     if (!window)
     {
+        const int error = glfwGetError(nullptr);
         glfwTerminate();
+        // Hosted VMs may not expose a GPU. Distinguish that environment limit
+        // from crashes or other startup failures in the package smoke check.
+        if (smokeTest && (error == GLFW_FORMAT_UNAVAILABLE || error == GLFW_VERSION_UNAVAILABLE || error == GLFW_API_UNAVAILABLE))
+            return 77;
         return 1;
     }
 
@@ -270,12 +285,22 @@ int main(int, char**)
         app.decoders.setRecordFormat(rf);
         app.decodersB.setRecordFormat(rf);
     }
-    app.verCheck.start("inmarscope", INMARSCOPE_VERSION);
-    scanBandPlans(app.bandPlanDir, app.bandPlanNames, app.bandPlanPaths);
-    if (app.bandPlanIdx >= 0 && app.bandPlanIdx < (int)app.bandPlanPaths.size())
-        app.bandPlanLoaded = loadBandPlan(app.bandPlanPaths[app.bandPlanIdx]);
-    if (app.bandPlanIdxB >= 0 && app.bandPlanIdxB < (int)app.bandPlanPaths.size())
-        app.bandPlanLoadedB = loadBandPlan(app.bandPlanPaths[app.bandPlanIdxB]);
+    if (!smokeTest) app.verCheck.start("inmarscope", INMARSCOPE_VERSION);
+    // Find bundled plans when launched from a different working directory.
+    std::error_code directoryError;
+    if (std::strcmp(app.bandPlanDir, "bandplans") == 0 && !std::filesystem::is_directory("bandplans", directoryError)) {
+        auto program = std::filesystem::absolute(argv[0], directoryError);
+#if defined(_WIN32)
+        wchar_t executable[32768]{};
+        if (GetModuleFileNameW(nullptr, executable, 32768)) program = executable;
+#endif
+        const auto plans = program.parent_path() / "bandplans";
+        if (std::filesystem::is_directory(plans, directoryError))
+            std::snprintf(app.bandPlanDir, sizeof(app.bandPlanDir), "%s", plans.generic_u8string().c_str());
+    }
+    reloadBandPlans(app);
+    std::filesystem::create_directories(std::filesystem::u8path(app.recordDir), directoryError);
+    if (directoryError) app.status = "Cannot create recordings folder: " + directoryError.message();
     app.decoders.voiceCallLog().scanDir(app.recordDir);
     // Start web server if previously enabled
     if (app.webServerEnabled)
@@ -287,11 +312,14 @@ int main(int, char**)
         app.webServer.start(app.webServerPort);
     }
 #if defined(_WIN32)
-    app.flightMapWv.init(glfwGetWin32Window(window));
+    // The package smoke check renders the native UI without fetching the
+    // map tiles or creating a browser profile beside the release binary.
+    if (!smokeTest) app.flightMapWv.init(glfwGetWin32Window(window));
 #endif
 
     const ImVec4 clear_color = ImVec4(0.06f, 0.07f, 0.09f, 1.0f);
 
+    int smokeFrames = 0;
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -304,8 +332,8 @@ int main(int, char**)
 
         if (app.active->running())
             processFft(app.viewA, app, app.active->centerFreq(), app.active->sampleRate());
-        if (app.dualMode && app.sdrB.running())
-            processFft(app.viewB, app, app.sdrB.centerFreq(), app.sdrB.sampleRate());
+        if (app.dualMode && app.activeB->running())
+            processFft(app.viewB, app, app.activeB->centerFreq(), app.activeB->sampleRate());
 
         if (app.active->running())
             updateVoiceFollow(app);
@@ -412,6 +440,7 @@ int main(int, char**)
         }
 
         glfwSwapBuffers(window);
+        if (smokeTest && ++smokeFrames == 3) glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
 
     // Persist settings + dock layout to inmarscope.ini before shutting down.
@@ -419,6 +448,8 @@ int main(int, char**)
 
     app.decoders.stop();
     app.decodersB.stop();
+    app.rspB.close();
+    app.rsp.close();
     app.sdr.stop();
     app.sdrB.stop();
     app.wav.stop();

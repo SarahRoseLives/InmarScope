@@ -1,0 +1,64 @@
+'use strict';
+// Membership is the native receiver snapshot. Optional online coordinates are
+// filtered against received ICAOs by native code; no browser traffic requests.
+const map = L.map('map', {
+  worldCopyJump: true, scrollWheelZoom: false, zoomSnap: 0, zoomAnimation: false
+}).setView([20, 0], 2);
+const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+const wheelZoom = window.installSmoothWheelZoom(map);
+tiles.on('tileerror', () => {
+  document.getElementById('tiles').textContent = 'Background tiles unavailable. Received aircraft positions still update.';
+});
+const markers = new Map();
+// Fixed-size, bundled SVG silhouettes remain readable at every map zoom.
+// Their orientation is decorative: the receiver snapshot has no heading field.
+function aircraftIcon(color) {
+  return L.divIcon({className: 'aircraft-icon', iconSize: [24, 24], iconAnchor: [12, 12],
+    tooltipAnchor: [0, -12], html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">' +
+      '<path fill="' + color + '" stroke="#123c57" stroke-width="1.2" stroke-linejoin="round" d="M12 1 C11 1 10.5 2 10.5 3.5 L10.5 8 L2 13 L2 15 L10.5 12.5 L10.5 18 L7 20.5 L7 22 L12 20.5 L17 22 L17 20.5 L13.5 18 L13.5 12.5 L22 15 L22 13 L13.5 8 L13.5 3.5 C13.5 2 13 1 12 1 Z"/></svg>'});
+}
+const decodedIcon = aircraftIcon('#27c5ff');
+const onlineIcon = aircraftIcon('#ffb347');
+function hasPosition(a) {
+  return Number.isFinite(a.lat) && Number.isFinite(a.lon) && Math.abs(a.lat) <= 90 && Math.abs(a.lon) <= 180;
+}
+function label(a) { return [a.flight, a.reg, a.icao, 'AES ' + a.id].filter(Boolean).join(' · '); }
+window.updateAircraft = function (aircraft) {
+  const keep = new Set();
+  const missing = document.getElementById('missing');
+  missing.replaceChildren();
+  let noPosition = 0;
+  for (const a of aircraft) {
+    if (!hasPosition(a)) {
+      ++noPosition;
+      const item = document.createElement('li'); item.textContent = label(a); missing.appendChild(item);
+      continue;
+    }
+    keep.add(a.id);
+    const icon = a.positionSource === 'ADSB.lol (online)' ? onlineIcon : decodedIcon;
+    let marker = markers.get(a.id);
+    if (!marker) {
+      marker = L.marker([a.lat, a.lon], {icon, keyboard: false, autoPanOnFocus: false}).addTo(map);
+      markers.set(a.id, marker);
+    } else marker.setLatLng([a.lat, a.lon]);
+    if (marker.options.icon !== icon) marker.setIcon(icon);
+    const age = Math.max(0, Math.floor(Date.now() / 1000 - (a.posTime || 0)));
+    marker.setOpacity(age > 900 ? 0.35 : 0.9);
+    const text = document.createElement('span');
+    text.textContent = label(a) + '\n' + a.lat.toFixed(4) + ', ' + a.lon.toFixed(4) + ' · ' + a.alt + ' ft\n' +
+      (a.positionSource || 'Decoded ADS-C') + ' position: ' + Math.floor(age / 60) + ' min ago';
+    if (marker.getTooltip()) marker.setTooltipContent(text);
+    else marker.bindTooltip(text);
+  }
+  for (const [id, marker] of markers) if (!keep.has(id)) { map.removeLayer(marker); markers.delete(id); }
+  document.getElementById('counts').textContent = aircraft.length + ' received · ' + markers.size + ' with position';
+  document.getElementById('missing-count').textContent = 'Received without a known position: ' + noPosition;
+  // Deliberately no setView/panTo/fitBounds here: updates preserve the viewport.
+};
+document.getElementById('fit').addEventListener('click', () => {
+  wheelZoom.cancel();
+  if (markers.size) map.fitBounds(L.latLngBounds([...markers.values()].map(m => m.getLatLng())), {padding: [25, 25], maxZoom: 9});
+});
+new ResizeObserver(() => map.invalidateSize({pan: false})).observe(document.getElementById('map'));

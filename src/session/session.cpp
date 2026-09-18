@@ -74,8 +74,104 @@ void updateFeed(App& app)
     }
 }
 
+double bandPlanCaptureRate(const App& app, bool second)
+{
+    auto* source = second ? app.activeB : app.active;
+    double rate = source->sampleRate();
+    if (!source->running()) {
+        if (app.sourceMode == 7) rate = (second && app.rspSecond != 2 ? app.rspConfigB : app.rspConfig).rate;
+        else if (app.sourceMode == 3) rate = app.hackSampleRateMHz * 1e6;
+#ifdef HAS_AIRSPY
+        else if (app.sourceMode == 5) rate = kAirspyRates[std::clamp(app.airspySampleRateIdx, 0, kAirspyNumRates-1)];
+#endif
+        else if (app.sourceMode == 2) rate = app.serverSampleRateMHz * 1e6;
+        else rate = kRates[std::clamp(second ? app.sampleRateIdxB : app.sampleRateIdx, 0, kNumRates-1)];
+    }
+    if (app.sourceMode == 7) {
+        const auto& rsp = second ? app.rspB : app.rsp;
+        const auto& config = second ? app.rspConfigB : app.rspConfig;
+        const double bandwidth = rsp.running() ? rsp.bandwidth() : config.bandwidth;
+        if (std::isfinite(bandwidth) && bandwidth > 0) rate = std::min(rate, bandwidth);
+    }
+    return rate;
+}
+
+void tuneBandPlan(App& app, bool second, double centerMHz,
+                 const std::vector<std::pair<double, int>>* channels)
+{
+    if (app.sourceMode == 1 || !std::isfinite(centerMHz) || centerMHz <= 0) return;
+    auto* source = second ? app.activeB : app.active;
+    auto& view = second ? app.viewB : app.viewA;
+    auto& manager = second ? app.decodersB : app.decoders;
+    auto& frequency = second ? app.centerFreqMHzB : app.centerFreqMHz;
+    frequency = centerMHz;
+    if (source->running()) {
+        std::vector<std::pair<double, int>> keep;
+        if (channels) keep = *channels;
+        else for (const auto& decoder : manager.status()) keep.push_back({decoder.freqMHz, decoder.baud});
+        source->setCenterFreq(centerMHz * 1e6);
+        frequency = source->centerFreq() / 1e6;
+        manager.removeAll();
+        manager.configure(source->sampleRate(), source->centerFreq());
+        for (const auto& decoder : keep)
+            if (std::abs(decoder.first-frequency) * 1e6 < bandPlanCaptureRate(app, second)*0.45)
+                manager.addDecoder(decoder.first * 1e6, decoder.second);
+        view.ring.clear(); view.waterfall.clear();
+        buildWindow(view, kFftSizes[app.fftSizeIdx], app.dbMin);
+        updateFreqAxis(view, source->centerFreq(), source->sampleRate(), view.curN);
+        // An explicit tuning choice supersedes the old voice-follow return point.
+        app.following = false; app.followChannelId = -1; app.followHome.clear();
+        app.followSeenCount = app.decoders.cassignLog().count();
+    }
+    view.resetView = true; view.fftSkip = false;
+}
+
+bool activateBandPlan(App& app, bool second)
+{
+    if (app.sourceMode == 1) return false;
+    const auto& plan = second ? app.bandPlanLoadedB : app.bandPlanLoaded;
+    const double rate = bandPlanCaptureRate(app, second);
+    const auto groups = bandPlanGroups(plan, rate);
+    if (groups.empty()) return false;
+    int& groupIndex = second ? app.bandPlanGroupB : app.bandPlanGroup;
+    int& channelIndex = second ? app.bandPlanChannelB : app.bandPlanChannel;
+    groupIndex = std::clamp(groupIndex, 0, int(groups.size())-1);
+    const auto& group = groups[groupIndex];
+    std::vector<size_t> indices = group.channels;
+    double center = group.centerMHz;
+    if (channelIndex >= 0 && channelIndex < int(plan.entries.size()) && plan.entries[channelIndex].frequencyMHz > 0) {
+        indices = {size_t(channelIndex)};
+        center = plan.entries[channelIndex].frequencyMHz + rate / 1e6 * .04;
+    } else channelIndex = -1;
+    std::vector<std::pair<double, int>> channels;
+    for (size_t index : indices) {
+        const auto& entry = plan.entries[index];
+        if (!entry.baud) continue;
+        const auto pair = std::make_pair(entry.frequencyMHz, entry.baud);
+        if (std::find(channels.begin(), channels.end(), pair) == channels.end()) channels.push_back(pair);
+    }
+    const bool decode = second ? app.decodeBandPlanB : app.decodeBandPlan;
+    tuneBandPlan(app, second, center, decode && !channels.empty() ? &channels : nullptr);
+    auto* source = second ? app.activeB : app.active;
+    if (decode) {
+        auto& manager = second ? app.decodersB : app.decoders;
+        app.status = std::string(second ? "B: " : "A: ") + (channels.empty()
+            ? "No decoder modes in this plan; add decoders manually."
+            : source->running()
+            ? std::to_string(manager.decoderCount()) + " plan decoders acquiring"
+            : std::to_string(channels.size()) + " plan decoders ready for Start");
+    }
+    return true;
+}
+
 void startActive(App& app)
 {
+    app.activeB->stop();
+    app.active->stop();
+    app.decoders.stop();
+    app.decodersB.stop();
+    app.dualMode = false;
+    app.activeB = &app.sdrB;
     app.viewA.ring.clear();
     app.viewA.waterfall.clear();
     app.viewA.resetView = true;
@@ -192,6 +288,18 @@ void startActive(App& app)
         ok = app.rtltcp.start(0, cb, err);
     }
 
+    else if (app.sourceMode == 7)
+    {
+        app.rspB.close(); app.rsp.close();
+        app.active = &app.rsp;
+        app.activeB = &app.rspB;
+        if (app.rspSecond == 2) app.rspConfig.mode = "MA";
+        app.rsp.setCenterFreq(app.centerFreqMHz * 1e6);
+        ok = app.rsp.prepare(app.rspConfig, err) && app.rsp.apply(app.rspConfig, err)
+             && app.rsp.start(0, cb, err);
+    }
+    else err = "The selected source is not available in this build.";
+
     if (ok)
     {
         // Dual RTL mode: start second RTL with independent tuning
@@ -230,37 +338,71 @@ void startActive(App& app)
             else
                 app.status = "Dual RTL B error: " + errB;
         }
+        if (app.sourceMode == 7 && app.rspSecond != 0)
+        {
+            app.viewB.ring.clear(); app.viewB.waterfall.clear(); app.viewB.resetView = true;
+            if (app.rspSecond == 2) {
+                app.rspConfigB.serial = app.rspConfig.serial;
+                app.rspConfigB.mode = "SL";
+                app.rspConfigB.rate = app.rsp.sampleRate();
+            }
+            app.rspB.setCenterFreq(app.centerFreqMHzB * 1e6);
+            std::string errorB;
+            if (app.rspSecond == 1 && app.rspConfig.serial == app.rspConfigB.serial)
+                errorB = "Choose different serial numbers, or select RSPduo two tuners.";
+            else {
+                auto cbB = [&app](const float* iq, int n) {
+                    app.viewB.ring.push(iq, size_t(n)); app.decodersB.feed(iq, n);
+                    // The single IQ recorder belongs to A; never interleave two radios.
+                };
+                startedB = app.rspB.prepare(app.rspConfigB, errorB)
+                    && app.rspB.apply(app.rspConfigB, errorB) && app.rspB.start(0, cbB, errorB);
+            }
+            if (startedB) {
+                app.decodersB.removeAll();
+                app.decodersB.configure(app.rspB.sampleRate(), app.rspB.centerFreq());
+                app.decodersB.setMaxWorkers(2);
+                app.decodersB.setRecording(app.recordVoice, app.recordDir);
+                app.decodersB.start();
+            } else {
+                app.rspB.close(); app.rsp.close();
+                err = "SDRplay B: " + errorB; ok = false;
+            }
+        }
         app.dualMode = startedB;
 
-        app.decoders.removeAll();
-        app.decoders.configure(app.active->sampleRate(), app.active->centerFreq());
-        app.decoders.setAudioEnabled(true); // A keeps audio in dual mode (both SDRs have voice capability)
-        if (app.dualMode)
-            app.decoders.setMaxWorkers(4); // cap primary workers in dual mode (B gets 2)
-        app.decoders.start();
-        app.lastConfiguredFs = app.active->sampleRate();
-        app.iqRecorder.configurePrebuffer(app.active->sampleRate(), app.iqBufferSec);
-        // Don't auto-follow assignments left over from a previous session.
-        app.followSeenCount = app.decoders.cassignLog().count();
-        app.following = false;
-        app.followChannelId = -1;
-        app.followHome.clear();
+        if (ok)
+        {
+            app.decoders.removeAll();
+            app.decoders.configure(app.active->sampleRate(), app.active->centerFreq());
+            app.decoders.setAudioEnabled(true); // A keeps audio in dual mode (both SDRs have voice capability)
+            if (app.dualMode)
+                app.decoders.setMaxWorkers(4); // cap primary workers in dual mode (B gets 2)
+            app.decoders.start();
+            app.lastConfiguredFs = app.active->sampleRate();
+            app.iqRecorder.configurePrebuffer(app.active->sampleRate(), app.iqBufferSec);
+            // Don't auto-follow assignments left over from a previous session.
+            app.followSeenCount = app.decoders.cassignLog().count();
+            app.following = false;
+            app.followChannelId = -1;
+            app.followHome.clear();
 
-        // Restore saved decoders (non-8400 only, from inmarscope.ini)
-        if (app.saveDecoders && !app.savedDecoders.empty())
-        {
-            for (auto& sd : app.savedDecoders)
-                app.decoders.addDecoder(sd.first * 1e6, sd.second);
-        }
-        if (app.dualMode && app.saveDecoders && !app.savedDecodersB.empty())
-        {
-            for (auto& sd : app.savedDecodersB)
-                app.decodersB.addDecoder(sd.first * 1e6, sd.second);
-        }
-        if (!app.saveDecoders)
-        {
-            app.savedDecoders.clear();
-            app.savedDecodersB.clear();
+            // Restore saved decoders (non-8400 only, from inmarscope.ini)
+            if (app.saveDecoders && !app.savedDecoders.empty())
+            {
+                for (auto& sd : app.savedDecoders)
+                    app.decoders.addDecoder(sd.first * 1e6, sd.second);
+            }
+            if (app.dualMode && app.saveDecoders && !app.savedDecodersB.empty())
+            {
+                for (auto& sd : app.savedDecodersB)
+                    app.decodersB.addDecoder(sd.first * 1e6, sd.second);
+            }
+            if (!app.saveDecoders)
+            {
+                app.savedDecoders.clear();
+                app.savedDecodersB.clear();
+            }
         }
     }
 
@@ -274,8 +416,21 @@ void startActive(App& app)
             app.iqRecorder.start(app.iqRecPath, app.active->sampleRate());
     }
 
-    if (ok)
+    if (ok) {
+        // Start is handled after processFft in the GUI frame. Publish the NEW
+        // receiver range now, before drawSpectrum consumes resetView.
+        auto reset = [&](SpectrumView& view, SdrSource* source) {
+            buildWindow(view, kFftSizes[app.fftSizeIdx], app.dbMin);
+            updateFreqAxis(view, source->centerFreq(), source->sampleRate(), view.curN);
+            view.resetView = true;
+            view.fftSkip = false;
+        };
+        reset(app.viewA, app.active);
+        if (app.dualMode) reset(app.viewB, app.activeB);
         app.status = app.dualMode ? "Running (dual SDR)" : "Running";
+        if (app.showBandPlan && app.decodeBandPlan) activateBandPlan(app, false);
+        if (app.dualMode && app.showBandPlanB && app.decodeBandPlanB) activateBandPlan(app, true);
+    }
     else
         app.status = "Error: " + err;
 }

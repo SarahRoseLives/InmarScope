@@ -1,0 +1,335 @@
+{
+  "name": "German Mobile Networks",
+  "designator": "DE",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Germany"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/germany-mobile-networks.json",
+  "source_sha256": "dae040246527fbf15b6aa5d92f6e69f828cbb29903cff823c9262bc4e6c5a0b3",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "German Mobile Networks",
+    "country_name": "Germany",
+    "country_code": "DE",
+    "author_name": "Martin Hauke",
+    "author_url": "none"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 470.0,
+      "hi": 694.0,
+      "label": "DVB-T2",
+      "color": "FF9800"
+    },
+    {
+      "lo": 703.0,
+      "hi": 713.0,
+      "label": "703 Telefonica FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 713.0,
+      "hi": 723.0,
+      "label": "713 Telekom FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 723.0,
+      "hi": 733.0,
+      "label": "723 Vodafone FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 758.0,
+      "hi": 768.0,
+      "label": "758 Telefonica FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 768.0,
+      "hi": 778.0,
+      "label": "768 Telekom FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 778.0,
+      "hi": 788.0,
+      "label": "778 Vodafone FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 791.0,
+      "hi": 801.0,
+      "label": "791 Telefonica FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 801.0,
+      "hi": 811.0,
+      "label": "801 Vodafone FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 811.0,
+      "hi": 821.0,
+      "label": "811 Telekom FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 832.0,
+      "hi": 842.0,
+      "label": "832 Telefonica FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 842.0,
+      "hi": 852.0,
+      "label": "842 Vodafone FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 852.0,
+      "hi": 862.0,
+      "label": "852 Telekom FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 873.1,
+      "hi": 880.0,
+      "label": "GSM-R FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 880.0,
+      "hi": 890.0,
+      "label": "880 Telefonica FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 890.0,
+      "hi": 900.0,
+      "label": "890 Vodafone FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 900.0,
+      "hi": 915.0,
+      "label": "900 Telekom FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 918.1,
+      "hi": 925.0,
+      "label": "GSM-R FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 925.0,
+      "hi": 935.0,
+      "label": "925 Telefonica FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 935.0,
+      "hi": 945.0,
+      "label": "935 Vodafone FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 945.0,
+      "hi": 960.0,
+      "label": "945 Telekom FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 1452.0,
+      "hi": 1472.0,
+      "label": "1452 Telekom SDL downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 1472.0,
+      "hi": 1492.0,
+      "label": "1472 Vodafone SDL downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 1710.0,
+      "hi": 1740.0,
+      "label": "1710 Telekom FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 1740.0,
+      "hi": 1760.0,
+      "label": "1740 Telefonica FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 1760.0,
+      "hi": 1785.0,
+      "label": "1760 Vodafone FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 1805.0,
+      "hi": 1835.0,
+      "label": "1805 Telekom FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 1835.0,
+      "hi": 1855.0,
+      "label": "1835 Telefonica FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 1855.0,
+      "hi": 1880.0,
+      "label": "1855 Vodafone FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 1880.0,
+      "hi": 1900.0,
+      "label": "DECT",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1900.1,
+      "hi": 1905.1,
+      "label": "1900.1 Telefonica",
+      "color": "888888"
+    },
+    {
+      "lo": 1920.0,
+      "hi": 1940.0,
+      "label": "1920 Vodafone FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 1940.0,
+      "hi": 1960.0,
+      "label": "1940 Telefonica FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 1960.0,
+      "hi": 1980.0,
+      "label": "1960 Telekom FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 2010.5,
+      "hi": 2024.7,
+      "label": "2010.5 Telefonica",
+      "color": "888888"
+    },
+    {
+      "lo": 2110.0,
+      "hi": 2130.0,
+      "label": "2110 Vodafone FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 2130.0,
+      "hi": 2150.0,
+      "label": "2130 Telefonica FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 2150.0,
+      "hi": 2170.0,
+      "label": "2150 Telekom FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 2500.0,
+      "hi": 2520.0,
+      "label": "2500 Vodafone FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 2520.0,
+      "hi": 2540.0,
+      "label": "2520 Telekom FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 2540.0,
+      "hi": 2570.0,
+      "label": "2540 Telefonica FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 2570.0,
+      "hi": 2580.0,
+      "label": "2570 Telefonica TDD",
+      "color": "888888"
+    },
+    {
+      "lo": 2580.0,
+      "hi": 2605.0,
+      "label": "2580 Vodafone TDD",
+      "color": "888888"
+    },
+    {
+      "lo": 2605.0,
+      "hi": 2610.0,
+      "label": "2605 Telekom TDD",
+      "color": "888888"
+    },
+    {
+      "lo": 2610.0,
+      "hi": 2620.0,
+      "label": "2610 Telefonica TDD",
+      "color": "888888"
+    },
+    {
+      "lo": 2620.0,
+      "hi": 2640.0,
+      "label": "2620 Vodafone FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 2640.0,
+      "hi": 2660.0,
+      "label": "2640 Telekom FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 2660.0,
+      "hi": 2690.0,
+      "label": "2660 Telefonica FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 3400.0,
+      "hi": 3490.0,
+      "label": "3400 Vodafone",
+      "color": "888888"
+    },
+    {
+      "lo": 3490.0,
+      "hi": 3540.0,
+      "label": "3490 Drillisch",
+      "color": "888888"
+    },
+    {
+      "lo": 3540.0,
+      "hi": 3610.0,
+      "label": "3540 Telefonica",
+      "color": "888888"
+    },
+    {
+      "lo": 3610.0,
+      "hi": 3700.0,
+      "label": "3610 Telekom",
+      "color": "888888"
+    }
+  ]
+}

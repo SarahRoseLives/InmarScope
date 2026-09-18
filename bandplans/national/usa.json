@@ -1,0 +1,365 @@
+{
+  "name": "USA",
+  "designator": "US",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "United States of America"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/usa.json",
+  "source_sha256": "ebcccf5b32573200387da923b8d2ee099cf3d73a129afb90c9199cf5d9649d6b",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "USA",
+    "country_name": "United States of America",
+    "country_code": "US",
+    "author_name": "Joshua Kimsey",
+    "author_url": "http://jkimsey.tech"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 0.1357,
+      "hi": 0.1378,
+      "label": "2200m Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.472,
+      "hi": 0.479,
+      "label": "630m Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 0.1485,
+      "hi": 0.519,
+      "label": "Long Wave",
+      "color": "FF9800"
+    },
+    {
+      "lo": 0.525,
+      "hi": 1.705,
+      "label": "Medium Wave (AM Broadcast)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1.8,
+      "hi": 2.0,
+      "label": "160m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2.3,
+      "hi": 2.468,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.2,
+      "hi": 3.4,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 3.5,
+      "hi": 4.0,
+      "label": "80m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 4.75,
+      "hi": 4.995,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.005,
+      "hi": 5.06,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 5.3305,
+      "hi": 5.4065,
+      "label": "60m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 5.9,
+      "hi": 6.2,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 7.0,
+      "hi": 7.3,
+      "label": "40m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 7.3,
+      "hi": 7.45,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 9.4,
+      "hi": 9.9,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 10.1,
+      "hi": 10.15,
+      "label": "30m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 11.6,
+      "hi": 12.1,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 13.57,
+      "hi": 13.87,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 14.0,
+      "hi": 14.35,
+      "label": "20m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 15.1,
+      "hi": 15.8,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 17.48,
+      "hi": 17.9,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 18.068,
+      "hi": 18.168,
+      "label": "17m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 18.9,
+      "hi": 19.02,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 21.0,
+      "hi": 21.45,
+      "label": "15m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 21.45,
+      "hi": 21.85,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 24.89,
+      "hi": 24.99,
+      "label": "12m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 25.67,
+      "hi": 26.1,
+      "label": "Shortwave Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 26.96,
+      "hi": 27.41,
+      "label": "CB",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 28.0,
+      "hi": 29.7,
+      "label": "10m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 50.0,
+      "hi": 54.0,
+      "label": "6m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 54.0,
+      "hi": 72.0,
+      "label": "TV Channels 2-4",
+      "color": "FF9800"
+    },
+    {
+      "lo": 76.0,
+      "hi": 88.0,
+      "label": "TV Channels 5-6",
+      "color": "FF9800"
+    },
+    {
+      "lo": 87.5,
+      "hi": 108.0,
+      "label": "FM Broadcast",
+      "color": "FF9800"
+    },
+    {
+      "lo": 108.0,
+      "hi": 118.0,
+      "label": "Air Band VOR/ILS",
+      "color": "4287F5"
+    },
+    {
+      "lo": 118.0,
+      "hi": 137.0,
+      "label": "Air Band Voice",
+      "color": "4287F5"
+    },
+    {
+      "lo": 137.0,
+      "hi": 138.0,
+      "label": "Polar Orbiting Satellites",
+      "color": "D76B37"
+    },
+    {
+      "lo": 144.0,
+      "hi": 148.0,
+      "label": "2m Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 151.82,
+      "hi": 151.94,
+      "label": "MURS (lower)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 154.57,
+      "hi": 154.6,
+      "label": "MURS (upper)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 156.0,
+      "hi": 162.025,
+      "label": "Marine",
+      "color": "00A6A6"
+    },
+    {
+      "lo": 162.3625,
+      "hi": 162.5875,
+      "label": "NOAA Weather Radio",
+      "color": "FF9800"
+    },
+    {
+      "lo": 174.0,
+      "hi": 216.0,
+      "label": "TV Channels 7-13",
+      "color": "FF9800"
+    },
+    {
+      "lo": 219.0,
+      "hi": 220.0,
+      "label": "1.25m Band (lower)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 222.0,
+      "hi": 225.0,
+      "label": "1.25m Band (upper)",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 225.0,
+      "hi": 380.0,
+      "label": "Military Air",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 240.0,
+      "hi": 270.0,
+      "label": "Military Sat",
+      "color": "B85AC9"
+    },
+    {
+      "lo": 420.0,
+      "hi": 450.0,
+      "label": "70cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 446.0,
+      "hi": 446.2,
+      "label": "PMR446",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 462.55,
+      "hi": 462.725,
+      "label": "FRS",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 467.55,
+      "hi": 467.725,
+      "label": "FRS - GMRS",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 470.0,
+      "hi": 512.0,
+      "label": "TV Channels 14-20",
+      "color": "FF9800"
+    },
+    {
+      "lo": 512.0,
+      "hi": 608.0,
+      "label": "TV Channels 21-36",
+      "color": "FF9800"
+    },
+    {
+      "lo": 614.0,
+      "hi": 698.0,
+      "label": "TV Broadcasting",
+      "color": "FF9800"
+    },
+    {
+      "lo": 902.0,
+      "hi": 928.0,
+      "label": "33cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 1240.0,
+      "hi": 1300.0,
+      "label": "23cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2300.0,
+      "hi": 2310.0,
+      "label": "13cm Ham Band",
+      "color": "4CAF50"
+    },
+    {
+      "lo": 2390.0,
+      "hi": 2450.0,
+      "label": "13cm Ham Band",
+      "color": "4CAF50"
+    }
+  ]
+}

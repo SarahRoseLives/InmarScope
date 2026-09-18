@@ -1,0 +1,101 @@
+{
+  "name": "German LTE bands",
+  "designator": "DE",
+  "regions": [
+    "National"
+  ],
+  "countries": [
+    "Germany"
+  ],
+  "source": "https://raw.githubusercontent.com/AlexandreRouma/SDRPlusPlus/8c9f5ee8fe405775bfcd62c8c8f8c0fc928a64af/root/res/bandplans/germany-mobile-lte-bands.json",
+  "source_sha256": "bcaf72da953c0f8b621ef85e2c0e9cbfad2ac91a5d3cecf6ab57cef581eca8b5",
+  "license": "GPL-3.0",
+  "source_metadata": {
+    "name": "German LTE bands",
+    "country_name": "Germany",
+    "country_code": "DE",
+    "author_name": "Martin Hauke",
+    "author_url": "none"
+  },
+  "excluded_invalid_source_entries": [],
+  "bands": [
+    {
+      "lo": 703.0,
+      "hi": 748.0,
+      "label": "LTE band 28 (APT) FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 832.0,
+      "hi": 862.0,
+      "label": "LTE band 20 (Digital Dividend) FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 880.0,
+      "hi": 915.0,
+      "label": "LTE band 8 (Extended GSM) FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 1710.0,
+      "hi": 1785.0,
+      "label": "LTE band 3 (DCS) FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 1805.0,
+      "hi": 1880.0,
+      "label": "LTE band 3 (DCS) FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 1920.0,
+      "hi": 1980.0,
+      "label": "LTE band 1 (IMT) FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 2110.0,
+      "hi": 2170.0,
+      "label": "LTE band 1 (IMT) FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 2500.0,
+      "hi": 2570.0,
+      "label": "LTE band 7 (IMT-E) FDD uplink",
+      "color": "888888"
+    },
+    {
+      "lo": 2620.0,
+      "hi": 2690.0,
+      "label": "LTE band 7 (IMT-E) FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 7580.0,
+      "hi": 8030.0,
+      "label": "LTE band 28 (APT) FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 7910.0,
+      "hi": 8210.0,
+      "label": "LTE band 20 (Digital Dividend) FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 9250.0,
+      "hi": 9600.0,
+      "label": "LTE band 8 (Extended GSM) FDD downlink",
+      "color": "888888"
+    },
+    {
+      "lo": 14520.0,
+      "hi": 14960.0,
+      "label": "LTE band 32 (L-Band (EU)) SDL downlink",
+      "color": "888888"
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "name": "Alphasat / I4A / I-4A F4 / AF1 - 25E (surveyed channels; partial)",
+  "designator": "I4A",
+  "position": 25.0,
+  "regions": [
+    "Inmarsat",
+    "EMEA",
+    "Europe Middle East Africa"
+  ],
+  "countries": [],
+  "source": "https://raw.githubusercontent.com/alphafox02/inmarsat-sniffer/c5e767ec75b1511fdc44a0644f600d228144467d/satellites.c",
+  "source_sha256": "d468150f0fb83e90d756894285c68bb08329b5c53b1ba463c95ec45660fdb9be",
+  "fleet_source": "https://www.viasat.com/content/dam/us-site/government/missions/documents/Viasat-Aero-Services-brochure-September-2025-digital.pdf",
+  "region_source": "https://www.jsatmobile.com/general1/id=222",
+  "reviewed": "2026-09-17",
+  "license": "GPL-3.0-or-later",
+  "notes": "Surveyed channel centers, not complete allocations. Verify active frequencies locally. No geographic aliases inferred from the source.",
+  "bands": [
+    {
+      "lo": 1537.099999,
+      "hi": 1537.100001,
+      "decoder": "egc",
+      "frequency": 1537.1,
+      "service": "STD-C",
+      "label": "STDC EGC 1537.1 MHz (channel center)",
+      "color": "FF9800"
+    },
+    {
+      "lo": 1545.114999,
+      "hi": 1545.115001,
+      "baud": 600,
+      "frequency": 1545.115,
+      "service": "Aero data",
+      "label": "AERO 600 1545.12 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.119999,
+      "hi": 1545.120001,
+      "baud": 600,
+      "frequency": 1545.12,
+      "service": "Aero data",
+      "label": "AERO 600 1545.12 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.129999,
+      "hi": 1545.130001,
+      "baud": 600,
+      "frequency": 1545.13,
+      "service": "Aero data",
+      "label": "AERO 600 1545.13 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1545.124999,
+      "hi": 1545.125001,
+      "baud": 1200,
+      "frequency": 1545.125,
+      "service": "Aero data",
+      "label": "AERO 1200 1545.12 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.012499,
+      "hi": 1546.012501,
+      "baud": 10500,
+      "frequency": 1546.0125,
+      "service": "Aero data",
+      "label": "AERO 10500 1546.01 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.027499,
+      "hi": 1546.027501,
+      "baud": 10500,
+      "frequency": 1546.0275,
+      "service": "Aero data",
+      "label": "AERO 10500 1546.03 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.142499,
+      "hi": 1546.142501,
+      "baud": 8400,
+      "frequency": 1546.1425,
+      "service": "Aero voice",
+      "label": "AERO 8400 1546.14 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.147499,
+      "hi": 1546.147501,
+      "baud": 8400,
+      "frequency": 1546.1475,
+      "service": "Aero voice",
+      "label": "AERO 8400 1546.15 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.152499,
+      "hi": 1546.152501,
+      "baud": 8400,
+      "frequency": 1546.1525,
+      "service": "Aero voice",
+      "label": "AERO 8400 1546.15 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.182499,
+      "hi": 1546.182501,
+      "baud": 8400,
+      "frequency": 1546.1825,
+      "service": "Aero voice",
+      "label": "AERO 8400 1546.18 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.187499,
+      "hi": 1546.187501,
+      "baud": 8400,
+      "frequency": 1546.1875,
+      "service": "Aero voice",
+      "label": "AERO 8400 1546.19 MHz (channel center)",
+      "color": "4287F5"
+    },
+    {
+      "lo": 1546.192499,
+      "hi": 1546.192501,
+      "baud": 8400,
+      "frequency": 1546.1925,
+      "service": "Aero voice",
+      "label": "AERO 8400 1546.19 MHz (channel center)",
+      "color": "4287F5"
+    }
+  ]
+}
