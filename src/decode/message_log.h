@@ -3,6 +3,7 @@
 
 #include "store/message_store.h"
 
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -37,13 +38,23 @@ struct DecodedMessage
     std::string flight;    // flight/callsign (ADS-C flight id), if present
 };
 
+// Decoders leave timeSec at 0; the log stamps the receive time (epoch seconds)
+// so the Messages table, archive, feeds and dashboard all agree.
+inline void stampReceived(DecodedMessage& m)
+{
+    if (m.timeSec <= 0.0)
+        m.timeSec = std::chrono::duration<double>(
+                        std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
 class MessageLog
 {
 public:
     void setStore(MessageStore* s) { store_ = s; }
 
-    void add(const DecodedMessage& m)
+    void add(DecodedMessage m)
     {
+        stampReceived(m);
         std::lock_guard<std::mutex> lk(mtx_);
         msgs_.push_back(m);
         if (msgs_.size() > kMax)
@@ -52,8 +63,9 @@ public:
     }
 
     // Called from the decode worker — persists to store and then in-memory.
-    void addAndStore(const DecodedMessage& m, int baud)
+    void addAndStore(DecodedMessage m, int baud)
     {
+        stampReceived(m);
         if (store_)
             store_->storeAcars(m.timeSec, m.channelId, m.freqMHz, m.text, m.hex,
                               m.aesId, m.icao, m.reg, m.flight, m.label,
@@ -66,8 +78,9 @@ public:
         ++count_;
     }
 
-    void addSuAndStore(const DecodedMessage& m, int baud)
+    void addSuAndStore(DecodedMessage m, int baud)
     {
+        stampReceived(m);
         if (store_)
             store_->storeSu(m.timeSec, m.channelId, m.freqMHz, m.text, m.hex,
                            m.aesId, m.suType, baud);
