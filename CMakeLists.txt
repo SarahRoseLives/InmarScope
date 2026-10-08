@@ -289,6 +289,8 @@ if(WIN32)
 endif()
 find_package(Threads REQUIRED)
 target_link_libraries(InmarScope PRIVATE Threads::Threads)
+# miniaudio dlopen()s audio backends; glibc < 2.34 keeps dlopen/dlclose in libdl.
+target_link_libraries(InmarScope PRIVATE ${CMAKE_DL_LIBS})
 if(AIRSPY_FOUND)
     target_link_libraries(InmarScope PRIVATE ${AIRSPY_LIBRARIES})
 endif()
