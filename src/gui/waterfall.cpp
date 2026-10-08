@@ -160,34 +160,41 @@ void Waterfall::draw(const ImVec2& size, float uMin, float uMax,
     float dx0 = p0.x + size.x * xFracLo;
     float dx1 = p0.x + size.x * xFracHi;
 
+    // Map texture rows to whole screen pixels. Taller than the history:
+    // scale each row by an integer factor. Shorter: show only the newest rows
+    // at 1:1 rather than squeezing every row in with GL_NEAREST, which drops
+    // rows unevenly and aliases while the pane is resized (#21).
     float H = (float)texH_;
-    float drawH = size.y;
+    int rows = texH_;
+    float drawH = H;
     float yOff = p0.y;
-    if (size.y > H)
+    if (size.y >= H)
     {
-        // Upscaling: snap to integer multiples so each texture row maps to
-        // exactly N screen pixels with no sub-pixel blending.
         float rowScale = std::floor(size.y / H);
         drawH = rowScale * H;
         yOff = p0.y + (size.y - drawH) * 0.5f;
     }
-    float vSplit = (float)writePtr_ / H;
-    float topFrac = 1.0f - vSplit;
+    else
+    {
+        rows = std::max(1, (int)std::floor(size.y));
+        drawH = (float)rows;
+    }
+    float rowPx = drawH / (float)rows;
 
     ImTextureID tid = (ImTextureID)(intptr_t)tex_;
 
-    // Top slice: tex rows [writePtr_ .. texH_-1].
-    float topH = drawH * topFrac;
-    ImVec2 a0 = ImVec2(dx0, yOff);
-    ImVec2 a1 = ImVec2(dx1, yOff + topH);
-    dl->AddImage(tid, a0, a1, ImVec2(uMin, vSplit), ImVec2(uMax, 1.0f));
+    // Rows run newest-first from writePtr_, wrapping at the texture end.
+    int firstCount = std::min(rows, texH_ - writePtr_);
+    float firstH = rowPx * (float)firstCount;
+    dl->AddImage(tid, ImVec2(dx0, yOff), ImVec2(dx1, yOff + firstH),
+                 ImVec2(uMin, (float)writePtr_ / H),
+                 ImVec2(uMax, (float)(writePtr_ + firstCount) / H));
 
-    // Bottom slice: tex rows [0 .. writePtr_-1].
-    if (vSplit > 0.0f)
+    int wrapCount = rows - firstCount;
+    if (wrapCount > 0)
     {
-        ImVec2 b0 = ImVec2(dx0, yOff + topH);
-        ImVec2 b1 = ImVec2(dx1, yOff + drawH);
-        dl->AddImage(tid, b0, b1, ImVec2(uMin, 0.0f), ImVec2(uMax, vSplit));
+        dl->AddImage(tid, ImVec2(dx0, yOff + firstH), ImVec2(dx1, yOff + drawH),
+                     ImVec2(uMin, 0.0f), ImVec2(uMax, (float)wrapCount / H));
     }
 }
 

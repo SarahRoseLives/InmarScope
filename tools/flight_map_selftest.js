@@ -7,10 +7,10 @@ const element = () => ({textContent:'', children:[], replaceChildren(){this.chil
 const document = {getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id);}, createElement:element};
 const pins = new Set();
 let viewChanges=0;
-const map = {setView(){++viewChanges;return this;},fitBounds(){++viewChanges;},removeLayer(x){pins.delete(x);},invalidateSize(){}};
+const map = {setView(pos){++viewChanges;this.center=pos;return this;},getZoom(){return 2;},fitBounds(){++viewChanges;},removeLayer(x){pins.delete(x);},invalidateSize(){}};
 const L = {map:()=>map,tileLayer:()=>({addTo(){return this;},on(){}}),latLngBounds:x=>x,
   divIcon:options=>options,
-  marker(pos,options){return {pos, options, addTo(){pins.add(this);return this;},setLatLng(x){this.pos=x;},getLatLng(){return this.pos;},setIcon(icon){this.options.icon=icon;},setOpacity(x){this.opacity=x;},getTooltip(){return this.tip;},bindTooltip(x){this.tip=x;},setTooltipContent(x){this.tip=x;}};}};
+  marker(pos,options){return {pos, options, addTo(){pins.add(this);return this;},setLatLng(x){this.pos=x;},getLatLng(){return this.pos;},setIcon(icon){this.options.icon=icon;},setOpacity(x){this.opacity=x;},getTooltip(){return this.tip;},bindTooltip(x){this.tip=x;},setTooltipContent(x){this.tip=x;},openTooltip(){this.open=true;}};}};
 const context={L,document,window:{installSmoothWheelZoom:()=>({cancel(){}})},ResizeObserver:class{observe(){}}};
 vm.runInNewContext(fs.readFileSync('assets/flight-map/map.js','utf8'),context);
 const update=context.window.updateAircraft;
@@ -41,6 +41,23 @@ update([{id:'online',lat:10,lon:20,alt:30000,positionSource:'ADSB.lol (online)',
 assert.match([...pins][0].tip.textContent,/ADSB.lol \(online\)/);
 assert.equal(viewChanges,2);
 update([]);assert.equal(pins.size,0);
+// Voice call focus (#44): explicit focus centres once; follow focuses each new
+// target once when its marker exists, then leaves the user's view alone.
+let views=viewChanges;
+const call={id:'ABC123',lat:40,lon:-30,alt:35000,posTime:Date.now()/1000};
+assert.equal(context.window.focusAircraft('ABC123'),false);assert.equal(viewChanges,views);
+update([call]);assert.equal(context.window.focusAircraft('ABC123'),true);
+assert.equal(viewChanges,views+1);
+assert.equal(JSON.stringify(map.center),'[40,-30]');assert.equal([...pins][0].open,true);
+views=viewChanges;
+context.window.followAircraft('DEF456');update([call]);assert.equal(viewChanges,views); // no marker yet
+const next={id:'DEF456',lat:50,lon:10,alt:30000,posTime:Date.now()/1000};
+update([call,next]);assert.equal(viewChanges,views+1);assert.equal(JSON.stringify(map.center),'[50,10]');
+update([call,{...next,lat:51}]);context.window.followAircraft('DEF456');update([call,next]);
+assert.equal(viewChanges,views+1); // same target is not re-focused
+context.window.followAircraft('');update([call,next]);assert.equal(viewChanges,views+1);
+context.window.followAircraft('ABC123');update([call,next]);assert.equal(viewChanges,views+2);
+context.window.followAircraft('');update([]);assert.equal(pins.size,0);views=viewChanges;
 if (process.argv[2]) {
   // JSON emitted by the native ADS-C -> AircraftTable -> received-ID lookup test.
   const native=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
@@ -48,7 +65,7 @@ if (process.argv[2]) {
   update(native);assert.equal(pins.size,2);
   assert.ok([...pins].some(p=>p.tip.textContent.includes('Decoded ADS-C')));
   assert.ok([...pins].some(p=>p.tip.textContent.includes('ADSB.lol (online)')));
-  assert.equal(viewChanges,2);
+  assert.equal(viewChanges,views);
   update([]);assert.equal(pins.size,0);
 }
-console.log('PASS: aircraft SVG icons, source colors, age opacity, marker reuse; only supplied aircraft, no invented positions, marker updates/removal, safe labels, no automatic recenter');
+console.log('PASS: aircraft SVG icons, source colors, age opacity, marker reuse; only supplied aircraft, no invented positions, marker updates/removal, safe labels, no automatic recenter, voice-call focus/follow');

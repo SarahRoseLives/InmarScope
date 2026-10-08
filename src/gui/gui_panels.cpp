@@ -2128,7 +2128,20 @@ void drawFlightMap(App& app)
         auto second = app.decodersB.aircraftTable().snapshot();
         acs.insert(acs.end(), second.begin(), second.end());
     }
+    // Aircraft of the voice call being listened to (A first, then B).
+    uint32_t voiceAes = app.decoders.voiceAes();
+    if (!voiceAes && app.dualMode) voiceAes = app.decodersB.voiceAes();
+    bool voiceReceived = false;
+    for (const auto& a : acs)
+        if (voiceAes && a.aesId == voiceAes) { voiceReceived = true; break; }
+    app.flightMapWv.followAes = voiceReceived ? voiceAes : 0;
     app.flightMapWv.updateAircraft(acs);
+    ImGui::BeginDisabled(!voiceReceived);
+    if (ImGui::Button(_L("Show voice call aircraft")))
+        app.flightMapWv.focusAircraft(voiceAes);
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::Checkbox(_L("Follow voice calls"), &app.flightMapWv.followVoice);
     ImGui::Checkbox("Online positions for received aircraft", &app.flightMapWv.onlinePositions);
     ImGui::TextWrapped("%s", app.flightMapWv.positionStatus().c_str());
     if (!app.flightMapWv.isReady()) ImGui::TextDisabled("Loading received-aircraft map...");
