@@ -13,49 +13,51 @@ InmarScope is built with the **MSYS2 / MinGW-w64** toolchain (GCC 15.x) using
 **CMake** and **Ninja**. The build is reproducible from a clean MSYS2 install.
 
 > [!WARNING]
-> GCC must be invoked from inside the **MINGW64** environment. If you
+> GCC must be invoked from inside the **UCRT64** environment. If you
 > run `g++.exe` directly from PowerShell/cmd without that environment set up,
 > `cc1plus` dies silently with exit code 1 and no diagnostics. Always build from
-> the **MSYS2 MINGW64** shell (or set `MSYSTEM=MINGW64` before launching bash).
+> the **MSYS2 UCRT64** shell (or set `MSYSTEM=UCRT64` before launching bash).
 
 ### 1. Install MSYS2
 
 Download and install MSYS2 from [msys2.org](https://www.msys2.org) (`msys2-x86_64-*.exe`)
 
 > [!IMPORTANT]
-> The **UCRT64** shell will open on-screen after installing, close it afterwards.
+> The **UCRT64** shell opens on-screen after installing; you can use it for
+> the steps below. MSYS2 no longer provides the RTL-SDR and HackRF packages
+> for the older MINGW64 environment, so builds use UCRT64.
 
-Open the **"MSYS2 MINGW64"** shell from the Start menu. (has a blue icon, not the plain "MSYS2 MSYS" shell) 
+Open the **"MSYS2 UCRT64"** shell from the Start menu (not the plain "MSYS2 MSYS" shell).
 
 Inside of the shell window, update the package database:
 
 ```bash
 pacman -Syu
-# close and reopen the MINGW64 shell if it asks you to, then:
+# close and reopen the UCRT64 shell if it asks you to, then:
 pacman -Su
 ```
 
 ### 2. Install build tools and dependencies
 
-Install these packages through the **MINGW64** shell window:
+Install these packages through the **UCRT64** shell window:
 
 ```bash
 pacman -S --needed \
-  mingw-w64-x86_64-git \
-  mingw-w64-x86_64-toolchain \
-  mingw-w64-x86_64-cmake \
-  mingw-w64-x86_64-ninja \
-  mingw-w64-x86_64-pkgconf \
-  mingw-w64-x86_64-glfw \
-  mingw-w64-x86_64-rtl-sdr \
-  mingw-w64-x86_64-hackrf \
-  mingw-w64-x86_64-libusb \
-  mingw-w64-x86_64-zstd \
-  mingw-w64-x86_64-libogg \
-  mingw-w64-x86_64-libvorbis \
-  mingw-w64-x86_64-sqlite3 \
-  mingw-w64-x86_64-libxml2 \
-  mingw-w64-x86_64-jansson
+  mingw-w64-ucrt-x86_64-git \
+  mingw-w64-ucrt-x86_64-toolchain \
+  mingw-w64-ucrt-x86_64-cmake \
+  mingw-w64-ucrt-x86_64-ninja \
+  mingw-w64-ucrt-x86_64-pkgconf \
+  mingw-w64-ucrt-x86_64-glfw \
+  mingw-w64-ucrt-x86_64-rtl-sdr \
+  mingw-w64-ucrt-x86_64-hackrf \
+  mingw-w64-ucrt-x86_64-libusb \
+  mingw-w64-ucrt-x86_64-zstd \
+  mingw-w64-ucrt-x86_64-libogg \
+  mingw-w64-ucrt-x86_64-libvorbis \
+  mingw-w64-ucrt-x86_64-sqlite3 \
+  mingw-w64-ucrt-x86_64-libxml2 \
+  mingw-w64-ucrt-x86_64-jansson
 ```
 
 These provide: Git, GCC/G++, CMake, Ninja, pkg-config, GLFW (windowing), librtlsdr +
@@ -72,7 +74,7 @@ self-contained. **No `git submodule` commands are needed.**
 
 Because MSYS2 does not have a `libairspy` package available, you must build and install it.
 
-Build and install the `libairspy` libary through these commands in the **MINGW64** shell:
+Build and install the `libairspy` libary through these commands in the **UCRT64** shell:
 
 ```bash
 git clone https://github.com/airspy/airspyone_host.git
@@ -107,7 +109,7 @@ the executable.
 
 ### 3. Clone the InmarScope repository
 
-Obtain the project source code using Git in the **MINGW64** shell:
+Obtain the project source code using Git in the **UCRT64** shell:
 
 ```bash
 git clone https://github.com/SarahRoseLives/InmarScope.git
@@ -116,7 +118,7 @@ cd InmarScope
 
 ### 4. Configure and build
 
-From the **MINGW64** shell, in the project root:
+From the **UCRT64** shell, in the project root:
 
 ```bash
 cmake -S . -B build -G Ninja
@@ -149,17 +151,17 @@ Run it:
 
 ### 5. Building from PowerShell (optional)
 
-If you prefer to drive the build from PowerShell, you must enter the MINGW64
+If you prefer to drive the build from PowerShell, you must enter the UCRT64
 environment first. For example:
 
 ```powershell
-$env:MSYSTEM = "MINGW64"
+$env:MSYSTEM = "UCRT64"
 $env:CHERE_INVOKING = "1"
 & C:\msys64\usr\bin\bash.exe -lc "cd /c/path/to/InmarScope && ninja -C build"
 ```
 
-The `-l` (login) shell with `MSYSTEM=MINGW64` sources `/etc/profile`, which puts
-`/mingw64/bin` on `PATH` so `cc1plus` can find its runtime. `CHERE_INVOKING=1`
+The `-l` (login) shell with `MSYSTEM=UCRT64` sources `/etc/profile`, which puts
+`/ucrt64/bin` on `PATH` so `cc1plus` can find its runtime. `CHERE_INVOKING=1`
 keeps the current directory.
 
 ### Notes / troubleshooting
@@ -168,8 +170,8 @@ keeps the current directory.
   `implot_items.cpp` is extremely template-heavy; at `-O2` it takes ~5 minutes
   to compile. CMakeLists.txt overrides it to `-O1` (last `-O` flag wins) so it
   builds in about a minute. This is intentional, not a hang.
-- **`cc1plus` exits 1 with no output.** You are not in the MINGW64 environment.
-  Build from the MSYS2 MINGW64 shell (see the warning above).
+- **`cc1plus` exits 1 with no output.** You are not in the UCRT64 environment.
+  Build from the MSYS2 UCRT64 shell (see the warning above).
 - **Link fails with "Access is denied" on `InmarScope.exe`.** A previous instance
   is still running and is locking the file. Close it, then rebuild.
 - **Incremental builds.** Re-run `ninja -C build`. Only changed files recompile.
