@@ -32,16 +32,16 @@ jobs:
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           update: true
           install: >-
-            mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja mingw-w64-x86_64-pkgconf
-            mingw-w64-x86_64-glfw mingw-w64-x86_64-rtl-sdr
-            mingw-w64-x86_64-hackrf
-            mingw-w64-x86_64-zstd mingw-w64-x86_64-libogg
-            mingw-w64-x86_64-libvorbis mingw-w64-x86_64-sqlite3
-            mingw-w64-x86_64-libxml2 mingw-w64-x86_64-jansson
+            mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-glfw mingw-w64-ucrt-x86_64-rtl-sdr
+            mingw-w64-ucrt-x86_64-hackrf
+            mingw-w64-ucrt-x86_64-zstd mingw-w64-ucrt-x86_64-libogg
+            mingw-w64-ucrt-x86_64-libvorbis mingw-w64-ucrt-x86_64-sqlite3
+            mingw-w64-ucrt-x86_64-libxml2 mingw-w64-ucrt-x86_64-jansson
       - name: Windows Soapy SDK (verified download)
         if: runner.os == 'Windows'
         shell: pwsh

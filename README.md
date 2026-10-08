@@ -30,7 +30,7 @@ Windows builds can be found on official project page: **https://sarahsforge.dev/
 
 ## Building
 
-InmarScope supports building for Windows (MSYS2 MINGW64) and Linux (Debian/Ubuntu, Arch, Fedora).
+InmarScope supports building for Windows (MSYS2 UCRT64) and Linux (Debian/Ubuntu, Arch, Fedora).
 
 View build instructions at **[COMPILE.md](COMPILE.md)**.
 

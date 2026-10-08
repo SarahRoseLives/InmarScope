@@ -60,7 +60,7 @@ their hashes. Only then does it publish. It refuses to overwrite a published
 release. If upload/verification fails, fix the problem and rerun the release job;
 the existing draft can be completed safely.
 
-Windows uses MSYS2 MINGW64 and an extracted, SHA-256-pinned PothosSDR SDK. Its
+Windows uses MSYS2 UCRT64 and an extracted, SHA-256-pinned PothosSDR SDK. Its
 Soapy ABI is compatible with the shipped plugin; mixing an unrelated MinGW
 Soapy plugin with an MSVC Soapy DLL is not supported. `windows-sdk.ps1` builds
 SoapySDRPlay3 revision `48bd8b41072534018de1d74deb3dea5874d9e0e0` with Visual
