@@ -1,6 +1,7 @@
 // Inmarsat-C / EGC decoder implementation. Ported from scytaleC (GPL-3.0).
 #include "decode/egc/egc_decoder.h"
 #include "decode/message_log.h"
+#include "util/appendf.h"
 #include "util/log.h"
 
 #include <algorithm>
@@ -646,7 +647,7 @@ struct EgcDecoder::Impl
         {
             uint8_t c = f[payOff + i];
             if (hp < (int)sizeof(hex) - 4)
-                hp += std::snprintf(hex + hp, sizeof(hex) - hp, "%02X ", c);
+                appendf(hex, sizeof(hex), hp, "%02X ", c);
             // Strip high bit: many AA messages mark the 8th bit
             uint8_t c7 = c & 0x7F;
             if (c7 >= 0x20 || c7 == '\r' || c7 == '\n' || c7 == '\t')
@@ -788,20 +789,19 @@ struct EgcDecoder::Impl
                 lm.channel = lch;
                 lm.pktNo = pktNo;
                 char txt[1024]; int tp = 0;
-                tp += std::snprintf(txt + tp, sizeof(txt) - tp,
-                                    "%s LES %02d ch %d pkt %d/%d  [%d bytes]\n",
-                                    satName(sat), les, lch, pktNo,
-                                    (int)std::abs(mrf.first) % 10000, payLen);
-                tp += std::snprintf(txt + tp, sizeof(txt) - tp, "HEX: %s\n", hex);
+                appendf(txt, sizeof(txt), tp, "%s LES %02d ch %d pkt %d/%d  [%d bytes]\n",
+                        satName(sat), les, lch, pktNo,
+                        (int)std::abs(mrf.first) % 10000, payLen);
+                appendf(txt, sizeof(txt), tp, "HEX: %s\n", hex);
                 if (!ia5.empty())
-                    tp += std::snprintf(txt + tp, sizeof(txt) - tp, "IA5: %s\n", ia5.c_str());
+                    appendf(txt, sizeof(txt), tp, "IA5: %s\n", ia5.c_str());
                 if (!ita2Text.empty())
-                    tp += std::snprintf(txt + tp, sizeof(txt) - tp, "ITA2: %s\n", ita2Text.c_str());
+                    appendf(txt, sizeof(txt), tp, "ITA2: %s\n", ita2Text.c_str());
                 if (!hasReadable)
-                    tp += std::snprintf(txt + tp, sizeof(txt) - tp, "--- [encrypted] ---\n");
+                    appendf(txt, sizeof(txt), tp, "--- [encrypted] ---\n");
                 else if ((int)mrf.second.size() > 8)
-                    tp += std::snprintf(txt + tp, sizeof(txt) - tp, "--- assembled (%s) ---\n%s",
-                                        useIta2 ? "ITA2" : "IA5", mrf.second.c_str());
+                    appendf(txt, sizeof(txt), tp, "--- assembled (%s) ---\n%s",
+                            useIta2 ? "ITA2" : "IA5", mrf.second.c_str());
                 lm.isEncrypted = !hasReadable;
                 lm.text = txt;
                 lesLog->add(lm);
@@ -900,17 +900,16 @@ struct EgcDecoder::Impl
                     dl = downlinkMHz(f, pos + 5);
                 char buf[1024];
                 int bp = 0;
-                bp += std::snprintf(buf + bp, sizeof(buf) - bp,
-                                    "LES %06X on %s ch", lesHex, satName(0));
+                appendf(buf, sizeof(buf), bp, "LES %06X on %s ch", lesHex, satName(0));
                 if (dl > 0.0)
-                    bp += std::snprintf(buf + bp, sizeof(buf) - bp, " down %.4f MHz", dl);
-                bp += std::snprintf(buf + bp, sizeof(buf) - bp, " (len=%d)", f[pos+1]);
+                    appendf(buf, sizeof(buf), bp, " down %.4f MHz", dl);
+                appendf(buf, sizeof(buf), bp, " (len=%d)", f[pos+1]);
                 // If LoginAckLength > 7, station table follows
                 int ackLen = f[pos + 1];
                 if (ackLen > 7)
                 {
                     int cnt = f[pos + 8];
-                    bp += std::snprintf(buf + bp, sizeof(buf) - bp, "\nStation table (%d station(s)):", cnt);
+                    appendf(buf, sizeof(buf), bp, "\nStation table (%d station(s)):", cnt);
                     int off = pos + 9;
                     for (int i = 0; i < cnt && off + 6 <= pos + plen; ++i)
                     {
@@ -922,10 +921,9 @@ struct EgcDecoder::Impl
                             lesFreqTable->add(sdl, ssat, sles, satName(ssat),
                                               lesLabel(ssat, sles), svcBits,
                                               (double)std::time(nullptr));
-                        bp += std::snprintf(buf + bp, sizeof(buf) - bp,
-                                            "\n  %s LES %02d svc=[%s] down %.3f MHz",
-                                            satName(ssat), sles,
-                                            servicesText(svcBits).c_str(), sdl);
+                        appendf(buf, sizeof(buf), bp, "\n  %s LES %02d svc=[%s] down %.3f MHz",
+                                satName(ssat), sles,
+                                servicesText(svcBits).c_str(), sdl);
                         off += 6;
                     }
                 }
@@ -1056,7 +1054,7 @@ struct EgcDecoder::Impl
                 int cnt = f[pos + 3];
                 char buf[768];
                 int bp = 0;
-                bp += std::snprintf(buf + bp, sizeof(buf) - bp, "%d LES entry(s):", cnt);
+                appendf(buf, sizeof(buf), bp, "%d LES entry(s):", cnt);
                 int off = pos + 4;
                 for (int i = 0; i < cnt && off + 6 <= pos + plen; ++i)
                 {
@@ -1064,10 +1062,9 @@ struct EgcDecoder::Impl
                     int sles = f[off] & 0x3F;
                     uint16_t svcBits = ((uint16_t)f[off + 2] << 8) | f[off + 3];
                     double dl = downlinkMHz(f, off + 4);
-                    bp += std::snprintf(buf + bp, sizeof(buf) - bp,
-                                        "\n  %s LES %02d svc=[%s] down %.3f MHz",
-                                        satName(ssat), sles,
-                                        servicesText(svcBits).c_str(), dl);
+                    appendf(buf, sizeof(buf), bp, "\n  %s LES %02d svc=[%s] down %.3f MHz",
+                            satName(ssat), sles,
+                            servicesText(svcBits).c_str(), dl);
                     if (lesFreqTable && dl > 1500.0 && dl < 1600.0)
                         lesFreqTable->add(dl, ssat, sles, satName(ssat),
                                           lesLabel(ssat, sles), svcBits,
