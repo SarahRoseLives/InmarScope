@@ -55,7 +55,26 @@ window.updateAircraft = function (aircraft) {
   for (const [id, marker] of markers) if (!keep.has(id)) { map.removeLayer(marker); markers.delete(id); }
   document.getElementById('counts').textContent = aircraft.length + ' received · ' + markers.size + ' with position';
   document.getElementById('missing-count').textContent = 'Received without a known position: ' + noPosition;
-  // Deliberately no setView/panTo/fitBounds here: updates preserve the viewport.
+  // Updates never move the viewport on their own. The only exception is an
+  // opted-in voice-call follow target, focused once when its marker appears.
+  if (followId && followId !== followedId && focusAircraft(followId)) followedId = followId;
+};
+// Explicit host requests: "Show voice call aircraft" (focusAircraft) and the
+// opt-in "Follow voice calls" target (followAircraft, '' = none).
+let followId = '', followedId = '';
+function focusAircraft(id) {
+  const marker = markers.get(id);
+  if (!marker) return false;
+  wheelZoom.cancel();
+  map.setView(marker.getLatLng(), Math.max(map.getZoom(), 6), {animate: false});
+  marker.openTooltip();
+  return true;
+}
+window.focusAircraft = focusAircraft;
+window.followAircraft = function (id) {
+  if (id === followId) return;
+  followId = id || '';
+  followedId = '';
 };
 document.getElementById('fit').addEventListener('click', () => {
   wheelZoom.cancel();

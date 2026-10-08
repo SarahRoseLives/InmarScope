@@ -238,8 +238,20 @@ void FlightMapWebView::updateAircraft(const std::vector<AircraftEntry>& aircraft
     }
     // JSON_ENSURE_ASCII safely represents decoded strings in JavaScript and
     // UTF-16. Retry each second, including when initial page loading is slow.
-    const auto script = "window.updateAircraft && window.updateAircraft(" + flightMapJson(aircraft, impl_->positions, epoch) + ");";
+    char follow[16] = "";
+    if (followVoice && followAes) std::snprintf(follow, sizeof(follow), "%06X", followAes);
+    const auto script = std::string("window.followAircraft && window.followAircraft('") + follow + "');" +
+        "window.updateAircraft && window.updateAircraft(" + flightMapJson(aircraft, impl_->positions, epoch) + ");";
     const std::wstring wide(script.begin(), script.end());
+    impl_->webview->ExecuteScript(wide.c_str(), nullptr);
+}
+
+void FlightMapWebView::focusAircraft(uint32_t aesId) {
+    if (!impl_ || !impl_->ready || !impl_->webview || !aesId) return;
+    char script[96];
+    std::snprintf(script, sizeof(script), "window.focusAircraft && window.focusAircraft('%06X');", aesId);
+    const std::string s(script);
+    const std::wstring wide(s.begin(), s.end());
     impl_->webview->ExecuteScript(wide.c_str(), nullptr);
 }
 
@@ -271,6 +283,7 @@ struct FlightMapWebView::Impl {};
 FlightMapWebView::~FlightMapWebView() { delete impl_; }
 void FlightMapWebView::init(void*) {}
 void FlightMapWebView::updateAircraft(const std::vector<AircraftEntry>&) {}
+void FlightMapWebView::focusAircraft(uint32_t) {}
 void FlightMapWebView::setBounds(int, int, int, int, bool) {}
 bool FlightMapWebView::isReady() const { return false; }
 std::string FlightMapWebView::positionStatus() const { return "Map unavailable on this platform"; }
