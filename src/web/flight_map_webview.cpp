@@ -26,6 +26,7 @@
 #include <ctime>
 #include <stdexcept>
 #include <algorithm>
+#include <cctype>
 
 namespace {
 struct HttpHandle {
@@ -118,6 +119,14 @@ struct FlightMapWebView::Impl {
     FlightMapPositions positions;
     std::string lookupStatus = "Online positions: waiting for received aircraft";
     size_t lookupOffset = 0;
+    FlightMapWebView* owner = nullptr;
+    int loadedMode = -1;          // mode currently shown in the browser
+    std::string shownIcao;        // live mode: ICAO currently focused
+    std::wstring defaultAgent;    // stock Edge UA, used for airplanes.live
+    std::wstring localAgent;      // identifying UA for OSM tiles on local page
+    std::vector<std::string> received;  // mode 1 filter (lowercase hex)
+    std::string filterSent;             // last filter pushed into the page
+    std::chrono::steady_clock::time_point lastFilterPush{};
 
     ~Impl() {
         if (ctrl) { ctrl->Close(); ctrl->Release(); ctrl = nullptr; }
@@ -156,26 +165,82 @@ HRESULT STDMETHODCALLTYPE CtrlCB::Invoke(HRESULT result, ICoreWebView2Controller
     wchar_t executable[32768]{};
     if (!GetModuleFileNameW(nullptr, executable, 32768)) return E_FAIL;
     const auto folder = std::filesystem::path(executable).parent_path() / "flight-map";
+    // The local map needs a virtual host; the live airplanes.live map does not,
+    // so a failure here only disables the received-aircraft mode.
     ICoreWebView2_3* local = nullptr;
     hr = g_impl->webview->QueryInterface(IID_ICoreWebView2_3, reinterpret_cast<void**>(&local));
-    if (FAILED(hr)) { logWrite("[webview] Update WebView2 runtime for the local flight map"); return hr; }
-    hr = local->SetVirtualHostNameToFolderMapping(L"inmarscope.local", folder.c_str(), COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_DENY_CORS);
-    local->Release();
-    if (FAILED(hr)) return hr;
-    ICoreWebView2Settings* settings = nullptr;
-    if (SUCCEEDED(g_impl->webview->get_Settings(&settings))) {
-        ICoreWebView2Settings2* settings2 = nullptr;
-        if (SUCCEEDED(settings->QueryInterface(IID_ICoreWebView2Settings2, reinterpret_cast<void**>(&settings2)))) {
-            const std::string agent = "InmarScope/" INMARSCOPE_VERSION " (+https://github.com/blkph0x/InmarScope)";
-            const std::wstring wide(agent.begin(), agent.end());
-            settings2->put_UserAgent(wide.c_str()); settings2->Release();
-        }
-        settings->Release();
+    if (FAILED(hr)) logWrite("[webview] Update WebView2 runtime for the local flight map");
+    else {
+        hr = local->SetVirtualHostNameToFolderMapping(L"inmarscope.local", folder.c_str(), COREWEBVIEW2_HOST_RESOURCE_ACCESS_KIND_DENY_CORS);
+        local->Release();
+        if (FAILED(hr)) logWrite("[webview] local map folder mapping failed: 0x%lx", (unsigned long)hr);
     }
-    hr = g_impl->webview->Navigate(L"https://inmarscope.local/index.html");
-    g_impl->ready = SUCCEEDED(hr);
-    logWrite("[webview] local received-aircraft map: 0x%lx", (unsigned long)hr);
+    {
+        const std::string agent = "InmarScope/" INMARSCOPE_VERSION " (+https://github.com/blkph0x/InmarScope)";
+        g_impl->localAgent.assign(agent.begin(), agent.end());
+        ICoreWebView2Settings* settings = nullptr;
+        if (SUCCEEDED(g_impl->webview->get_Settings(&settings))) {
+            ICoreWebView2Settings2* settings2 = nullptr;
+            if (SUCCEEDED(settings->QueryInterface(IID_ICoreWebView2Settings2, reinterpret_cast<void**>(&settings2)))) {
+                LPWSTR ua = nullptr;
+                if (SUCCEEDED(settings2->get_UserAgent(&ua)) && ua) { g_impl->defaultAgent = ua; CoTaskMemFree(ua); }
+                settings2->Release();
+            }
+            settings->Release();
+        }
+    }
+    g_impl->ready = true;
+    if (g_impl->owner) g_impl->owner->applyMode();
+    logWrite("[webview] flight map ready (mode %d)", g_impl->owner ? g_impl->owner->mode : -1);
     return S_OK;
+}
+
+namespace {
+void setAgent(FlightMapWebView::Impl* impl, const std::wstring& agent) {
+    if (agent.empty()) return;
+    ICoreWebView2Settings* settings = nullptr;
+    if (FAILED(impl->webview->get_Settings(&settings))) return;
+    ICoreWebView2Settings2* settings2 = nullptr;
+    if (SUCCEEDED(settings->QueryInterface(IID_ICoreWebView2Settings2, reinterpret_cast<void**>(&settings2)))) {
+        settings2->put_UserAgent(agent.c_str()); settings2->Release();
+    }
+    settings->Release();
+}
+// Only hex digits reach the URL, so a decoded string can never alter it.
+std::string cleanIcao(const std::string& icao) {
+    std::string out;
+    for (char c : icao) if (std::isxdigit((unsigned char)c)) out += (char)std::tolower((unsigned char)c);
+    return out.size() == 6 ? out : std::string{};
+}
+std::string joinIds(const std::vector<std::string>& ids) {
+    std::string out;
+    for (const auto& id : ids) { if (!out.empty()) out += ','; out += id; }
+    return out;
+}
+void navigateLive(FlightMapWebView::Impl* impl, const std::string& icao, bool filtered) {
+    std::string url = "https://globe.airplanes.live/";
+    if (filtered) {
+        // tar1090 treats an empty icaoFilter as "no filter", so start with a
+        // placeholder that matches nothing; the list is updated in-page.
+        const std::string ids = joinIds(impl->received);
+        std::vector<std::string> list = impl->received;
+        if (!icao.empty() && std::find(list.begin(), list.end(), icao) == list.end()) list.push_back(icao);
+        const std::string all = joinIds(list);
+        url += "?icaoFilter=" + (all.empty() ? std::string("000000") : all);
+        // Select and centre the voice-call aircraft, keeping the others visible.
+        if (!icao.empty()) url += "&icao=" + icao + "&noIsolation";
+        impl->filterSent = ids;
+        impl->lastFilterPush = std::chrono::steady_clock::now();
+    } else if (!icao.empty()) {
+        url += "?icao=" + icao;
+    }
+    setAgent(impl, impl->defaultAgent);
+    const std::wstring wide(url.begin(), url.end());
+    const HRESULT hr = impl->webview->Navigate(wide.c_str());
+    impl->shownIcao = icao.empty() ? impl->shownIcao : icao;
+    logWrite("[webview] airplanes.live%s %s: 0x%lx", filtered ? " (received only)" : "",
+             icao.empty() ? "" : icao.c_str(), (unsigned long)hr);
+}
 }
 
 FlightMapWebView::~FlightMapWebView() {
@@ -187,6 +252,7 @@ void FlightMapWebView::init(void* nativeHwnd) {
     if (impl_) return;
     impl_ = new Impl{};
     impl_->hwnd = (HWND)nativeHwnd;
+    impl_->owner = this;
     g_impl = impl_;
     auto* cb = new EnvCB{};
     CreateCoreWebView2EnvironmentWithOptions(nullptr, nullptr, nullptr, cb);
@@ -243,6 +309,69 @@ void FlightMapWebView::updateAircraft(const std::vector<AircraftEntry>& aircraft
     impl_->webview->ExecuteScript(wide.c_str(), nullptr);
 }
 
+void FlightMapWebView::applyMode() {
+    if (!impl_ || !impl_->ready || !impl_->webview) return;
+    if (mode < 0 || mode > 2) mode = 0;
+    if (mode == impl_->loadedMode) return;
+    impl_->loadedMode = mode;
+    if (mode == 0) {
+        navigateLive(impl_, impl_->shownIcao, false);
+    } else if (mode == 1) {
+        navigateLive(impl_, impl_->shownIcao, true);
+    } else {
+        setAgent(impl_, impl_->localAgent);
+        const HRESULT hr = impl_->webview->Navigate(L"https://inmarscope.local/index.html");
+        logWrite("[webview] local received-aircraft map: 0x%lx", (unsigned long)hr);
+    }
+}
+
+void FlightMapWebView::showAircraft(const std::string& icaoHex) {
+    if (!impl_) return;
+    const std::string icao = cleanIcao(icaoHex);
+    if (icao.empty() || icao == impl_->shownIcao) return; // keep the user's pan/zoom
+    impl_->shownIcao = icao;
+    if (!impl_->ready || !impl_->webview || impl_->loadedMode != mode) return; // applied on load
+    if (mode == 0 || mode == 1) navigateLive(impl_, icao, mode == 1);
+}
+
+void FlightMapWebView::setReceived(const std::vector<std::string>& icaoHex) {
+    if (!impl_) return;
+    std::vector<std::string> clean;
+    for (const auto& raw : icaoHex) {
+        const std::string id = cleanIcao(raw);
+        if (!id.empty() && std::find(clean.begin(), clean.end(), id) == clean.end()) clean.push_back(id);
+    }
+    impl_->received = std::move(clean);
+    if (!impl_->ready || !impl_->webview || mode != 1 || impl_->loadedMode != 1) return;
+    const auto now = std::chrono::steady_clock::now();
+    if (now - impl_->lastUpdate < std::chrono::seconds(1)) return;
+    impl_->lastUpdate = now;
+    // Only act on the airplanes.live page we loaded.
+    LPWSTR source = nullptr;
+    const bool live = SUCCEEDED(impl_->webview->get_Source(&source)) && source &&
+        std::wstring(source).rfind(L"https://globe.airplanes.live/", 0) == 0;
+    CoTaskMemFree(source);
+    if (!live) return;
+    std::string script;
+    const std::string ids = joinIds(impl_->received);
+    // Push when the list changes, and every few seconds in case the page
+    // reloaded itself. Strings are validated hex, so the JS is safe to build.
+    if (ids != impl_->filterSent || now - impl_->lastFilterPush > std::chrono::seconds(5)) {
+        std::string arr = "[";
+        for (const auto& id : impl_->received) { if (arr.size() > 1) arr += ','; arr += "'" + id + "'"; }
+        arr += "]";
+        script += "try{if(typeof icaoFilter!=='undefined'&&icaoFilter){const l=" + arr +
+                  ";icaoFilter.length=0;Array.prototype.push.apply(icaoFilter,l.length?l:['000000']);}}catch(e){}";
+        impl_->filterSent = ids;
+        impl_->lastFilterPush = now;
+    }
+    if (script.empty()) return;
+    const std::wstring wide(script.begin(), script.end());
+    impl_->webview->ExecuteScript(wide.c_str(), nullptr);
+}
+
+std::string FlightMapWebView::shownIcao() const { return impl_ ? impl_->shownIcao : std::string{}; }
+
 void FlightMapWebView::setBounds(int x, int y, int w, int h, bool visible) {
     if (!impl_ || !impl_->ctrl) return;
     if (!IsWindow(impl_->hwnd)) return;
@@ -274,5 +403,9 @@ void FlightMapWebView::updateAircraft(const std::vector<AircraftEntry>&) {}
 void FlightMapWebView::setBounds(int, int, int, int, bool) {}
 bool FlightMapWebView::isReady() const { return false; }
 std::string FlightMapWebView::positionStatus() const { return "Map unavailable on this platform"; }
+void FlightMapWebView::applyMode() {}
+void FlightMapWebView::showAircraft(const std::string&) {}
+void FlightMapWebView::setReceived(const std::vector<std::string>&) {}
+std::string FlightMapWebView::shownIcao() const { return {}; }
 
 #endif // _WIN32

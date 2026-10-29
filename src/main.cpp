@@ -1,6 +1,7 @@
 // InmarScope - Inmarsat decoder
 // Phase 1: RTL-SDR -> IQ ring -> FFT -> spectrum + scrolling waterfall.
 
+#include "stt/transcriber.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_impl_glfw.h"
@@ -320,6 +321,15 @@ int main(int argc, char** argv)
     const ImVec4 clear_color = ImVec4(0.06f, 0.07f, 0.09f, 1.0f);
 
     int smokeFrames = 0;
+    {
+        // Speech-to-text worker: below normal priority (whisper's compute
+        // threads are pinned to lowest in its build), models in models/.
+        auto &tx = stt::Transcriber::instance();
+#ifdef _WIN32
+        tx.set_thread_init([] { SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_BELOW_NORMAL); });
+#endif
+        tx.set_models_dir("models");
+    }
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -452,6 +462,7 @@ int main(int argc, char** argv)
     app.rsp.close();
     app.sdr.stop();
     app.sdrB.stop();
+    stt::Transcriber::instance().shutdown();
     app.wav.stop();
     app.server.stop();
     app.hack.stop();

@@ -69,6 +69,8 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WI(voiceFollow); WF(followHoldSec);
     WS(recordDir);
     WI(recordFormat);
+    WI(recordVoice);
+    WI(sttOn); WI(sttTranslate); WI(sttLargeAll); WS(sttVocab);
     WI(saveDecoders);
     WI(acPosOnly);
     WI(showEmptyMsgs);
@@ -76,7 +78,7 @@ void cfgWriteAll(App& app, ImGuiTextBuffer* buf)
     WS(bandPlanFile); WS(bandPlanFileB);
     WI(bandPlanGroup); WI(bandPlanGroupB);
     WI(bandPlanChannel); WI(bandPlanChannelB); WI(decodeBandPlan); WI(decodeBandPlanB);
-    WI(flightMapWv.onlinePositions);
+    WI(flightMapWv.onlinePositions); WI(flightMapWv.mode); WI(flightMapWv.followVoice);
     WI(outFile); WS(outFilePath); WI(outUdp); WS(outUdpHost); WI(outUdpPort);
     WI(outFormat); WS(outStation); WI(outSbs); WI(outSbsPort);
     WI(layoutVersion);
@@ -147,7 +149,8 @@ void cfgReadLine(App& app, const char* line)
     RB(autoGainB); RF(gainDbB); RB(biasTeeB); RF(ppmB);
     RB(voiceFollow); RF(followHoldSec);
     RS(recordDir);
-    RI(recordFormat); RB(saveDecoders);
+    RI(recordFormat); RB(saveDecoders); RB(recordVoice);
+    RB(sttOn); RB(sttTranslate); RB(sttLargeAll); RS(sttVocab);
     // savedDecoder lines: freqMHz,baud (e.g. "1545.020,600")
     if (!std::strcmp(key, "savedDecoder"))
     {
@@ -169,7 +172,7 @@ void cfgReadLine(App& app, const char* line)
     RS(bandPlanFile); RS(bandPlanFileB);
     RI(bandPlanGroup); RI(bandPlanGroupB);
     RI(bandPlanChannel); RI(bandPlanChannelB); RB(decodeBandPlan); RB(decodeBandPlanB);
-    RB(flightMapWv.onlinePositions);
+    RB(flightMapWv.onlinePositions); RI(flightMapWv.mode); RB(flightMapWv.followVoice);
     RB(outFile); RS(outFilePath); RB(outUdp); RS(outUdpHost); RI(outUdpPort);
     RI(outFormat); RS(outStation); RB(outSbs); RI(outSbsPort);
     RI(layoutVersion);

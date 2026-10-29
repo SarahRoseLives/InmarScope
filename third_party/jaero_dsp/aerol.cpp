@@ -1453,8 +1453,31 @@ std::vector<uint8_t> &AeroL::Decode(std::vector<short> &bits, bool soft)//0 bit 
     return decodedbytes;
 }
 
+// Ported from JAERO's AeroL::updateDCD() (called there every second by a
+// QTimer): count the carrier-detect down and clear it once frames have
+// stopped passing their CRC, so the preamble search is no longer limited to
+// the expected frame position and the decoder can re-acquire.
+void AeroL::updateDCD()
+{
+    if(datacdcountdown>0)datacdcountdown-=3;
+    else {if(datacdcountdown<0)datacdcountdown=0;}
+    if(datacd&&!datacdcountdown)
+    {
+        datacd=false;
+        if(dcd_callback) dcd_callback(datacd, dcd_user);
+    }
+}
+
 void AeroL::processDemodulatedSoftBits(const std::vector<short> &soft_bits)
 {
+    // Once per second of signal (bits at the channel bit rate), like JAERO's timer.
+    dcdBits += (long long)soft_bits.size();
+    const long long bitsPerSecond = ifb > 0 ? ifb : 600;
+    while (dcdBits >= bitsPerSecond)
+    {
+        dcdBits -= bitsPerSecond;
+        updateDCD();
+    }
 
     sbits.clear();
 

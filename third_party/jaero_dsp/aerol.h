@@ -947,6 +947,15 @@ private:
     bool datacd;
     int cntr;
 
+    // JAERO runs updateDCD() from a 1 s QTimer; this port has no Qt, so it is
+    // driven by the amount of signal processed instead (one call per second
+    // of bits at the channel bit rate). Without it the data-carrier-detect
+    // flag never clears, and a continuous OQPSK (10500) channel that loses
+    // frame alignment only searches for the next unique word inside the old
+    // frame window, so it never re-syncs (shows LOCK, decodes nothing).
+    void updateDCD();
+    long long dcdBits = 0;
+
     std::vector<int> donotdisplaysus;
 
     //old static

@@ -14,6 +14,7 @@
   "fleet_source": "https://www.viasat.com/content/dam/us-site/government/missions/documents/Viasat-Aero-Services-brochure-September-2025-digital.pdf",
   "region_source": "https://www.jsatmobile.com/general1/id=222",
   "reviewed": "2026-09-17",
+  "local_changes": "10500 channels 1546.005 and 1546.02 replaced with 1545.3187 and 1545.3317 (verified locally, Kitchener-Waterloo, Oct 2026)",
   "license": "GPL-3.0-or-later",
   "notes": "Surveyed channel centers, not complete allocations. Verify active frequencies locally. No geographic aliases inferred from the source.",
   "bands": [
@@ -144,21 +145,21 @@
       "color": "4287F5"
     },
     {
-      "lo": 1546.004999,
-      "hi": 1546.005001,
+      "lo": 1545.318699,
+      "hi": 1545.318701,
       "baud": 10500,
-      "frequency": 1546.005,
+      "frequency": 1545.3187,
       "service": "Aero data",
-      "label": "AERO 10500 1546.01 MHz (channel center)",
+      "label": "AERO 10500 1545.3187 MHz (channel center)",
       "color": "4287F5"
     },
     {
-      "lo": 1546.019999,
-      "hi": 1546.020001,
+      "lo": 1545.331699,
+      "hi": 1545.331701,
       "baud": 10500,
-      "frequency": 1546.02,
+      "frequency": 1545.3317,
       "service": "Aero data",
-      "label": "AERO 10500 1546.02 MHz (channel center)",
+      "label": "AERO 10500 1545.3317 MHz (channel center)",
       "color": "4287F5"
     },
     {

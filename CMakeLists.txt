@@ -190,6 +190,8 @@ add_executable(InmarScope
     src/decode/decoder.cpp
     src/decode/decoder_manager.cpp
     src/decode/acars_apps.cpp
+    src/decode/acars_explain.cpp
+    src/stt/transcriber.cpp
     src/decode/icao_country.cpp
     src/decode/band_plan.cpp
     src/decode/json_mini.cpp
@@ -288,6 +290,24 @@ if(WIN32)
     target_link_libraries(InmarScope PRIVATE ${WEBVIEW2_LIB})
 endif()
 find_package(Threads REQUIRED)
+# whisper.cpp (speech-to-text for voice calls), optional, static: libwhisper +
+# ggml. Without it the app builds as before and transcription is unavailable.
+# On Windows, build ggml with -DGGML_WIN_FORCE_THREAD_PRIORITY=THREAD_PRIORITY_LOWEST
+# (patches/whisper-ggml-thread-priority.patch) so its threads stay at the
+# lowest priority instead of being raised to normal on every compute pass.
+find_path(WHISPER_INCLUDE_DIR whisper.h)
+find_library(WHISPER_LIBRARY NAMES whisper)
+find_library(GGML_LIBRARY NAMES ggml)
+find_library(GGML_CPU_LIBRARY NAMES ggml-cpu)
+find_library(GGML_BASE_LIBRARY NAMES ggml-base)
+if(WHISPER_INCLUDE_DIR AND WHISPER_LIBRARY AND GGML_LIBRARY AND GGML_CPU_LIBRARY AND GGML_BASE_LIBRARY)
+  target_compile_definitions(InmarScope PRIVATE HAS_WHISPER=1)
+  target_include_directories(InmarScope PRIVATE ${WHISPER_INCLUDE_DIR})
+  target_link_libraries(InmarScope PRIVATE ${WHISPER_LIBRARY} ${GGML_LIBRARY} ${GGML_CPU_LIBRARY} ${GGML_BASE_LIBRARY})
+  message(STATUS "whisper.cpp found - voice transcription enabled")
+else()
+  message(STATUS "whisper.cpp not found - voice transcription disabled")
+endif()
 target_link_libraries(InmarScope PRIVATE Threads::Threads)
 if(AIRSPY_FOUND)
     target_link_libraries(InmarScope PRIVATE ${AIRSPY_LIBRARIES})

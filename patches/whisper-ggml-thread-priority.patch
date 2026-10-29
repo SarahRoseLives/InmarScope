@@ -1,0 +1,17 @@
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.c b/ggml/src/ggml-cpu/ggml-cpu.c
+index 7c274c0..42a7208 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.c
++++ b/ggml/src/ggml-cpu/ggml-cpu.c
+@@ -2559,6 +2559,12 @@ static bool ggml_thread_apply_affinity(bool * mask) {
+ }
+ 
+ static bool ggml_thread_apply_priority(int32_t prio) {
++#ifdef GGML_WIN_FORCE_THREAD_PRIORITY
++    // Embedding app (IridiScope/InmarScope): compute threads always run at
++    // this priority so speech-to-text never outranks the radio or decoders.
++    (void)prio;
++    return SetThreadPriority(GetCurrentThread(), GGML_WIN_FORCE_THREAD_PRIORITY);
++#endif
+     // Note that on Windows the Process Priority Class must be updated in order to set Thread priority.
+     // This is up to the applications.
+     DWORD p = THREAD_PRIORITY_NORMAL;

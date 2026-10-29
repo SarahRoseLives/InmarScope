@@ -173,6 +173,13 @@ struct App
     bool voiceMuted = false;
     bool cpuReduce = false;
     bool showAbout = false;
+    // Speech-to-text of recorded voice calls (stt/transcriber.h)
+    bool showStt = false;
+    bool sttOn = false;
+    bool sttTranslate = false;
+    bool sttLargeAll = true;   // every call on large-v3-turbo when downloaded
+    char sttVocab[1024] = "Inmarsat, ACARS, dispatch, maintenance control, MedAire, MedLink, MEL, ATC, "
+                          "captain, first officer, flight number, tail number, ETA, roger, copy, stand by";
     bool autoAddLes = true;       // auto-create decoders for discovered LES frequencies
     int  maxLesAutoDecoders = 4;  // cap on auto-created LES decoders
     bool webServerEnabled = false;
